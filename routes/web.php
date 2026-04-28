@@ -102,4 +102,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/ruangan-waktu/waktu/{waktu}', [AdminRuanganWaktuWebController::class, 'destroyWaktu'])->name('waktu.destroy');
         Route::post('/ruangan-waktu/waktu/import', [AdminRuanganWaktuWebController::class, 'importWaktu'])->name('waktu.import');
     });
+
+    Route::get('/', function () {
+    return response()->json([
+        'status' => 'API berjalan',
+        'message' => 'Laravel Railway OK'
+    ]);
+});
 });
