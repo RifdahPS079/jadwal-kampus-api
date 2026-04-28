@@ -1,6 +1,6 @@
 FROM php:8.2-cli
 
-# Install system dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     git unzip curl libzip-dev zip libpng-dev \
     && docker-php-ext-install zip pdo pdo_mysql gd
@@ -15,10 +15,9 @@ COPY . .
 # Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Laravel cache clear
+# Clear cache (aman kalau gagal)
 RUN php artisan config:clear || true
 RUN php artisan cache:clear || true
-
-# Run Laravel
+# Jalankan server (INI YANG BENAR)
 CMD php -S 0.0.0.0:$PORT -t public
-CMD php artisan migrate --force && php -S 0.0.0.0:$PORT -t public
+
