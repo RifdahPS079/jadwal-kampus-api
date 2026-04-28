@@ -1,24 +1,26 @@
 FROM php:8.2-cli
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
+    libzip-dev \
     zip \
     unzip \
     git \
     curl
 
-# Install GD extension
+# GD
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd
 
-# Install Composer
+# ZIP (INI YANG KURANG 🔥)
+RUN docker-php-ext-install zip
+
+# Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
-
 COPY . .
 
 RUN composer install --no-interaction --optimize-autoloader
