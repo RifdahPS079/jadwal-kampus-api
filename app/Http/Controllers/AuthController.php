@@ -48,22 +48,24 @@ class AuthController extends Controller
     // DOSEN LOGIN
     // =======================
     public function loginDosen(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string'
-        ]);
+{
+    $user = \App\Models\Dosen::where('email', $request->email)->first();
 
-        // INI PENTING: attempt pakai guard dosen
-        if (!$token = auth('dosen')->attempt($credentials)) {
-            return response()->json(['message' => 'Email atau password salah'], 401);
-        }
-
+    if (!$user || !\Hash::check($request->password, $user->password)) {
         return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-        ]);
+            'success' => false,
+            'message' => 'Email atau password salah'
+        ], 401);
     }
+
+    $token = auth('dosen')->login($user);
+
+    return response()->json([
+        'success' => true,
+        'token' => $token,
+        'user' => $user
+    ]);
+}
 
     public function logoutDosen()
     {
@@ -74,32 +76,25 @@ class AuthController extends Controller
     // =======================
     // MAHASISWA LOGIN
     // =======================
-    public function loginMahasiswa(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string'
-        ]);
+   public function loginMahasiswa(Request $request)
+{
+    $user = \App\Models\Mahasiswa::where('email', $request->email)->first();
 
-        if (!$token = auth('mahasiswa')->attempt($credentials)) {
-            return response()->json(['message' => 'Email atau password salah'], 401);
-        }
-
-        $user = auth('mahasiswa')->user();
-
+    if (!$user || !\Hash::check($request->password, $user->password)) {
         return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'user' => [
-                'id' => $user->id,
-                'nama' => $user->nama,
-                'nim' => $user->nim,
-                'kelas' => $user->kelas,
-                'angkatan' => $user->angkatan,
-                'program_studi' => $user->program_studi,
-            ]
-        ]);
+            'success' => false,
+            'message' => 'Email atau password salah'
+        ], 401);
     }
+
+    $token = auth('mahasiswa')->login($user);
+
+    return response()->json([
+        'success' => true,
+        'token' => $token,
+        'user' => $user
+    ]);
+}
 
     public function logoutMahasiswa()
     {
