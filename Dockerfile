@@ -21,3 +21,4 @@ RUN php artisan cache:clear || true
 
 # Run Laravel
 CMD php -S 0.0.0.0:$PORT -t public
+CMD php artisan migrate --force && php -S 0.0.0.0:$PORT -t public
