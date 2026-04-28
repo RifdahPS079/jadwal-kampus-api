@@ -47,8 +47,13 @@ class AuthController extends Controller
     // =======================
     // DOSEN LOGIN
     // =======================
-    public function loginDosen(Request $request)
+ public function loginDosen(Request $request)
 {
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required'
+    ]);
+
     $user = \App\Models\Dosen::where('email', $request->email)->first();
 
     if (!$user || !\Hash::check($request->password, $user->password)) {
@@ -58,6 +63,7 @@ class AuthController extends Controller
         ], 401);
     }
 
+    // 🔥 PENTING: pakai guard dosen
     $token = auth('dosen')->login($user);
 
     return response()->json([
@@ -78,6 +84,11 @@ class AuthController extends Controller
     // =======================
    public function loginMahasiswa(Request $request)
 {
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required'
+    ]);
+
     $user = \App\Models\Mahasiswa::where('email', $request->email)->first();
 
     if (!$user || !\Hash::check($request->password, $user->password)) {
