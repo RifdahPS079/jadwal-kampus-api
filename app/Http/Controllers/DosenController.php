@@ -1,0 +1,130 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Dosen;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+
+class DosenController extends Controller
+{
+    /**
+     * GET /api/dosen
+     */
+    public function index()
+    {
+        return response()->json(Dosen::all());
+    }
+
+    /**
+     * POST /api/dosen
+     */
+    public function store(Request $request)
+    {
+        // 1) Validasi input
+        $validated = $request->validate([
+            'nama' => 'required|string|max:255',
+            'nidn' => 'required|string|max:50|unique:dosens,nidn',
+            'kode_dosen' => 'required|string|max:50|unique:dosens,kode_dosen',
+            'program_studi' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:dosens,email',
+            'password' => 'required|string|min:6',
+        ]);
+
+        // 2) Hash password
+        $validated['password'] = Hash::make($validated['password']);
+
+        // 3) Simpan ke DB
+        $dosen = Dosen::create($validated);
+
+        return response()->json([
+            'message' => 'Dosen berhasil ditambahkan',
+            'data' => $dosen
+        ], 201);
+    }
+
+    /**
+     * GET /api/dosen/{id}
+     */
+    public function show($id)
+    {
+        return response()->json(Dosen::findOrFail($id));
+    }
+
+    /**
+     * PUT /api/dosen/{id}
+     */
+    public function update(Request $request, $id)
+    {
+        $dosen = Dosen::findOrFail($id);
+
+        // password di update bersifat opsional
+        $validated = $request->validate([
+            'nama' => 'required|string|max:255',
+            'nidn' => 'required|string|max:50|unique:dosens,nidn,' . $id,
+            'kode_dosen' => 'required|string|max:50|unique:dosens,kode_dosen,' . $id,
+            'program_studi' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:dosens,email,' . $id,
+            'password' => 'nullable|string|min:6',
+        ]);
+
+        // Kalau user kirim password baru, hash dulu
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']); // biar password lama tidak ketimpa null
+        }
+
+        $dosen->update($validated);
+
+        return response()->json([
+            'message' => 'Dosen berhasil diperbarui',
+            'data' => $dosen
+        ]);
+    }
+
+    /**
+     * DELETE /api/dosen/{id}
+     */
+    public function destroy($id)
+    {
+        $dosen = Dosen::findOrFail($id);
+        $dosen->delete();
+
+        return response()->json([
+            'message' => 'Dosen berhasil dihapus'
+        ]);
+    }
+
+   public function mataKuliahSaya()
+{
+    $user = auth('dosen')->user();
+
+    // 🔥 AMBIL DOSEN BERDASARKAN EMAIL
+    $dosen = \App\Models\Dosen::where('email', $user->email)->first();
+
+    if (!$dosen) {
+        return response()->json([
+            'data' => [],
+            'message' => 'Dosen tidak ditemukan'
+        ]);
+    }
+
+    $data = \App\Models\PengampuMataKuliah::with('mataKuliah')
+        ->where('dosen_id', $dosen->id)
+        ->get()
+        ->map(function ($item) {
+            return [
+                'id' => $item->mataKuliah->id ?? null,
+                'nama_mk' => $item->mataKuliah->nama_mk ?? '-',
+                'sks' => $item->mataKuliah->sks ?? 0,
+                'program_studi' => $item->mataKuliah->program_studi ?? '-',
+            ];
+        });
+
+    return response()->json([
+        'data' => $data
+    ]);
+}
+
+}
