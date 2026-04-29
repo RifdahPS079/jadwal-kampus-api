@@ -69,9 +69,9 @@ public function loginDosen(Request $request)
 
     \Log::info([
     'email' => $request->email,
-    'input_password' => $request->password,
-    'db_password' => $user->password,
-    'check' => Hash::check($request->password, $user->password)
+    'input' => $request->password,
+    'db_hash' => $user?->password,
+    'check' => $user ? Hash::check($request->password, $user->password) : null,
 ]);
 
     return response()->json([
