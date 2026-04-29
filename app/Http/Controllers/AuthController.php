@@ -62,9 +62,9 @@ public function loginDosen(Request $request)
 
     $token = auth('dosen')->login($user);
 
-    return response()->json([
-        'success' => true,
-        'token' => $token,
+   return response()->json([
+        'access_token' => $token,
+        'token_type' => 'bearer',
         'user' => $user
     ]);
 }
