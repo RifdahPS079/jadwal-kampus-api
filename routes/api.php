@@ -146,12 +146,21 @@ Route::prefix('mahasiswa')
     ->middleware('auth:dosen,mahasiswa');
 
 Route::get('/fix-pass', function () {
-    $user = \App\Models\Dosen::where('email','putriayu@gmail.com')->first();
+    try {
+        $user = \App\Models\Dosen::where('email','putriayu@gmail.com')->first();
 
-    if (!$user) return "USER TIDAK ADA";
+        if (!$user) {
+            return response()->json(['msg' => 'USER TIDAK ADA']);
+        }
 
-    $user->password = \Illuminate\Support\Facades\Hash::make('123456');
-    $user->save();
+        $user->password = bcrypt('123456');
+        $user->save();
 
-    return "PASSWORD DI RESET";
+        return response()->json(['msg' => 'PASSWORD DI RESET']);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage()
+        ]);
+    }
 });
