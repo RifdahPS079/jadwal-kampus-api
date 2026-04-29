@@ -67,6 +67,13 @@ public function loginDosen(Request $request)
 
     $token = auth('dosen')->login($user);
 
+    \Log::info([
+    'email' => $request->email,
+    'input_password' => $request->password,
+    'db_password' => $user->password,
+    'check' => Hash::check($request->password, $user->password)
+]);
+
     return response()->json([
         'access_token' => $token,
         'token_type' => 'bearer',
@@ -209,12 +216,5 @@ public function loginDosen(Request $request)
         ]);
     }
 
-    public function saveFcmToken(Request $r)
-{
-    $user = auth()->user(); // user login (dosen / mahasiswa)
-    $user->fcm_token = $r->fcm_token;
-    $user->save();
 
-    return response()->json(['success' => true]);
-}
 }
