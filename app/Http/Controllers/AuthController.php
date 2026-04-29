@@ -47,22 +47,25 @@ class AuthController extends Controller
     // =======================
     // DOSEN LOGIN
     // =======================
+use Illuminate\Support\Facades\Hash;
+
 public function loginDosen(Request $request)
 {
-    $credentials = $request->only('email', 'password');
+    $user = \App\Models\Dosen::where('email', $request->email)->first();
 
-    // 🔥 PAKSA GUARD DOSEN
-    if (!$token = auth()->guard('dosen')->attempt($credentials)) {
+    if (!$user || !Hash::check($request->password, $user->password)) {
         return response()->json([
             'success' => false,
             'message' => 'Email atau password salah'
         ], 401);
     }
 
+    $token = auth('dosen')->login($user);
+
     return response()->json([
         'success' => true,
         'token' => $token,
-        'user' => auth()->guard('dosen')->user()
+        'user' => $user
     ]);
 }
 
