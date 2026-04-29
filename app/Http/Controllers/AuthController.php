@@ -47,16 +47,23 @@ class AuthController extends Controller
     // =======================
     // DOSEN LOGIN
     // =======================
-    
+
 
 public function loginDosen(Request $request)
 {
     $user = \App\Models\Dosen::where('email', $request->email)->first();
 
-    if (!$user || !Hash::check($request->password, $user->password)) {
+    if (!$user) {
         return response()->json([
-            'success' => false,
-            'message' => 'Email atau password salah'
+            'debug' => 'user tidak ditemukan'
+        ], 401);
+    }
+
+    if (!\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+        return response()->json([
+            'debug' => 'password tidak cocok',
+            'input_password' => $request->password,
+            'db_password' => $user->password
         ], 401);
     }
 
