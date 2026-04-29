@@ -53,17 +53,10 @@ public function loginDosen(Request $request)
 {
     $user = \App\Models\Dosen::where('email', $request->email)->first();
 
-    if (!$user) {
+    if (!$user || !Hash::check($request->password, $user->password)) {
         return response()->json([
-            'debug' => 'user tidak ditemukan'
-        ], 401);
-    }
-
-    if (!\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
-        return response()->json([
-            'debug' => 'password tidak cocok',
-            'input_password' => $request->password,
-            'db_password' => $user->password
+            'success' => false,
+            'message' => 'Email atau password salah'
         ], 401);
     }
 
