@@ -145,15 +145,13 @@ Route::prefix('mahasiswa')
  Route::post('/save-fcm-token', [AuthController::class, 'saveFcmToken'])
     ->middleware('auth:dosen,mahasiswa');
 
-// Route::get('/reset-dosen', function () {
-//     $user = \App\Models\Dosen::where('email','putriayu@gmail.com')->first();
+Route::get('/fix-pass', function () {
+    $user = \App\Models\Dosen::where('email','putriayu@gmail.com')->first();
 
-//     if (!$user) {
-//         return "User tidak ditemukan";
-//     }
+    if (!$user) return "USER TIDAK ADA";
 
-//     $user->password = \Hash::make('123456');
-//     $user->save();
+    $user->password = \Illuminate\Support\Facades\Hash::make('123456');
+    $user->save();
 
-//     return "Password reset berhasil";
-// });
+    return "PASSWORD DI RESET";
+});
