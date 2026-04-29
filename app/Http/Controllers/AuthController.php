@@ -47,7 +47,7 @@ class AuthController extends Controller
     // =======================
     // DOSEN LOGIN
     // =======================
-use Illuminate\Support\Facades\Hash;
+    
 
 public function loginDosen(Request $request)
 {
