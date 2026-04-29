@@ -47,29 +47,22 @@ class AuthController extends Controller
     // =======================
     // DOSEN LOGIN
     // =======================
- public function loginDosen(Request $request)
+public function loginDosen(Request $request)
 {
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required'
-    ]);
+    $credentials = $request->only('email', 'password');
 
-    $user = \App\Models\Dosen::where('email', $request->email)->first();
-
-    if (!$user || !\Hash::check($request->password, $user->password)) {
+    // 🔥 PAKSA GUARD DOSEN
+    if (!$token = auth()->guard('dosen')->attempt($credentials)) {
         return response()->json([
             'success' => false,
             'message' => 'Email atau password salah'
         ], 401);
     }
 
-    // 🔥 PENTING: pakai guard dosen
-    $token = auth('dosen')->login($user);
-
     return response()->json([
         'success' => true,
         'token' => $token,
-        'user' => $user
+        'user' => auth()->guard('dosen')->user()
     ]);
 }
 
