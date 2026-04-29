@@ -51,6 +51,11 @@ class AuthController extends Controller
 
 public function loginDosen(Request $request)
 {
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required'
+    ]);
+
     $user = \App\Models\Dosen::where('email', $request->email)->first();
 
     if (!$user || !Hash::check($request->password, $user->password)) {
@@ -62,7 +67,7 @@ public function loginDosen(Request $request)
 
     $token = auth('dosen')->login($user);
 
-   return response()->json([
+    return response()->json([
         'access_token' => $token,
         'token_type' => 'bearer',
         'user' => $user
