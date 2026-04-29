@@ -14,6 +14,7 @@ use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\MobileController;
 use App\Http\Controllers\NotifikasiController;
 
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -26,9 +27,10 @@ use App\Http\Controllers\NotifikasiController;
 Route::get('/test', fn () => response()->json(['status' => 'API OK']));
 
 // login
-Route::post('/admin/login', [AuthController::class, 'adminLogin']);
+
 Route::post('/dosen/login', [AuthController::class, 'loginDosen']);
 Route::post('/mahasiswa/login', [AuthController::class, 'loginMahasiswa']);
+Route::post('/admin/login', [AuthController::class, 'adminLogin']);
 
 
 // =======================
@@ -66,7 +68,7 @@ Route::prefix('admin')
 // DOSEN AREA (MOBILE) -> prefix /api/dosen/...
 // =======================
 Route::prefix('dosen')
-    ->middleware(['jwt.auth', 'auth:dosen'])
+
     ->group(function () {
 
         Route::get(
