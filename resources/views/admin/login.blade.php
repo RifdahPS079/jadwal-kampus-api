@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin Panel - Sistem Penjadwalan Kampus</title>
-
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     :root{
       --orange:#E7831D;
@@ -159,8 +159,8 @@
       top:50%;
       transform:translateY(-50%);
       cursor:pointer;
-      font-size:16px;
-      color:#777;
+      font-size:18px;
+      color:#666;
     }
   </style>
 </head>
@@ -194,7 +194,8 @@
 
         <div class="password-wrap">
           <input type="password" id="password" name="password" placeholder="Masukkan password">
-          <span class="toggle-password" onclick="togglePassword()">👁️</span>
+          
+          <i class="fa-regular fa-eye toggle-password" onclick="togglePassword()"></i>
         </div>
 
         <div class="btn-wrap">
@@ -213,10 +214,12 @@ function togglePassword() {
 
     if (input.type === "password") {
         input.type = "text";
-        icon.textContent = "🙈";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash"); // 👁️‍🗨️ dicoret
     } else {
         input.type = "password";
-        icon.textContent = "👁️";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye"); // 👁️ normal
     }
 }
 </script>
