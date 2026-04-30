@@ -132,6 +132,36 @@
       .title{ font-size: 20px; }
       button{ width: 170px; }
     }
+
+    .logo-group{
+      display:flex;
+      align-items:center;
+      gap:16px;
+    }
+
+    .logo-group img{
+      width:60px;
+      height:60px;
+      object-fit:contain;
+    }
+
+    .password-wrap{
+      position:relative;
+    }
+
+    .password-wrap input{
+      padding-right:45px;
+    }
+
+    .toggle-password{
+      position:absolute;
+      right:12px;
+      top:50%;
+      transform:translateY(-50%);
+      cursor:pointer;
+      font-size:16px;
+      color:#777;
+    }
   </style>
 </head>
 
@@ -141,11 +171,12 @@
     <div class="card">
 
       <div class="header">
-        <div class="logo">
+        <div class="logo-group">
           <img src="{{ asset('images/logoith.jpg') }}" alt="Logo ITH">
+          <img src="{{ asset('images/logoaplikasi1.png') }}" alt="Logo Aplikasi">
         </div>
-        <h1 class="title">Admin Panel</h1>
-        <p class="subtitle">Sistem Penjadwalan Kampus</p>
+        <h1 class="title">ADMIN SIHATI</h1>
+        <p class="subtitle">(Sistem Informasi Jadwal ITH)</p>
       </div>
 
       @if($errors->has('login'))
@@ -161,10 +192,9 @@
           @error('username') <div class="small-error">{{ $message }}</div> @enderror
         </div>
 
-        <div class="row">
-          <label>Password</label>
-          <input type="password" name="password" placeholder="Masukkan password" autocomplete="current-password">
-          @error('password') <div class="small-error">{{ $message }}</div> @enderror
+        <div class="password-wrap">
+          <input type="password" id="password" name="password" placeholder="Masukkan password">
+          <span class="toggle-password" onclick="togglePassword()">👁️</span>
         </div>
 
         <div class="btn-wrap">
@@ -175,5 +205,20 @@
     </div>
   </div>
 </div>
+
+<script>
+function togglePassword() {
+    const input = document.getElementById("password");
+    const icon = document.querySelector(".toggle-password");
+
+    if (input.type === "password") {
+        input.type = "text";
+        icon.textContent = "🙈";
+    } else {
+        input.type = "password";
+        icon.textContent = "👁️";
+    }
+}
+</script>
 </body>
 </html>

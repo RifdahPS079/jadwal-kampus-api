@@ -6,8 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Monitoring Jadwal</title>
 
-  <form method="POST" action="{{ route('admin.jadwal.store') }}">
-    @csrf
+
   <style>
     :root{
       --orange:#e5861f;
