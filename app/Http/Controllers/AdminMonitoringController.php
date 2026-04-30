@@ -25,7 +25,7 @@ class AdminMonitoringController extends Controller
 
         Excel::import(new JadwalImport, $request->file('file'));
 
-        return back()->with('ok', 'Import jadwal berhasil.');
+        return back()->with('success', 'Import jadwal berhasil.');
     }
 
     public function index(Request $request)

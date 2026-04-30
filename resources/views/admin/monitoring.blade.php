@@ -387,6 +387,16 @@ input, select{
   border:1px solid #ddd;
   margin-bottom:8px;
 }
+
+.success-box{
+  margin-bottom:14px;
+  background:#d4edda;
+  color:#155724;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #c3e6cb;
+  font-size:14px;
+}
   </style>
 </head>
 
@@ -414,9 +424,16 @@ input, select{
   </div>
 
   <div class="content">
-        @if(session('success'))
+    <div id="notif-success" style="display:none;" class="success-box"></div>
+
+  @if(session('success'))
+    <div class="success-box">
+      {{ session('success') }}
+    </div>
+  @endif
+        <!-- @if(session('success'))
       <div class="success">{{ session('success') }}</div>
-    @endif
+    @endif -->
     <div class="card">
       <h3 class="page-title">Monitoring Jadwal Kuliah</h3>
 
@@ -692,7 +709,7 @@ function saveEdit() {
         console.log(res);
 
         if (res.success) {
-            alert('Berhasil update');
+            localStorage.setItem('success', res.message);
             location.reload();
         } else {
             alert(res.message || 'Gagal update');
@@ -725,7 +742,7 @@ function saveEdit() {
     })
     .then(res => {
         if(res.success){
-            alert('Berhasil dihapus');
+            localStorage.setItem('success', res.message);
             location.reload();
         } else {
             alert(res.message || 'Gagal hapus');
@@ -737,7 +754,19 @@ function saveEdit() {
     });
 }
 
+document.addEventListener("DOMContentLoaded", function () {
+    const msg = localStorage.getItem('success');
+    if (msg) {
+        const box = document.getElementById('notif-success');
+        box.innerText = msg;
+        box.style.display = 'block';
+
+        localStorage.removeItem('success');
+    }
+});
+
   </script>
 
+  
 </body>
 </html>
