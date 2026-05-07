@@ -263,28 +263,59 @@ class JadwalController extends Controller
         return $this->ok($query->get(), 'OK');
     }
 
-   public function batalkan($id)
-    {
-        $jadwal = Jadwal::with('pengampu.mataKuliah', 'pengampu.dosen', 'ruangan', 'waktu')->findOrFail($id);
+  public function batalkan(Request $request, $id)
+{
+    try {
 
+        \Log::info('REQUEST BATAL', [
+            'all' => $request->all()
+        ]);
+
+        $request->validate([
+            'alasan_batal' => 'required|string'
+        ]);
+
+        $jadwal = Jadwal::with(
+            'pengampu.mataKuliah',
+            'pengampu.dosen',
+            'ruangan',
+            'waktu'
+        )->findOrFail($id);
+
+        // ✅ UPDATE STATUS
         $jadwal->status = 'batal';
+
+        // ✅ SIMPAN ALASAN
+        $jadwal->alasan_batal =
+            $request->alasan_batal;
+
         $jadwal->save();
+
+        // DEBUG
+        \Log::info('SETELAH SAVE', [
+            'alasan' => $jadwal->alasan_batal
+        ]);
 
         $mk = $jadwal->pengampu->mataKuliah->nama_mk;
         $kelas = $jadwal->kelas;
         $dosen = $jadwal->pengampu->dosen->nama;
         $ruangan = $jadwal->ruangan->kode_ruangan;
 
-        // ✅ FORMAT BARU
-        $hari = $jadwal->waktu->hari . ', ' . Carbon::parse($jadwal->waktu->jam_mulai)->format('Y-m-d');
+        $hari = $jadwal->waktu->hari;
 
         $jam =
-            Carbon::parse($jadwal->waktu->jam_mulai)->format('H:i') . '-' .
-            Carbon::parse($jadwal->waktu->jam_selesai)->format('H:i');
+            Carbon::parse($jadwal->waktu->jam_mulai)
+                ->format('H:i')
+            . '-' .
+            Carbon::parse($jadwal->waktu->jam_selesai)
+                ->format('H:i');
+
+        $alasan = $jadwal->alasan_batal;
 
         $mahasiswas = Mahasiswa::all();
 
         foreach ($mahasiswas as $m) {
+
             Notifikasi::create([
                 'role' => 'mahasiswa',
                 'user_id' => $m->id,
@@ -297,34 +328,53 @@ class JadwalController extends Controller
                     'hari_lama' => $hari,
                     'jam_lama' => $jam,
                     'ruangan_lama' => $ruangan,
+
+                    // ✅ INI PENTING
+                    'alasan_batal' => $alasan,
                 ]),
             ]);
         }
 
-        $dosens = Dosen::where('id', '!=', $jadwal->pengampu->dosen->id)->get();
+        $dosens = Dosen::where(
+            'id',
+            '!=',
+            $jadwal->pengampu->dosen->id
+        )->get();
 
-foreach ($dosens as $d) {
-    Notifikasi::create([
-        'role' => 'dosen',
-        'user_id' => $d->id,
-        'tipe' => 'batal',
-        'is_read' => 0,
-        'pesan' => json_encode([
-            'nama_mk' => $mk,
-            'kelas' => $kelas,
-            'nama_dosen' => $dosen,
-            'hari_lama' => $hari,
-            'jam_lama' => $jam,
-            'ruangan_lama' => $ruangan,
-        ]),
-    ]);
-}
+        foreach ($dosens as $d) {
+
+            Notifikasi::create([
+                'role' => 'dosen',
+                'user_id' => $d->id,
+                'tipe' => 'batal',
+                'is_read' => 0,
+                'pesan' => json_encode([
+                    'nama_mk' => $mk,
+                    'kelas' => $kelas,
+                    'nama_dosen' => $dosen,
+                    'hari_lama' => $hari,
+                    'jam_lama' => $jam,
+                    'ruangan_lama' => $ruangan,
+
+                    // ✅ INI PENTING
+                    'alasan_batal' => $alasan,
+                ]),
+            ]);
+        }
 
         return response()->json([
+            'success' => true,
             'message' => 'Jadwal dibatalkan',
-            'data' => $jadwal
+            'alasan' => $jadwal->alasan_batal,
         ]);
+
+    } catch (\Exception $e) {
+
+        return response()->json([
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
     
     public function jadwalDosenByMataKuliah($mataKuliahId)
         {
