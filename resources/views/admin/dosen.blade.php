@@ -221,6 +221,21 @@
       margin:0 0 12px;
     }
 
+    .error-alert{
+      background:#ffe5e5;
+      border:1px solid #ffb3b3;
+      color:#b00020;
+      padding:12px;
+      border-radius:10px;
+      font-size:13px;
+      margin:0 0 12px;
+    }
+
+    .error-alert ul{
+      margin:8px 0 0 18px;
+      padding:0;
+    }
+
     .table-wrap{
       width: 100%;
       overflow-x: auto;
@@ -249,7 +264,39 @@
       font-size:12px;
     }
 
+    .input-password{
+      position: relative;
+    }
+
+    .input-password input{
+      padding-right:40px;
+    }
+
+    .eye{
+      position:absolute;
+      right:12px;
+      top:50%;
+      transform:translateY(-50%);
+      cursor:pointer;
+      font-size:16px;
+      color:#888;
+    }
+
     .td-center{ text-align:center; }
+
+    .highlight-row{
+        animation: highlightFade 4s ease;
+    }
+
+@keyframes highlightFade{
+  0%{
+    background:#93c5fd;
+  }
+
+  100%{
+    background:transparent;
+  }
+}
   </style>
 </head>
 
@@ -281,8 +328,28 @@
       <h3 class="page-title">Kelolah Data Dosen</h3>
 
       @if(session('ok'))
-        <div class="success">{{ session('ok') }}</div>
-      @endif
+    <div class="success">
+        {{ session('ok') }}
+    </div>
+    @endif
+
+    @if(session('error'))
+        <div class="error-alert">
+
+            @if(is_array(session('error')))
+                <b>Beberapa data gagal ditambahkan:</b>
+
+                <ul>
+                    @foreach(session('error') as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            @else
+                {{ session('error') }}
+            @endif
+
+        </div>
+    @endif
 
       {{-- FILTER DOSEN --}}
       <div class="panel" style="margin-bottom:14px;">
@@ -327,59 +394,228 @@
         <div class="panel">
           <h4>Tambah Dosen</h4>
 
-          <form method="POST" action="{{ route('admin.dosen.store') }}">
-            @csrf
+          <form method="POST"
+              action="{{ route('admin.dosen.store') }}"
+              autocomplete="off">
+@csrf
 
-            <div class="row">
-              <div class="col">
-                <label>Password</label>
-                <input type="password" name="password" placeholder="Masukkan password awal dosen" required>
-                @error('password') <div class="small-err">{{ $message }}</div> @enderror
-              </div>
-            </div>
+<!-- ROW 1 -->
+<div class="row">
 
-            <div class="row" style="margin-top:10px;">
-              <div class="col">
-                <label>Kode Dosen</label>
-                <input name="kode_dosen" value="{{ old('kode_dosen') }}" placeholder="Contoh: DSN001">
-                @error('kode_dosen') <div class="small-err">{{ $message }}</div> @enderror
-              </div>
+  <!-- NAMA -->
+  <div class="col">
+    <label>Nama Dosen</label>
 
-              <div class="col">
-                <label>Nama Dosen</label>
-                <input name="nama" value="{{ old('nama') }}" placeholder="Contoh: Rifdah Dosen">
-                @error('nama') <div class="small-err">{{ $message }}</div> @enderror
-              </div>
-            </div>
+    <input
+      name="nama"
+      value="{{ old('nama') }}"
+      placeholder="Contoh: Rifdah Dosen"
+    >
 
-            <div class="row" style="margin-top:10px;">
-              <div class="col">
-                <label>Program Studi</label>
-                <input name="program_studi" value="{{ old('program_studi') }}" placeholder="Contoh: Sistem Informasi">
-                @error('program_studi') <div class="small-err">{{ $message }}</div> @enderror
-              </div>
+    @error('nama')
+      <div class="small-err">{{ $message }}</div>
+    @enderror
+  </div>
 
-              <div class="col">
-                <label>NIDN</label>
-                <input name="nidn" value="{{ old('nidn') }}" placeholder="Contoh: 9132xxxx">
-                @error('nidn') <div class="small-err">{{ $message }}</div> @enderror
-              </div>
-            </div>
+  <!-- NIDN -->
+  <div class="col">
+  <label>NIDN (harus 10 angka)</label>
 
-            <div class="row" style="margin-top:10px;">
-              <div class="col">
-                <label>Email</label>
-                <input name="email" value="{{ old('email') }}" placeholder="Contoh: dosen@gmail.com">
-                @error('email') <div class="small-err">{{ $message }}</div> @enderror
-              </div>
-            </div>
+  <input
+    type="text"
+    name="nidn"
+    value="{{ old('nidn') }}"
+    placeholder="Contoh: Karakter harus"
+    maxlength="10"
+    minlength="10"
+    pattern="[0-9]{10}"
+    inputmode="numeric"
+  >
 
-            <div class="actions">
-              <button class="btn btn-orange" type="submit">Simpan</button>
-              <button class="btn btn-soft" type="reset">Reset</button>
-            </div>
-          </form>
-        </div>
+  @error('nidn')
+    <div class="small-err">{{ $message }}</div>
+  @enderror
+</div>
+
+</div>
+
+<!-- ROW 2 -->
+<div class="row" style="margin-top:10px;">
+
+  <!-- PROGRAM STUDI -->
+  <div class="col">
+
+    <label>Program Studi</label>
+
+    <select name="program_studi" id="program_studi">
+
+      <option value="">-- Pilih Program Studi --</option>
+
+      <option>Ilmu Komputer</option>
+      <option>Sistem Informasi</option>
+      <option>Matematika</option>
+      <option>Teknik Sipil</option>
+      <option>Sains Data</option>
+      <option>Teknologi Pangan</option>
+      <option>Bioteknologi</option>
+      <option>Teknik Arsitektur</option>
+      <option>Bisnis Digital</option>
+      <option>Sains Aktuaria</option>
+      <option>Teknik Mesin</option>
+      <option>Teknik Perkapalan</option>
+      <option>Teknik Elektro</option>
+      <option>Teknik Industri</option>
+      <option>Teknik Lingkungan</option>
+      <option>Teknik Sistem Energi</option>
+      <option>Teknik Metalurgi</option>
+      <option>Teknik Robotika & Kecerdasan Buatan</option>
+
+    </select>
+
+    @error('program_studi')
+      <div class="small-err">{{ $message }}</div>
+    @enderror
+
+  </div>
+
+  <!-- MATA KULIAH -->
+  <div class="col">
+
+    <label>Mata Kuliah yang Diampu</label>
+
+    <select name="mata_kuliah_id" id="mata_kuliah_id">
+
+      <option value="">
+        -- Pilih Mata Kuliah --
+      </option>
+
+      @foreach($matakuliahs as $mk)
+
+      <option
+        value="{{ $mk->id }}"
+        data-prodi="{{ $mk->program_studi }}"
+      >
+        {{ $mk->nama_mk }}
+      </option>
+
+    @endforeach
+
+    </select>
+
+  </div>
+
+</div>
+
+<!-- ROW 3 -->
+<div class="row" style="margin-top:10px;">
+
+  <!-- TAHUN AJARAN -->
+  <div class="col">
+
+    <label>Tahun Ajaran</label>
+
+    <select name="tahun_ajaran">
+
+      <option value="2025/2026">
+        2025/2026
+      </option>
+
+      <option value="2026/2027" selected>
+        2026/2027
+      </option>
+
+      <option value="2027/2028">
+        2027/2028
+      </option>
+
+    </select>
+
+  </div>
+
+  <!-- KODE DOSEN -->
+  <div class="col">
+
+    <label>Kode Dosen</label>
+
+    <input
+      name="kode_dosen"
+      value="{{ old('kode_dosen') }}"
+      placeholder="Contoh: DSN001"
+    >
+
+    @error('kode_dosen')
+      <div class="small-err">{{ $message }}</div>
+    @enderror
+
+  </div>
+
+</div>
+
+<!-- ROW 4 -->
+<div class="row" style="margin-top:10px;">
+
+  <!-- EMAIL -->
+  <div class="col">
+
+    <label>Email</label>
+
+    <input
+      type="email"
+      name="email"
+      value=""
+      placeholder="Contoh: dosen@gmail.com"
+      autocomplete="off"
+    >
+
+    @error('email')
+      <div class="small-err">{{ $message }}</div>
+    @enderror
+
+  </div>
+
+  <!-- PASSWORD -->
+  <div class="col">
+
+    <label>Password</label>
+
+    <div class="input-password">
+
+      <input
+        type="password"
+        id="password"
+        name="password"
+        placeholder="Masukkan password awal dosen"
+        autocomplete="new-password"
+        required
+      >
+
+      <span onclick="togglePassword()" class="eye">
+        👁️
+      </span>
+
+    </div>
+
+    @error('password')
+      <div class="small-err">{{ $message }}</div>
+    @enderror
+
+  </div>
+
+</div>
+
+<div class="actions">
+  <button class="btn btn-orange" type="submit">
+    Simpan
+  </button>
+
+  <button class="btn btn-soft" type="reset">
+    Reset
+  </button>
+</div>
+
+</form>
+
+      </div>
 
         {{-- PANEL IMPORT DOSEN --}}
         <div class="panel">
@@ -412,7 +648,6 @@
             kode_dosen, nama, program_studi, nidn, email, password
           </div>
         </div>
-
       </div>
 
       {{-- DAFTAR DOSEN --}}
@@ -423,6 +658,7 @@
           <table class="minw">
             <thead>
               <tr>
+            
                 <th style="width:90px;">Kode</th>
                 <th>Nama Dosen</th>
                 <th style="width:180px;">Program Studi</th>
@@ -434,7 +670,11 @@
 
             <tbody>
               @forelse($dosens as $d)
-                <tr>
+
+              <tr
+                  id="dosen-{{ $d->id }}"
+                  class="{{ session('highlight_id') == $d->id ? 'highlight-row' : '' }}"
+              >
                   <td class="td-center">{{ $d->kode_dosen ?? '-' }}</td>
                   <td>{{ $d->nama ?? '-' }}</td>
                   <td>{{ $d->program_studi ?? '-' }}</td>
@@ -465,9 +705,76 @@
           </table>
         </div>
 
-      </div>
-
     </div>
   </div>
+
+ <script>
+function togglePassword() {
+    const input = document.getElementById("password");
+
+    if (input.type === "password") {
+        input.type = "text";
+    } else {
+        input.type = "password";
+    }
+}
+
+@if(session('highlight_id'))
+
+window.addEventListener('load', function () {
+
+    const row = document.getElementById(
+        'dosen-{{ session('highlight_id') }}'
+    );
+
+    if(row){
+
+        row.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
+    }
+
+});
+
+@endif
+
+const prodiSelect = document.getElementById('program_studi');
+
+const mkSelect = document.getElementById('mata_kuliah_id');
+
+const semuaOptionMK = Array.from(
+    mkSelect.querySelectorAll('option')
+);
+
+prodiSelect.addEventListener('change', function () {
+
+    const prodiDipilih = this.value;
+
+    mkSelect.innerHTML = '';
+
+    // option default
+    const defaultOption = document.createElement('option');
+
+    defaultOption.value = '';
+    defaultOption.textContent = '-- Pilih Mata Kuliah --';
+
+    mkSelect.appendChild(defaultOption);
+
+    semuaOptionMK.forEach(function(option){
+
+        const prodiMK = option.getAttribute('data-prodi');
+
+        if(
+            prodiMK === prodiDipilih
+        ){
+            mkSelect.appendChild(option);
+        }
+
+    });
+
+});
+</script>
 </body>
 </html>

@@ -224,6 +224,22 @@
       text-align:center;
       font-size:12px;
     }
+
+    select{
+  width:100%;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  outline:none;
+  background:#fff;
+  font-size:14px;
+  height:42px; /* 🔥 ini penting biar sama tinggi */
+}
+
+select:focus{
+  border-color:var(--orange);
+  box-shadow:0 0 0 4px rgba(229,134,31,.12);
+}
     .td-center{ text-align:center; }
   </style>
 </head>
@@ -296,43 +312,54 @@
 
           <hr style="border:none; border-top:1px solid var(--border); margin:14px 0;">
 
-          <h4>Import Ruangan</h4>
-          <div class="notice">Masukkan file Excel untuk import ruangan. (xlsx/xls/csv)</div>
-
-          <form method="POST" action="{{ route('admin.ruangan.import') }}" enctype="multipart/form-data">
-            @csrf
-            <label>Masukkan File Excel</label>
-            <input type="file" name="file" accept=".xlsx,.xls,.csv">
-            @error('file') <div class="small-err">{{ $message }}</div> @enderror
-
-            <div class="actions">
-              <button class="btn btn-orange" type="submit">Import</button>
-            </div>
-          </form>
-
-          <div style="margin-top:10px; color:var(--muted); font-size:12px;">
-            <b>Format heading Excel:</b><br>
-            kode_ruangan, nama_ruangan, gedung
-          </div>
         </div>
 
         {{-- PANEL WAKTU --}}
         <div class="panel">
           <h4>Tambah Waktu</h4>
 
+          @if($errors->any())
+            <div style="background:#ffe6e6; padding:10px; border-radius:10px; margin-bottom:10px;">
+              @foreach($errors->all() as $err)
+                <div style="color:red;">{{ $err }}</div>
+              @endforeach
+            </div>
+          @endif
           <form method="POST" action="{{ route('admin.waktu.store') }}">
             @csrf
 
             <div class="row">
               <div class="col">
+                <label>Hari</label>
+                <select name="hari" required>
+                  <option value="">-- Pilih Hari --</option>
+                  <option>Senin</option>
+                  <option>Selasa</option>
+                  <option>Rabu</option>
+                  <option>Kamis</option>
+                  <option>Jumat</option>
+                  <option>Sabtu</option>
+                  <option>Minggu</option>
+                </select>
+                @error('hari') <div class="small-err">{{ $message }}</div> @enderror
+              </div>
+
+              <div class="col">
+                <label>Tanggal (Opsional)</label>
+                <input type="date" name="tanggal" value="{{ old('tanggal') }}">
+              </div>
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+              <div class="col">
                 <label>Jam Mulai</label>
-                <input name="jam_mulai" value="{{ old('jam_mulai') }}" placeholder="Contoh: 07:00">
+                <input type="time" name="jam_mulai" value="{{ old('jam_mulai') }}" required>
                 @error('jam_mulai') <div class="small-err">{{ $message }}</div> @enderror
               </div>
 
               <div class="col">
                 <label>Jam Selesai</label>
-                <input name="jam_selesai" value="{{ old('jam_selesai') }}" placeholder="Contoh: 08:40">
+                <input type="time" name="jam_selesai" value="{{ old('jam_selesai') }}" required>
                 @error('jam_selesai') <div class="small-err">{{ $message }}</div> @enderror
               </div>
             </div>
@@ -345,27 +372,59 @@
 
           <hr style="border:none; border-top:1px solid var(--border); margin:14px 0;">
 
-          <h4>Import Waktu</h4>
-          <div class="notice">Masukkan file Excel untuk import waktu. (xlsx/xls/csv)</div>
 
-          <form method="POST" action="{{ route('admin.waktu.import') }}" enctype="multipart/form-data">
-            @csrf
-            <label>Masukkan File Excel</label>
-            <input type="file" name="file" accept=".xlsx,.xls,.csv">
-            @error('file') <div class="small-err">{{ $message }}</div> @enderror
-
-            <div class="actions">
-              <button class="btn btn-orange" type="submit">Import</button>
-            </div>
-          </form>
-
-          <div style="margin-top:10px; color:var(--muted); font-size:12px;">
-            <b>Format heading Excel:</b><br>
-            jam_mulai, jam_selesai
-          </div>
         </div>
       </div>
 
+      <div class="grid" style="margin-top:14px;">
+
+  <div class="panel">
+    <h4>Import Ruangan</h4>
+
+    <div class="notice">
+      Masukkan file Excel untuk import ruangan (xlsx/xls/csv)
+    </div>
+
+    <form method="POST" action="{{ route('admin.ruangan.import') }}" enctype="multipart/form-data">
+      @csrf
+      <label>Masukkan File Excel</label>
+      <input type="file" name="file">
+
+      <div class="actions">
+        <button class="btn btn-orange">Import</button>
+      </div>
+    </form>
+
+    <div style="font-size:12px; margin-top:10px;">
+      <b>Format:</b> kode_ruangan, nama_ruangan, gedung
+    </div>
+  </div>
+
+  <div class="panel">
+    <h4>Import Waktu</h4>
+
+    <div class="notice">
+      Masukkan file Excel untuk import waktu (xlsx/xls/csv)
+    </div>
+
+    <form method="POST" action="{{ route('admin.waktu.import') }}" enctype="multipart/form-data">
+      @csrf
+      <label>Masukkan File Excel</label>
+      <input type="file" name="file">
+
+      <div class="actions">
+        <button class="btn btn-orange">Import</button>
+      </div>
+    </form>
+
+    <div style="font-size:12px; margin-top:10px;">
+      <b>Format:</b> jam_mulai, jam_selesai
+    </div>
+  </div>
+
+</div>
+
+    </div>
       {{-- DAFTAR RUANGAN --}}
       <div class="panel" style="margin-top:14px;">
         <h4>Daftar Ruangan</h4>

@@ -59,27 +59,61 @@ class AdminMahasiswaWebController extends Controller
         $data = $request->validate([
             'nama'          => ['required','string','max:255'],
             'program_studi' => ['nullable','string','max:255'],
-            'nim'           => ['required','string','max:50'],
+            'nim'           => ['required', 'digits:9'],
             'kelas'         => ['nullable','string','max:50'],
             'angkatan'      => ['nullable','string','max:10'],
             'email'         => ['required','email','max:255'],
             'password'      => ['required','string','min:4','max:100'],
         ]);
 
-        // email & nim harus unik
+        $errors = [];
+
+        // =========================
+        // CEK EMAIL
+        // =========================
+
         if (Mahasiswa::where('email', $data['email'])->exists()) {
-            return back()->withErrors(['email' => 'Email sudah dipakai mahasiswa lain.'])->withInput();
+
+            $errors[] =
+                'Email '.$data['email'].' sudah digunakan';
         }
 
+        // =========================
+        // CEK NIM
+        // =========================
+
         if (Mahasiswa::where('nim', $data['nim'])->exists()) {
-            return back()->withErrors(['nim' => 'NIM sudah terdaftar.'])->withInput();
+
+            $errors[] =
+                'NIM '.$data['nim'].' sudah terdaftar';
+        }
+
+        // =========================
+        // JIKA ADA ERROR
+        // =========================
+
+        if (count($errors) > 0) {
+
+            return back()
+                ->withInput()
+                ->with('error', $errors);
         }
 
         $data['password'] = Hash::make($data['password']);
-        Mahasiswa::create($data);
 
-        return redirect()->route('admin.mahasiswa.index')->with('ok', 'Data mahasiswa berhasil disimpan.');
-    }
+        $mahasiswa = Mahasiswa::create($data);
+
+        return redirect()
+            ->route('admin.mahasiswa.index')
+            ->with(
+                'ok',
+                'Data mahasiswa berhasil disimpan.'
+            )
+            ->with(
+                'highlight_id',
+                $mahasiswa->id
+            );
+            }
 
     public function edit(Mahasiswa $mahasiswa)
     {
@@ -91,29 +125,64 @@ class AdminMahasiswaWebController extends Controller
         $data = $request->validate([
             'nama'          => ['required','string','max:255'],
             'program_studi' => ['nullable','string','max:255'],
-            'nim'           => ['required','string','max:50'],
+            'nim'           => ['required','digits:9'],
             'kelas'         => ['nullable','string','max:50'],
             'angkatan'      => ['nullable','string','max:10'],
             'email'         => ['required','email','max:255'],
             'password'      => ['nullable','string','min:4','max:100'],
+
+        ], [
+
+            'nim.required' => 'NIM wajib diisi',
+
+            'nim.digits' => 'NIM harus tepat 9 angka',
+
         ]);
+        $errors = [];
 
-        // cegah NIM bentrok
-        $nimBentrok = Mahasiswa::where('nim', $data['nim'])
-            ->where('id', '!=', $mahasiswa->id)
-            ->exists();
+        // =========================
+        // CEK NIM
+        // =========================
 
-        if ($nimBentrok) {
-            return back()->withErrors(['nim' => 'NIM sudah dipakai mahasiswa lain.'])->withInput();
+        $cekNim = Mahasiswa::where(
+            'nim',
+            $data['nim']
+        )
+        ->where('id', '!=', $mahasiswa->id)
+        ->exists();
+
+        if ($cekNim) {
+
+            $errors[] =
+                'NIM '.$data['nim'].' sudah digunakan';
         }
 
-        // cegah email bentrok
-        $emailBentrok = Mahasiswa::where('email', $data['email'])
-            ->where('id', '!=', $mahasiswa->id)
-            ->exists();
+        // =========================
+        // CEK EMAIL
+        // =========================
 
-        if ($emailBentrok) {
-            return back()->withErrors(['email' => 'Email sudah dipakai mahasiswa lain.'])->withInput();
+        $cekEmail = Mahasiswa::where(
+            'email',
+            $data['email']
+        )
+        ->where('id', '!=', $mahasiswa->id)
+        ->exists();
+
+        if ($cekEmail) {
+
+            $errors[] =
+                'Email '.$data['email'].' sudah digunakan';
+        }
+
+        // =========================
+        // JIKA ADA ERROR
+        // =========================
+
+        if (count($errors) > 0) {
+
+            return back()
+                ->withInput()
+                ->with('error', $errors);
         }
 
         if (!empty($data['password'])) {
@@ -124,7 +193,16 @@ class AdminMahasiswaWebController extends Controller
 
         $mahasiswa->update($data);
 
-        return redirect()->route('admin.mahasiswa.index')->with('ok', 'Data mahasiswa berhasil diupdate.');
+       return redirect()
+                ->route('admin.mahasiswa.index')
+                ->with(
+                    'ok',
+                    'Data mahasiswa berhasil diupdate.'
+                )
+                ->with(
+                    'highlight_id',
+                    $mahasiswa->id
+                );
     }
 
     public function destroy(Mahasiswa $mahasiswa)
@@ -146,12 +224,18 @@ class AdminMahasiswaWebController extends Controller
         ]);
 
         Excel::import(new MahasiswaImport, $request->file('file'));
-
+        $lastMahasiswa = \App\Models\Mahasiswa::latest()->first();
         return redirect()->route('admin.mahasiswa.index', [
             'q' => $request->input('q', ''),
             'prodi' => $request->input('prodi', ''),
             'kelas' => $request->input('kelas', ''),
             'angkatan' => $request->input('angkatan', ''),
-        ])->with('ok', 'Import mahasiswa berhasil.');
+        ])->with(
+            'ok',
+            'Import mahasiswa berhasil.'
+        )->with(
+            'highlight_id',
+            $lastMahasiswa?->id
+        );
     }
 }

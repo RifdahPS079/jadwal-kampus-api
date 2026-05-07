@@ -80,44 +80,87 @@ class AdminMataKuliahWebController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
+
             'kode_mk'       => ['required','string','max:50'],
             'nama_mk'       => ['required','string','max:255'],
             'program_studi' => ['nullable','string','max:255'],
-            'sks'           => ['required','integer','min:0','max:30'],
+            'sks'           => ['required','integer','min:1','max:5'],
             'semester'      => ['required','integer','min:1','max:14'],
             'tahun_ajaran'  => ['required','string','max:20'],
             'dosen_id'      => ['required','exists:dosens,id'],
+
         ]);
 
-        // create/update master MK
-        $mk = MataKuliah::updateOrCreate(
-            ['kode_mk' => $data['kode_mk']],
-            [
-                'nama_mk'       => $data['nama_mk'],
-                'program_studi' => $data['program_studi'] ?? null,
-                'sks'           => $data['sks'],
-                'semester'      => $data['semester'],
-            ]
-        );
+        $errors = [];
 
-        // set pengampu per periode
-        PengampuMataKuliah::updateOrCreate(
-            [
-                'mata_kuliah_id' => $mk->id,
-                'semester'       => $data['semester'],
-                'tahun_ajaran'   => $data['tahun_ajaran'],
-            ],
-            [
-                'dosen_id' => $data['dosen_id'],
-            ]
-        );
+        // =========================
+        // CEK KODE MK
+        // =========================
+
+        $cekKode = MataKuliah::where(
+            'kode_mk',
+            $data['kode_mk']
+        )->exists();
+
+        if ($cekKode) {
+
+            $errors[] =
+                'Kode Mata Kuliah '.$data['kode_mk'].' sudah tersedia';
+        }
+
+        // =========================
+        // JIKA ADA ERROR
+        // =========================
+
+        if (count($errors) > 0) {
+
+            return back()
+                ->withInput()
+                ->with('error', $errors);
+        }
+
+        // =========================
+        // SIMPAN MK
+        // =========================
+
+        $mk = MataKuliah::create([
+
+            'kode_mk'       => $data['kode_mk'],
+            'nama_mk'       => $data['nama_mk'],
+            'program_studi' => $data['program_studi'] ?? null,
+            'sks'           => $data['sks'],
+            'semester'      => $data['semester'],
+
+        ]);
+
+        // =========================
+        // SIMPAN PENGAMPU
+        // =========================
+
+        PengampuMataKuliah::create([
+
+            'mata_kuliah_id' => $mk->id,
+            'semester'       => $data['semester'],
+            'tahun_ajaran'   => $data['tahun_ajaran'],
+            'dosen_id'       => $data['dosen_id'],
+
+        ]);
 
         return redirect()
             ->route('admin.matakuliah.index', [
+
                 'semester' => $data['semester'],
                 'tahun_ajaran' => $data['tahun_ajaran'],
+
             ])
-            ->with('ok', 'Mata kuliah berhasil disimpan.');
+            ->with(
+                'ok',
+                'Mata kuliah berhasil disimpan.'
+            )
+            ->with(
+                'highlight_id',
+                $mk->id
+            );
     }
 
     public function edit(Request $request, MataKuliah $mataKuliah)
@@ -165,7 +208,11 @@ class AdminMataKuliahWebController extends Controller
             ->exists();
 
         if ($exists) {
-            return back()->withErrors(['kode_mk' => 'Kode MK sudah dipakai mata kuliah lain.'])->withInput();
+            return back()
+                ->withInput()
+                ->with('error', [
+                    'Kode Mata Kuliah '.$data['kode_mk'].' sudah digunakan'
+                ]);
         }
 
         $mataKuliah->update([

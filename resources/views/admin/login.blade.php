@@ -23,12 +23,12 @@
       display:flex;
     }
 
-    /* ✅ overlay jangan pernah menangkap klik */
+    
     .bg::after{
       content:"";
       position:absolute; inset:0;
       background: rgba(255,255,255,0.55);
-      pointer-events: none;     /* ✅ FIX: biar input bisa diklik */
+      pointer-events: none;    
       z-index: 0;
     }
 
@@ -44,7 +44,7 @@
     }
 
     .card{
-      width: min(980px, 96vw);  /* ✅ lebih simetris di layar besar */
+      width: min(450px, 96vw);  /* ✅ lebih simetris di layar besar */
       background:#fff;
       border-radius: 18px;
       padding: 42px 64px;
@@ -140,8 +140,8 @@
     }
 
     .logo-group img{
-      width:60px;
-      height:60px;
+      width:80px;
+      height:80px;
       object-fit:contain;
     }
 
@@ -172,10 +172,10 @@
 
       <div class="header">
         <div class="logo-group">
-          <img src="{{ asset('images/logoith.jpg') }}" alt="Logo ITH">
+          <!-- <img src="{{ asset('images/logoith.jpg') }}" alt="Logo ITH"> -->
           <img src="{{ asset('images/logoaplikasi1.png') }}" alt="Logo Aplikasi">
         </div>
-        <h1 class="title">ADMIN SIHATI</h1>
+        <h1 class="title">JADWALKU</h1>
         <p class="subtitle">(Sistem Informasi Jadwal ITH)</p>
       </div>
 

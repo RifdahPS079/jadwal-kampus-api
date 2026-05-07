@@ -163,21 +163,22 @@
       color:var(--muted);
       margin-bottom:6px;
     }
+  input,
+  select{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid #ddd;
+    outline:none;
+    background:#fff;
+    font-size:14px;
+  }
 
-    input{
-      width:100%;
-      padding:10px 12px;
-      border-radius:10px;
-      border:1px solid #ddd;
-      outline:none;
-      background:#fff;
-      font-size:14px;
-    }
-
-    input:focus{
-      border-color:var(--orange);
-      box-shadow:0 0 0 4px rgba(229,134,31,.12);
-    }
+  input:focus,
+  select:focus{
+    border-color:var(--orange);
+    box-shadow:0 0 0 4px rgba(229,134,31,.12);
+  }
 
     .row{ display:flex; gap:10px; flex-wrap:wrap; }
     .col{ flex:1; min-width:250px; }
@@ -261,7 +262,41 @@
       text-align:center;
       font-size:12px;
     }
+
+    .password-wrapper{
+  position: relative;
+  width: 100%;
+}
+
+.password-wrapper input{
+  padding-right: 40px; /* kasih ruang buat icon */
+}
+
+.toggle-password{
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 16px;
+  color: #777;
+}
     .td-center{ text-align:center; }
+
+  
+    .highlight-row{
+    animation: highlightFade 4s ease;
+}
+
+@keyframes highlightFade{
+    0%{
+        background:#93c5fd;
+    }
+
+    100%{
+        background:transparent;
+    }
+}
   </style>
 </head>
 
@@ -296,15 +331,32 @@
         <div class="success">{{ session('ok') }}</div>
       @endif
 
-      @if($errors->any())
-        <div class="error">
-          <b>Terjadi error:</b>
-          <ul style="margin:8px 0 0; padding-left:18px;">
-            @foreach($errors->all() as $e)
-              <li>{{ $e }}</li>
-            @endforeach
-          </ul>
-        </div>
+      @if(session('error'))
+
+      <div class="error">
+
+          @if(is_array(session('error')))
+
+              <b>Beberapa data gagal ditambahkan:</b>
+
+              <ul style="margin:8px 0 0; padding-left:18px;">
+
+                  @foreach(session('error') as $err)
+
+                      <li>{{ $err }}</li>
+
+                  @endforeach
+
+              </ul>
+
+          @else
+
+              {{ session('error') }}
+
+          @endif
+
+      </div>
+
       @endif
 
       {{-- FILTER (konsep sama seperti matakuliah) --}}
@@ -319,7 +371,103 @@
             </div>
             <div class="col">
               <label>Program Studi</label>
-              <input name="prodi" value="{{ $prodi ?? '' }}" placeholder="Contoh: Ilmu Komputer">
+             <select name="prodi">
+
+    <option value="">
+        -- Semua Program Studi --
+    </option>
+
+    <option value="Ilmu Komputer"
+        {{ ($prodi ?? '') == 'Ilmu Komputer' ? 'selected' : '' }}>
+        Ilmu Komputer
+    </option>
+
+    <option value="Sistem Informasi"
+        {{ ($prodi ?? '') == 'Sistem Informasi' ? 'selected' : '' }}>
+        Sistem Informasi
+    </option>
+
+    <option value="Matematika"
+        {{ ($prodi ?? '') == 'Matematika' ? 'selected' : '' }}>
+        Matematika
+    </option>
+
+    <option value="Teknik Sipil"
+        {{ ($prodi ?? '') == 'Teknik Sipil' ? 'selected' : '' }}>
+        Teknik Sipil
+    </option>
+
+    <option value="Sains Data"
+        {{ ($prodi ?? '') == 'Sains Data' ? 'selected' : '' }}>
+        Sains Data
+    </option>
+
+    <option value="Teknologi Pangan"
+        {{ ($prodi ?? '') == 'Teknologi Pangan' ? 'selected' : '' }}>
+        Teknologi Pangan
+    </option>
+
+    <option value="Bioteknologi"
+        {{ ($prodi ?? '') == 'Bioteknologi' ? 'selected' : '' }}>
+        Bioteknologi
+    </option>
+
+    <option value="Teknik Arsitektur"
+        {{ ($prodi ?? '') == 'Teknik Arsitektur' ? 'selected' : '' }}>
+        Teknik Arsitektur
+    </option>
+
+    <option value="Bisnis Digital"
+        {{ ($prodi ?? '') == 'Bisnis Digital' ? 'selected' : '' }}>
+        Bisnis Digital
+    </option>
+
+    <option value="Sains Aktuaria"
+        {{ ($prodi ?? '') == 'Sains Aktuaria' ? 'selected' : '' }}>
+        Sains Aktuaria
+    </option>
+
+    <option value="Teknik Mesin"
+        {{ ($prodi ?? '') == 'Teknik Mesin' ? 'selected' : '' }}>
+        Teknik Mesin
+    </option>
+
+    <option value="Teknik Perkapalan"
+        {{ ($prodi ?? '') == 'Teknik Perkapalan' ? 'selected' : '' }}>
+        Teknik Perkapalan
+    </option>
+
+    <option value="Teknik Elektro"
+        {{ ($prodi ?? '') == 'Teknik Elektro' ? 'selected' : '' }}>
+        Teknik Elektro
+    </option>
+
+    <option value="Teknik Industri"
+        {{ ($prodi ?? '') == 'Teknik Industri' ? 'selected' : '' }}>
+        Teknik Industri
+    </option>
+
+    <option value="Teknik Lingkungan"
+        {{ ($prodi ?? '') == 'Teknik Lingkungan' ? 'selected' : '' }}>
+        Teknik Lingkungan
+    </option>
+
+    <option value="Teknik Sistem Energi"
+        {{ ($prodi ?? '') == 'Teknik Sistem Energi' ? 'selected' : '' }}>
+        Teknik Sistem Energi
+    </option>
+
+    <option value="Teknik Metalurgi"
+        {{ ($prodi ?? '') == 'Teknik Metalurgi' ? 'selected' : '' }}>
+        Teknik Metalurgi
+    </option>
+
+    <option value="Teknik Robotika & Kecerdasan Buatan"
+        {{ ($prodi ?? '') == 'Teknik Robotika & Kecerdasan Buatan' ? 'selected' : '' }}>
+        Teknik Robotika & Kecerdasan Buatan
+    </option>
+
+</select>
             </div>
           </div>
 
@@ -351,23 +499,78 @@
             @csrf
 
             <div class="row">
+
+              <div class="col">
+                  <label>Nama Mahasiswa</label>
+                  <input name="nama" value="{{ old('nama') }}" placeholder="Contoh: Muhammad Adhi">
+                  @error('nama') <div class="small-err">{{ $message }}</div> @enderror
+                </div>
               <div class="col">
                 <label>NIM</label>
-                <input name="nim" value="{{ old('nim') }}" placeholder="Contoh: 221011079">
+                <input
+                    type="text"
+                    name="nim"
+                    value="{{ old('nim') }}"
+                    placeholder="Contoh: 221011079"
+                    maxlength="9"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                >
                 @error('nim') <div class="small-err">{{ $message }}</div> @enderror
               </div>
 
-              <div class="col">
-                <label>Nama Mahasiswa</label>
-                <input name="nama" value="{{ old('nama') }}" placeholder="Contoh: Muhammad Adhi">
-                @error('nama') <div class="small-err">{{ $message }}</div> @enderror
-              </div>
+              
             </div>
 
             <div class="row" style="margin-top:10px;">
               <div class="col">
                 <label>Program Studi</label>
-                <input name="program_studi" value="{{ old('program_studi') }}" placeholder="Contoh: Ilmu Komputer">
+                <select name="program_studi">
+
+    <option value="">
+        -- Pilih Program Studi --
+    </option>
+
+    <option value="Ilmu Komputer">Ilmu Komputer</option>
+
+    <option value="Sistem Informasi">Sistem Informasi</option>
+
+    <option value="Matematika">Matematika</option>
+
+    <option value="Teknik Sipil">Teknik Sipil</option>
+
+    <option value="Sains Data">Sains Data</option>
+
+    <option value="Teknologi Pangan">Teknologi Pangan</option>
+
+    <option value="Bioteknologi">Bioteknologi</option>
+
+    <option value="Teknik Arsitektur">Teknik Arsitektur</option>
+
+    <option value="Bisnis Digital">Bisnis Digital</option>
+
+    <option value="Sains Aktuaria">Sains Aktuaria</option>
+
+    <option value="Teknik Mesin">Teknik Mesin</option>
+
+    <option value="Teknik Perkapalan">Teknik Perkapalan</option>
+
+    <option value="Teknik Elektro">Teknik Elektro</option>
+
+    <option value="Teknik Industri">Teknik Industri</option>
+
+    <option value="Teknik Lingkungan">Teknik Lingkungan</option>
+
+    <option value="Teknik Sistem Energi">Teknik Sistem Energi</option>
+
+    <option value="Teknik Metalurgi">Teknik Metalurgi</option>
+
+    <option value="Teknik Robotika & Kecerdasan Buatan">
+        Teknik Robotika & Kecerdasan Buatan
+    </option>
+
+</select>
                 @error('program_studi') <div class="small-err">{{ $message }}</div> @enderror
               </div>
 
@@ -376,29 +579,67 @@
                 <input name="kelas" value="{{ old('kelas') }}" placeholder="Contoh: IK22A">
                 @error('kelas') <div class="small-err">{{ $message }}</div> @enderror
               </div>
+
+              
+              <div class="col">
+
+              <label>Angkatan</label>
+
+              <input
+                  type="text"
+                  name="angkatan"
+                  value="{{ old('angkatan') }}"
+                  placeholder="Contoh: 2022"
+                  maxlength="4"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+              >
+
+              @error('angkatan')
+                  <div class="small-err">{{ $message }}</div>
+              @enderror
+
+          </div>
             </div>
 
-            <div class="row" style="margin-top:10px;">
-              <div class="col">
-                <label>Angkatan</label>
-                <input name="angkatan" value="{{ old('angkatan') }}" placeholder="Contoh: 2022">
-                @error('angkatan') <div class="small-err">{{ $message }}</div> @enderror
-              </div>
+           <div class="row" style="margin-top:10px;">
 
-              <div class="col">
-                <label>Email (untuk login)</label>
-                <input type="email" name="email" value="{{ old('email') }}" placeholder="Contoh: adhi@gmail.com">
-                @error('email') <div class="small-err">{{ $message }}</div> @enderror
-              </div>
+            <!-- EMAIL -->
+            <div class="col">
+              <label>Email</label>
+              <input
+                  type="email"
+                  name="email"
+                  value=""
+                  placeholder="Contoh: mahasiswa@gmail.com"
+                  autocomplete="off"
+              >
+              @error('email') <div class="small-err">{{ $message }}</div> @enderror
             </div>
 
-            <div class="row" style="margin-top:10px;">
-              <div class="col">
-                <label>Password (untuk login)</label>
-                <input type="password" name="password" placeholder="Masukkan password awal mahasiswa" required>
-                @error('password') <div class="small-err">{{ $message }}</div> @enderror
+            <!-- PASSWORD -->
+            <div class="col">
+              <label>Password</label>
+
+              <div class="input-password">
+                <div class="password-wrapper">
+                  <input
+                      type="password"
+                      id="password"
+                      name="password"
+                      placeholder="Masukkan password"
+                      autocomplete="new-password"
+                  >
+
+                  <span class="toggle-password" onclick="togglePassword()">👁️</span>
+                </div>
               </div>
+
+              @error('password') <div class="small-err">{{ $message }}</div> @enderror
             </div>
+
+          </div>
 
             <div class="actions">
               <button class="btn btn-orange" type="submit">Simpan</button>
@@ -461,7 +702,10 @@
 
             <tbody>
               @forelse($mahasiswas as $m)
-                <tr>
+                <tr
+                    id="mahasiswa-{{ $m->id }}"
+                    class="{{ session('highlight_id') == $m->id ? 'highlight-row' : '' }}"
+                >
                   <td>{{ $m->nama ?? '-' }}</td>
                   <td>{{ $m->program_studi ?? '-' }}</td>
                   <td class="td-center">{{ $m->nim ?? '-' }}</td>
@@ -498,5 +742,37 @@
     </div>
   </div>
 
+  <script>
+function togglePassword() {
+    const input = document.getElementById("password");
+
+    if (input.type === "password") {
+        input.type = "text";
+    } else {
+        input.type = "password";
+    }
+}
+
+@if(session('highlight_id'))
+
+window.addEventListener('load', function () {
+
+    const row = document.getElementById(
+        'mahasiswa-{{ session('highlight_id') }}'
+    );
+
+    if(row){
+
+        row.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
+    }
+
+});
+
+@endif
+</script>
 </body>
 </html>

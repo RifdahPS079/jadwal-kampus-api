@@ -25,7 +25,11 @@ class AdminMonitoringController extends Controller
 
         Excel::import(new JadwalImport, $request->file('file'));
 
-        return back()->with('success', 'Import jadwal berhasil.');
+        $last = Jadwal::latest()->first();
+
+        return back()
+            ->with('success', 'Import jadwal berhasil.')
+            ->with('new_jadwal_id', optional($last)->id);
     }
 
     public function index(Request $request)
@@ -41,6 +45,16 @@ class AdminMonitoringController extends Controller
 
         $ruangans = Ruangan::orderBy('kode_ruangan')->get();
         $waktus = Waktu::where('hari', $hari)->orderBy('jam_mulai')->get();
+        $allWaktus = Waktu::orderByRaw("
+            FIELD(hari,
+            'Senin',
+            'Selasa',
+            'Rabu',
+            'Kamis',
+            'Jumat')
+        ")
+        ->orderBy('jam_mulai')
+        ->get();
 
         $jadwals = Jadwal::with([
                 'waktu',
@@ -69,8 +83,56 @@ class AdminMonitoringController extends Controller
         // 🔥 DATA UNTUK DROPDOWN EDIT
         $dosens = Dosen::all();
         $matakuliahs = MataKuliah::all();
-        $pengampus = PengampuMataKuliah::with(['dosen','mataKuliah'])->get();
+        $pengampus = PengampuMataKuliah::with([
+    'dosen',
+    'mataKuliah'
+])->get()->map(function ($p) {
 
+    return [
+        'id' => $p->id,
+
+        'semester' => $p->semester,
+
+        'dosen' => [
+            'nama' => optional($p->dosen)->nama
+        ],
+
+        'mata_kuliah' => [
+            'nama_mk' => optional($p->mataKuliah)->nama_mk,
+            'program_studi' => optional($p->mataKuliah)->program_studi,
+        ]
+    ];
+});
+        
+        $programStudis = MataKuliah::select('program_studi')
+            ->whereNotNull('program_studi')
+            ->where('program_studi', '!=', '')
+            ->distinct()
+            ->orderBy('program_studi')
+            ->pluck('program_studi');
+        $semesters = PengampuMataKuliah::select('semester')->distinct()->pluck('semester');
+        $kelasList = \App\Models\Mahasiswa::select('kelas')->distinct()->pluck('kelas');
+        $ruangansKosong = $ruangans->filter(function ($r) use ($matrix) {
+            return true; 
+        });
+
+        $jadwalTerpakai = Jadwal::select(
+            'id',
+            'ruangan_id',
+            'waktu_id',
+            'kelas',
+            'pengampu_id'
+        )->get();
+        $used = [];
+            foreach ($jadwalTerpakai as $j) {
+                $used[$j->waktu_id][] = $j->ruangan_id;
+            }
+        $waktusKosong = $waktus->filter(function($w) use ($used, $ruangans) {
+        $totalRuangan = $ruangans->count();
+        $terpakai = isset($used[$w->id]) ? count($used[$w->id]) : 0;
+            return $terpakai < $totalRuangan; // masih ada ruang kosong
+        });
+        
         return view('admin.monitoring', compact(
             'daftarHari',
             'hari',
@@ -79,7 +141,13 @@ class AdminMonitoringController extends Controller
             'matrix',
             'dosens',
             'matakuliahs',
-            'pengampus'
+            'pengampus',
+            'programStudis',
+            'semesters',
+            'kelasList',
+            'waktusKosong',
+            'jadwalTerpakai',
+            'allWaktus'
         ));
     }
 

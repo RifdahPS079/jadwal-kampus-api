@@ -14,19 +14,25 @@ class WaktuController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'hari' => 'required|string|max:20',
-            'jam_mulai' => 'required|date_format:H:i',
-            'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
-            'tanggal' => 'nullable|date',
-        ]);
+        try {
+            $data = $request->validate([
+                'hari' => 'required|string|max:20',
+                'jam_mulai' => 'required|date_format:H:i',
+                'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
+                'tanggal' => 'nullable|date',
+            ]);
 
-        $waktu = Waktu::create($data);
+            $waktu = Waktu::create($data);
 
-        return response()->json([
-            'message' => 'Waktu berhasil dibuat',
-            'data' => $waktu
-        ], 201);
+            return redirect()
+                ->back()
+                ->with('ok', 'Waktu berhasil ditambahkan');
+
+        } catch (\Throwable $e) {
+            return back()->withErrors([
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     public function show($id)

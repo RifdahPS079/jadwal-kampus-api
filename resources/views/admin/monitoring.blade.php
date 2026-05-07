@@ -366,11 +366,18 @@
   display:flex;
   gap:20px;
   flex-wrap:wrap;
+  align-items:flex-start; 
 }
 
 .col{
   flex:1;
   min-width:280px;
+  display:flex;
+  flex-direction:column;
+}
+
+select, input{
+  height:42px; 
 }
 
 label{
@@ -396,6 +403,29 @@ input, select{
   border-radius:10px;
   border:1px solid #c3e6cb;
   font-size:14px;
+}
+
+.form-duo{
+  display:flex;
+  gap:20px;
+  align-items:stretch;
+  flex-wrap:wrap;
+}
+
+.form-duo .panel{
+  flex:1;
+  min-width:320px;
+}
+
+.new-highlight {
+  animation: highlightFade 12s ease;
+  background: #cce5ff !important;
+}
+
+@keyframes highlightFade {
+  0%   { background: #66b3ff; }
+  50%  { background: #99ccff; }
+  100% { background: transparent; }
 }
   </style>
 </head>
@@ -453,69 +483,119 @@ input, select{
               @endforeach
             </select>
           </form>
-
-
+         
+<div class="form-duo">
 <div class="panel" style="margin-top:14px;">
   <h4>Tambah Jadwal Manual</h4>
 
   <form method="POST" action="{{ route('admin.jadwal.store') }}">
-    @csrf
+  @csrf
 
-    <div class="row">
+  <div class="row">
 
-      <!-- KIRI -->
-      <div class="col">
-        <label>Kelas</label>
-        <input name="kelas" placeholder="Contoh: IK22B" required>
+    <!-- KIRI -->
+    <div class="col">
 
-        <label style="margin-top:10px;">Mata Kuliah & Dosen</label>
-        <select name="pengampu_id" required>
-          @foreach($pengampus as $p)
-            <option value="{{ $p->id }}">
-              {{ $p->mataKuliah->nama_mk }} - {{ $p->dosen->nama }}
-            </option>
-          @endforeach
-        </select>
+      <!-- PROGRAM STUDI -->
+      <label>Program Studi</label>
+      <select name="program_studi" id="program_studi" required>
+        <option value="">-- Pilih Prodi --</option>
+        @foreach($programStudis as $ps)
+          <option value="{{ $ps }}">{{ $ps }}</option>
+        @endforeach
+      </select>
 
-        <label style="margin-top:10px;">Waktu</label>
-        <select name="waktu_id" required>
-          @foreach($waktus as $w)
-            <option value="{{ $w->id }}">
-              {{ $w->hari }} ({{ \Carbon\Carbon::parse($w->jam_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($w->jam_selesai)->format('H:i') }})
-            </option>
-          @endforeach
-        </select>
-      </div>
+      <!-- MATAKULIAH -->
+      <label style="margin-top:10px;">Mata Kuliah</label>
+      <select name="pengampu_id" id="matkul" required>
+        <option value="">-- Pilih Matkul --</option>
+      </select>
 
-      <!-- KANAN -->
-      <div class="col">
-        <label>Program Studi</label>
-        <input name="program_studi" placeholder="Contoh: Ilmu Komputer" required>
-
-        <label style="margin-top:10px;">Ruangan</label>
-        <select name="ruangan_id" required>
-          @foreach($ruangans as $r)
-            <option value="{{ $r->id }}">{{ $r->kode_ruangan }}</option>
-          @endforeach
-        </select>
-      </div>
+      <!-- KELAS -->
+      <label style="margin-top:10px;">Kelas</label>
+      <select name="kelas" id="kelas_select" required>
+        <option value="">-- Pilih Kelas --</option>
+        @foreach($kelasList as $k)
+          <option value="{{ $k }}">{{ $k }}</option>
+        @endforeach
+      </select>
 
     </div>
 
-    <div class="actions">
-      <button class="btn btn-orange" type="submit">Simpan Jadwal</button>
-      <button class="btn btn-soft" type="reset">Reset</button>
+    <!-- KANAN -->
+    <div class="col">
+
+      <!-- WAKTU -->
+      <label>Waktu</label>
+      <select name="waktu_id" required>
+        @foreach($waktusKosong as $w)
+          <option value="{{ $w->id }}">
+            {{ $w->hari }} ({{ \Carbon\Carbon::parse($w->jam_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($w->jam_selesai)->format('H:i') }})
+          </option>
+        @endforeach
+      </select>
+
+      <!-- RUANGAN -->
+      <label style="margin-top:10px;">Ruangan</label>
+      <select name="ruangan_id" required>
+        @foreach($ruangans as $r)
+          <option value="{{ $r->id }}">{{ $r->kode_ruangan }}</option>
+        @endforeach
+      </select>
+
     </div>
+
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-orange" type="submit">Simpan Jadwal</button>
+  </div>
 
   </form>
 </div>
 
-          {{-- Import jadwal --}}
-          <form method="POST" action="{{ route('admin.jadwal.import') }}" enctype="multipart/form-data" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            @csrf
-            <input type="file" name="file" accept=".xlsx,.xls,.csv" required>
-            <button type="submit" class="btn btn-orange">Import Jadwal</button>
-          </form>
+          <div class="panel" style="margin-top:14px;">
+  <h4>Import Jadwal dari Excel</h4>
+
+  <div style="
+      background:#fff4e6;
+      padding:10px 12px;
+      border-radius:10px;
+      font-size:13px;
+      color:#7a4b10;
+      border:1px solid rgba(229,134,31,.25);
+      margin-bottom:12px;
+  ">
+    Upload file Excel untuk menambahkan banyak jadwal sekaligus.  
+    Format: <b>xlsx / xls / csv</b>
+  </div>
+
+  <form method="POST" action="{{ route('admin.jadwal.import') }}" enctype="multipart/form-data">
+    @csrf
+
+    <div class="row">
+
+      <div class="col">
+        <label>Pilih File Excel</label>
+        <input type="file" name="file" accept=".xlsx,.xls,.csv" required>
+      </div>
+
+    </div>
+
+    <div style="margin-top:12px;">
+      <button type="submit" class="btn btn-orange">
+        Import Jadwal
+      </button>
+    </div>
+
+  </form>
+
+  <div style="margin-top:10px; font-size:12px; color:#777;">
+    Format kolom: kode_dosen, nama, program_studi, nidn, email, password
+  </div>
+
+</div>
+</div>
 
           {{-- tombol bantu (opsional) --}}
           {{-- <a class="btn btn-soft" href="#">Download Template</a> --}}
@@ -555,7 +635,7 @@ input, select{
                         $j = $matrix[$w->id][$r->id] ?? null;
                       @endphp
 
-                     <td>
+                     <td id="{{ $j ? 'jadwal-'.$j->id : '' }}">
                       @if($j)
                           <div class="cell filled">
 
@@ -605,22 +685,29 @@ input, select{
 
   <div class="form-group">
   <label>Kelas</label>
-  <input id="edit_kelas" placeholder="Contoh: IK22A">
+  <select id="edit_kelas">
+
+<option value="">-- Pilih Kelas --</option>
+
+</select>
   </div>
 
   <div class="form-group">
   <label>Program Studi</label>
-  <input id="edit_prodi" placeholder="Ilmu Komputer">
+
+  <select id="edit_prodi">
+    <option value="">-- Pilih Prodi --</option>
+    @foreach($programStudis as $ps)
+      <option value="{{ $ps }}">{{ $ps }}</option>
+    @endforeach
+  </select>
+
   </div>
 
   <div class="form-group">
   <label>Mata Kuliah</label>
   <select id="edit_pengampu">
-  @foreach($pengampus as $p)
-  <option value="{{ $p->id }}">
-  {{ $p->mataKuliah->nama_mk }} - {{ $p->dosen->nama }}
-  </option>
-  @endforeach
+   <option value="">-- Pilih Matkul --</option>
   </select>
   </div>
 
@@ -636,7 +723,7 @@ input, select{
   <div class="form-group">
   <label>Waktu</label>
   <select id="edit_waktu">
-  @foreach($waktus as $w)
+  @foreach($allWaktus as $w)
   <option value="{{ $w->id }}">
   {{ $w->hari }} ({{ \Carbon\Carbon::parse($w->jam_mulai)->format('H:i') }} - {{ \Carbon\Carbon::parse($w->jam_selesai)->format('H:i') }})
   </option>
@@ -654,6 +741,10 @@ input, select{
   </div>
   </div>
 
+  <script>
+    const newJadwalId = "{{ session('new_jadwal_id') }}";
+  </script>
+
   <!-- SCRIPT TETAP -->
   <script>
 
@@ -669,12 +760,19 @@ input, select{
 
         const data = res.data;
 
-        document.getElementById('edit_id').value = data.id;
-        document.getElementById('edit_kelas').value = data.kelas;
-        document.getElementById('edit_prodi').value = data.program_studi;
-        document.getElementById('edit_pengampu').value = data.pengampu_id;
-        document.getElementById('edit_ruangan').value = data.ruangan_id;
         document.getElementById('edit_waktu').value = data.waktu_id;
+        document.getElementById('edit_id').value = data.id;
+
+        document.getElementById('edit_prodi').value = data.program_studi;
+        filterEditDropdowns(
+          data.waktu_id,
+          data.program_studi,
+          data.id,
+          data.kelas,
+          data.ruangan_id,
+          data.pengampu_id
+      );
+        document.getElementById('edit_ruangan').value = data.ruangan_id;
 
         document.getElementById('modalEdit').style.display = 'block';
     });
@@ -710,6 +808,7 @@ function saveEdit() {
 
         if (res.success) {
             localStorage.setItem('success', res.message);
+            localStorage.setItem('highlight_jadwal', id);
             location.reload();
         } else {
             alert(res.message || 'Gagal update');
@@ -763,6 +862,344 @@ document.addEventListener("DOMContentLoaded", function () {
 
         localStorage.removeItem('success');
     }
+
+    if (newJadwalId) {
+        localStorage.setItem('highlight_jadwal', newJadwalId);
+    }
+
+    const targetId = localStorage.getItem('highlight_jadwal');
+
+    if (targetId) {
+        const el = document.getElementById('jadwal-' + targetId);
+
+        if (el) {
+            // scroll ke posisi
+            el.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+            // kasih efek
+            el.classList.add('new-highlight');
+
+            // hapus setelah 12 detik
+            setTimeout(() => {
+                el.classList.remove('new-highlight');
+                localStorage.removeItem('highlight_jadwal');
+            }, 2000);
+        }
+    }
+});
+
+document.getElementById('program_studi').addEventListener('change', function () {
+
+    const prodi = this.value;
+    const matkulSelect = document.getElementById('matkul');
+
+    matkulSelect.innerHTML = '<option value="">-- Pilih Matkul --</option>';
+
+    const filtered = pengampus.filter(p => {
+        return p.mata_kuliah.program_studi === prodi;
+    });
+
+    filtered.forEach(p => {
+
+        const option = document.createElement('option');
+
+        option.value = p.id;
+
+        option.textContent =
+            p.mata_kuliah.nama_mk + ' - ' + p.dosen.nama;
+
+        matkulSelect.appendChild(option);
+    });
+
+});
+
+  const pengampus = @json($pengampus);
+  const jadwalTerpakai = @json($jadwalTerpakai);
+  const ruanganSelect = document.querySelector('[name="ruangan_id"]');
+  const waktuSelect = document.querySelector('[name="waktu_id"]');
+  const allRuangan = @json($ruangans);
+  const allWaktus = @json($allWaktus);
+  const allKelas = @json($kelasList);
+
+const kelasSelect = document.getElementById('kelas_select');
+
+function filterDropdowns()
+{
+    const waktuId = waktuSelect.value;
+    const prodi = document.getElementById('program_studi').value;
+
+    // =========================
+    // FILTER RUANGAN
+    // =========================
+
+    ruanganSelect.innerHTML = '';
+
+    const ruanganTerpakai = jadwalTerpakai
+        .filter(j => j.waktu_id == waktuId)
+        .map(j => j.ruangan_id);
+
+    const ruanganKosong =
+        allRuangan.filter(r => !ruanganTerpakai.includes(r.id));
+
+    ruanganKosong.forEach(r => {
+
+        const option = document.createElement('option');
+
+        option.value = r.id;
+        option.textContent = r.kode_ruangan;
+
+        ruanganSelect.appendChild(option);
+    });
+
+    // =========================
+    // FILTER KELAS
+    // =========================
+
+    kelasSelect.innerHTML =
+        '<option value="">-- Pilih Kelas --</option>';
+
+    const kelasTerpakai = jadwalTerpakai
+        .filter(j => j.waktu_id == waktuId)
+        .map(j => j.kelas);
+
+    const kelasKosong =
+        @json($kelasList).filter(k => !kelasTerpakai.includes(k));
+
+    kelasKosong.forEach(k => {
+
+        const option = document.createElement('option');
+
+        option.value = k;
+        option.textContent = k;
+
+        kelasSelect.appendChild(option);
+    });
+
+    // =========================
+    // FILTER MATAKULIAH
+    // =========================
+
+    const matkulSelect = document.getElementById('matkul');
+
+    matkulSelect.innerHTML =
+        '<option value="">-- Pilih Matkul --</option>';
+
+    const pengampuTerpakai = jadwalTerpakai
+        .filter(j => j.waktu_id == waktuId)
+        .map(j => j.pengampu_id);
+
+    const filtered = pengampus.filter(p => {
+
+        return p.mata_kuliah.program_studi === prodi
+            && !pengampuTerpakai.includes(p.id);
+    });
+
+    filtered.forEach(p => {
+
+        const option = document.createElement('option');
+
+        option.value = p.id;
+
+        option.textContent =
+            p.mata_kuliah.nama_mk +
+            ' - ' +
+            p.dosen.nama;
+
+        matkulSelect.appendChild(option);
+    });
+}
+
+function loadEditMatkul(prodi, selectedPengampu = null)
+{
+    const matkulSelect = document.getElementById('edit_pengampu');
+
+    matkulSelect.innerHTML =
+        '<option value="">-- Pilih Matkul --</option>';
+
+    const filtered = pengampus.filter(p => {
+        return p.mata_kuliah.program_studi === prodi;
+    });
+
+    filtered.forEach(p => {
+
+        const option = document.createElement('option');
+
+        option.value = p.id;
+
+        option.textContent =
+            p.mata_kuliah.nama_mk + ' - ' + p.dosen.nama;
+
+        if (selectedPengampu == p.id) {
+            option.selected = true;
+        }
+
+        matkulSelect.appendChild(option);
+    });
+}
+
+document.getElementById('edit_prodi')
+.addEventListener('change', function () {
+
+    loadEditMatkul(this.value);
+
+});
+
+document.getElementById('program_studi')
+.addEventListener('change', filterDropdowns);
+
+waktuSelect.addEventListener('change', filterDropdowns);
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    filterDropdowns();
+
+}); 
+
+function filterEditDropdowns(
+    waktuId,
+    prodi,
+    currentJadwalId = null,
+    selectedKelas = null,
+    selectedRuangan = null,
+    selectedPengampu = null
+) {
+
+    // =========================
+    // AMBIL JADWAL LAIN
+    // =========================
+
+    const jadwalLain = jadwalTerpakai.filter(j => {
+
+        return j.id != currentJadwalId
+            && j.waktu_id == waktuId;
+    });
+
+    // =========================
+    // FILTER KELAS
+    // =========================
+
+    const editKelas =
+        document.getElementById('edit_kelas');
+
+    editKelas.innerHTML =
+        '<option value="">-- Pilih Kelas --</option>';
+
+    const kelasTerpakai =
+        jadwalLain.map(j => j.kelas);
+
+    const kelasKosong =
+        allKelas.filter(k => !kelasTerpakai.includes(k));
+
+    kelasKosong.forEach(k => {
+
+        const option = document.createElement('option');
+
+        option.value = k;
+        option.textContent = k;
+
+        if (selectedKelas == k) {
+            option.selected = true;
+        }
+
+        editKelas.appendChild(option);
+    });
+
+    // =========================
+    // FILTER RUANGAN
+    // =========================
+
+    const editRuangan =
+        document.getElementById('edit_ruangan');
+
+    editRuangan.innerHTML = '';
+
+    const ruanganTerpakai =
+        jadwalLain.map(j => j.ruangan_id);
+
+    const ruanganKosong =
+        allRuangan.filter(r => !ruanganTerpakai.includes(r.id));
+
+    ruanganKosong.forEach(r => {
+
+        const option = document.createElement('option');
+
+        option.value = r.id;
+        option.textContent = r.kode_ruangan;
+
+        if (selectedRuangan == r.id) {
+            option.selected = true;
+        }
+
+        editRuangan.appendChild(option);
+    });
+
+    // =========================
+    // FILTER MATAKULIAH
+    // =========================
+
+    const editPengampu =
+        document.getElementById('edit_pengampu');
+
+    editPengampu.innerHTML =
+        '<option value="">-- Pilih Matkul --</option>';
+
+    const pengampuTerpakai =
+        jadwalLain.map(j => j.pengampu_id);
+
+    const matkulKosong = pengampus.filter(p => {
+
+        return p.mata_kuliah.program_studi === prodi
+            && !pengampuTerpakai.includes(p.id);
+    });
+
+    matkulKosong.forEach(p => {
+
+        const option = document.createElement('option');
+
+        option.value = p.id;
+
+        option.textContent =
+            p.mata_kuliah.nama_mk +
+            ' - ' +
+            p.dosen.nama;
+
+        if (selectedPengampu == p.id) {
+            option.selected = true;
+        }
+
+        editPengampu.appendChild(option);
+    });
+}
+
+document.getElementById('edit_waktu')
+.addEventListener('change', function () {
+
+    const waktuId = this.value;
+
+    const prodi =
+        document.getElementById('edit_prodi').value;
+
+    const currentJadwalId =
+        document.getElementById('edit_id').value;
+
+    const selectedKelas =
+        document.getElementById('edit_kelas').value;
+
+    const selectedPengampu =
+        document.getElementById('edit_pengampu').value;
+
+    filterEditDropdowns(
+        waktuId,
+        prodi,
+        currentJadwalId,
+        selectedKelas,
+        null,
+        selectedPengampu
+    );
+
 });
 
   </script>

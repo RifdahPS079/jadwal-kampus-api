@@ -166,7 +166,8 @@ class JadwalController extends Controller
 
         return redirect()
             ->route('admin.monitoring')
-            ->with('success', 'Jadwal berhasil ditambahkan');
+            ->with('success', 'Jadwal berhasil ditambahkan')
+            ->with('new_jadwal_id', $jadwal->id);
 
     } catch (\Throwable $e) {
 

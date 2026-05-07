@@ -13,6 +13,8 @@ class AdminDosenWebController extends Controller
 {
     public function index(Request $request)
     {
+        $matakuliahs = \App\Models\MataKuliah::orderBy('nama_mk')
+             ->get();
         $q     = trim((string) $request->get('q', ''));
         $prodi = trim((string) $request->get('prodi', ''));
         $nidn  = trim((string) $request->get('nidn', ''));
@@ -49,29 +51,122 @@ class AdminDosenWebController extends Controller
 
         $dosens = $query->get();
 
-        return view('admin.dosen', compact('dosens', 'q', 'prodi', 'nidn', 'urut'));
+        return view('admin.dosen', compact('dosens', 'q', 'prodi', 'nidn', 'urut', 'matakuliahs'));
     }
 
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'kode_dosen'    => ['required','string','max:50'],
-            'nama'          => ['required','string','max:255'],
-            'program_studi' => ['nullable','string','max:255'],
-            'nidn'          => ['nullable','string','max:50'],
-            'email'         => ['nullable','email','max:255'],
-            'password'      => ['required','string','min:6'],
-        ]);
+   public function store(Request $request)
+{   
+    $request->validate([
+        'nama' => 'required',
+        'nidn' => 'required|digits:10',
+        'kode_dosen' => 'required',
+        'program_studi' => 'required',
+        'email' => 'required|email',
+        'password' => 'required|min:6',
+    ], [
+        'nidn.required' => 'NIDN wajib diisi',
+        'nidn.digits' => 'NIDN harus tepat 10 angka',
+    ]);
 
-        $data['password'] = Hash::make($data['password']);
+    $errors = [];
 
-        Dosen::updateOrCreate(
-            ['kode_dosen' => $data['kode_dosen']],
-            $data
-        );
+    // =========================
+    // CEK NIDN
+    // =========================
 
-        return redirect()->route('admin.dosen.index')->with('ok', 'Data dosen berhasil disimpan.');
+    $cekNidn = \App\Models\Dosen::where(
+        'nidn',
+        $request->nidn
+    )->exists();
+
+    if ($cekNidn) {
+
+        $errors[] =
+            'NIDN '.$request->nidn.' sudah tersedia';
     }
+
+    // =========================
+    // CEK EMAIL
+    // =========================
+
+    $cekEmail = \App\Models\Dosen::where(
+        'email',
+        $request->email
+    )->exists();
+
+    if ($cekEmail) {
+
+        $errors[] =
+            'Email '.$request->email.' sudah tersedia';
+    }
+
+    // =========================
+    // CEK KODE DOSEN
+    // =========================
+
+    $cekKode = \App\Models\Dosen::where(
+        'kode_dosen',
+        $request->kode_dosen
+    )->exists();
+
+    if ($cekKode) {
+
+        $errors[] =
+            'Kode Dosen '.$request->kode_dosen.' sudah digunakan';
+    }
+
+    // =========================
+    // JIKA ADA ERROR
+    // =========================
+
+    if (count($errors) > 0) {
+
+        return back()
+            ->withInput()
+            ->with('error', $errors);
+    }
+
+    // =========================
+    // SIMPAN DOSEN
+    // =========================
+
+    $dosen = \App\Models\Dosen::create([
+        'nama' => $request->nama,
+        'nidn' => $request->nidn,
+        'kode_dosen' => $request->kode_dosen,
+        'program_studi' => $request->program_studi,
+        'email' => $request->email,
+        'password' => bcrypt($request->password),
+    ]);
+
+    // =========================
+// SIMPAN PENGAMPU
+// =========================
+
+if ($request->mata_kuliah_id) {
+
+    \App\Models\PengampuMataKuliah::create([
+
+        'dosen_id' => $dosen->id,
+
+        'mata_kuliah_id' => $request->mata_kuliah_id,
+
+        'semester' => 1,
+
+        'tahun_ajaran' => $request->tahun_ajaran,
+    ]);
+}
+
+return back()
+    ->with(
+        'ok',
+        'Dosen berhasil ditambahkan'
+    )
+    ->with(
+        'highlight_id',
+        $dosen->id
+    );
+}
 
     public function edit(Dosen $dosen)
     {
@@ -81,22 +176,80 @@ class AdminDosenWebController extends Controller
     public function update(Request $request, Dosen $dosen)
     {
         $data = $request->validate([
-            'kode_dosen'    => ['required','string','max:50'],
-            'nama'          => ['required','string','max:255'],
-            'program_studi' => ['nullable','string','max:255'],
-            'nidn'          => ['nullable','string','max:50'],
-            'email'         => ['nullable','email','max:255'],
-            'password'      => ['nullable','string','min:6'],
-        ]);
+        'kode_dosen'    => ['required','string','max:50'],
+        'nama'          => ['required','string','max:255'],
+        'program_studi' => ['nullable','string','max:255'],
+        'nidn'          => ['required','digits:10'],
+        'email'         => ['nullable','email','max:255'],
+        'password'      => ['nullable','string','min:6'],
+    ], [
 
-        $exists = Dosen::where('kode_dosen', $data['kode_dosen'])
-            ->where('id', '!=', $dosen->id)
-            ->exists();
+        'nidn.required' => 'NIDN wajib diisi',
+        'nidn.digits' => 'NIDN harus tepat 10 angka',
+    ]);
 
-        if ($exists) {
+        $errors = [];
+
+        // =========================
+        // CEK KODE DOSEN
+        // =========================
+
+        $cekKode = Dosen::where(
+            'kode_dosen',
+            $data['kode_dosen']
+        )
+        ->where('id', '!=', $dosen->id)
+        ->exists();
+
+        if ($cekKode) {
+
+            $errors[] =
+                'Kode Dosen '.$data['kode_dosen'].' sudah digunakan';
+        }
+
+        // =========================
+        // CEK EMAIL
+        // =========================
+
+        $cekEmail = Dosen::where(
+            'email',
+            $data['email']
+        )
+        ->where('id', '!=', $dosen->id)
+        ->exists();
+
+        if ($cekEmail) {
+
+            $errors[] =
+                'Email '.$data['email'].' sudah tersedia';
+        }
+
+        // =========================
+        // CEK NIDN
+        // =========================
+
+        $cekNidn = Dosen::where(
+            'nidn',
+            $data['nidn']
+        )
+        ->where('id', '!=', $dosen->id)
+        ->exists();
+
+        if ($cekNidn) {
+
+            $errors[] =
+                'NIDN '.$data['nidn'].' sudah tersedia';
+        }
+
+        // =========================
+        // JIKA ADA ERROR
+        // =========================
+
+        if (count($errors) > 0) {
+
             return back()
-                ->withErrors(['kode_dosen' => 'Kode dosen sudah dipakai dosen lain.'])
-                ->withInput();
+                ->withInput()
+                ->with('error', $errors);
         }
 
         if (!empty($data['password'])) {
@@ -107,7 +260,16 @@ class AdminDosenWebController extends Controller
 
         $dosen->update($data);
 
-        return redirect()->route('admin.dosen.index')->with('ok', 'Data dosen berhasil diupdate.');
+       return redirect()
+            ->route('admin.dosen.index')
+            ->with(
+                'ok',
+                'Data dosen berhasil diupdate.'
+            )
+            ->with(
+                'highlight_id',
+                $dosen->id
+            );
     }
 
     public function destroy(Dosen $dosen)
@@ -116,15 +278,45 @@ class AdminDosenWebController extends Controller
         return redirect()->route('admin.dosen.index')->with('ok', 'Data dosen berhasil dihapus.');
     }
 
-    public function import(Request $request)
+   public function import(Request $request)
     {
         $request->validate([
-            'file' => ['required','file','mimes:xlsx,xls,csv']
+            'file' => 'required|mimes:xlsx,xls,csv'
         ]);
 
-        Excel::import(new DosenImport, $request->file('file'));
+        // reset duplicate
+        \App\Imports\DosenImport::$duplicates = [];
 
-        // balik ke index (filter tidak wajib dipertahankan di redirect ini)
-        return redirect()->route('admin.dosen.index')->with('ok', 'Import dosen berhasil.');
+        \Maatwebsite\Excel\Facades\Excel::import(
+            new \App\Imports\DosenImport,
+            $request->file('file')
+        );
+
+        $duplicates = \App\Imports\DosenImport::$duplicates;
+
+        if (count($duplicates) > 0) {
+
+            return back()
+                ->with(
+                    'error',
+                    $duplicates
+                )
+                ->with(
+                    'ok',
+                    'Import selesai. Sebagian data berhasil ditambahkan.'
+                );
+        }
+
+        $lastDosen = \App\Models\Dosen::latest()->first();
+
+    return back()
+        ->with(
+            'ok',
+            'Import dosen berhasil'
+        )
+        ->with(
+            'highlight_id',
+            $lastDosen?->id
+        );
     }
 }

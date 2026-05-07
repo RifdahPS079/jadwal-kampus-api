@@ -134,6 +134,16 @@ input:focus, select:focus{
   border:1px solid rgba(229,134,31,.35);
 }
 
+.alert-err{
+  background:#ffe5e5;
+  border:1px solid #ffb3b3;
+  color:#b00020;
+  padding:12px;
+  border-radius:10px;
+  font-size:13px;
+  margin-bottom:12px;
+}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:900px){
   .row{
@@ -182,6 +192,32 @@ input:focus, select:focus{
       </div>
     </div>
 
+    @if(session('error'))
+
+    <div class="alert-err">
+
+        @if(is_array(session('error')))
+
+            <ul style="margin:0; padding-left:18px;">
+
+                @foreach(session('error') as $err)
+
+                    <li>{{ $err }}</li>
+
+                @endforeach
+
+            </ul>
+
+        @else
+
+            {{ session('error') }}
+
+        @endif
+
+    </div>
+
+    @endif
+
     <!-- FORM -->
     <div class="card">
       <form method="POST" action="{{ route('admin.matakuliah.update', $mataKuliah->id) }}">
@@ -203,15 +239,140 @@ input:focus, select:focus{
 
         <!-- ROW 2 -->
         <div class="row">
-          <div>
-            <label>Program Studi</label>
-            <input name="program_studi" value="{{ old('program_studi', $mataKuliah->program_studi) }}">
-          </div>
+         <div>
 
-          <div>
+          <label>Program Studi</label>
+
+          <select name="program_studi">
+
+            <option value="">-- Pilih Program Studi --</option>
+
+            <option value="Ilmu Komputer"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Ilmu Komputer' ? 'selected' : '' }}>
+              Ilmu Komputer
+            </option>
+
+            <option value="Sistem Informasi"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Sistem Informasi' ? 'selected' : '' }}>
+              Sistem Informasi
+            </option>
+
+            <option value="Matematika"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Matematika' ? 'selected' : '' }}>
+              Matematika
+            </option>
+
+            <option value="Teknik Sipil"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Teknik Sipil' ? 'selected' : '' }}>
+              Teknik Sipil
+            </option>
+
+            <option value="Sains Data"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Sains Data' ? 'selected' : '' }}>
+              Sains Data
+            </option>
+
+            <option value="Teknologi Pangan"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Teknologi Pangan' ? 'selected' : '' }}>
+              Teknologi Pangan
+            </option>
+
+            <option value="Bioteknologi"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Bioteknologi' ? 'selected' : '' }}>
+              Bioteknologi
+            </option>
+
+            <option value="Teknik Arsitektur"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Teknik Arsitektur' ? 'selected' : '' }}>
+              Teknik Arsitektur
+            </option>
+
+            <option value="Bisnis Digital"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Bisnis Digital' ? 'selected' : '' }}>
+              Bisnis Digital
+            </option>
+
+            <option value="Sains Aktuaria"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Sains Aktuaria' ? 'selected' : '' }}>
+              Sains Aktuaria
+            </option>
+
+            <option value="Teknik Mesin"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Teknik Mesin' ? 'selected' : '' }}>
+              Teknik Mesin
+            </option>
+
+            <option value="Teknik Perkapalan"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Teknik Perkapalan' ? 'selected' : '' }}>
+              Teknik Perkapalan
+            </option>
+
+            <option value="Teknik Elektro"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Teknik Elektro' ? 'selected' : '' }}>
+              Teknik Elektro
+            </option>
+
+            <option value="Teknik Industri"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Teknik Industri' ? 'selected' : '' }}>
+              Teknik Industri
+            </option>
+
+            <option value="Teknik Lingkungan"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Teknik Lingkungan' ? 'selected' : '' }}>
+              Teknik Lingkungan
+            </option>
+
+            <option value="Teknik Sistem Energi"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Teknik Sistem Energi' ? 'selected' : '' }}>
+              Teknik Sistem Energi
+            </option>
+
+            <option value="Teknik Metalurgi"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Teknik Metalurgi' ? 'selected' : '' }}>
+              Teknik Metalurgi
+            </option>
+
+            <option value="Teknik Robotika & Kecerdasan Buatan"
+              {{ old('program_studi', $mataKuliah->program_studi) == 'Teknik Robotika & Kecerdasan Buatan' ? 'selected' : '' }}>
+              Teknik Robotika & Kecerdasan Buatan
+            </option>
+
+          </select>
+
+      </div>
+
+         <div>
             <label>SKS</label>
-            <input type="number" name="sks" value="{{ old('sks', $mataKuliah->sks) }}">
-          </div>
+            <select name="sks">
+
+                <option value="1"
+                    {{ old('sks', $mataKuliah->sks) == 1 ? 'selected' : '' }}>
+                    1 SKS
+                </option>
+
+                <option value="2"
+                    {{ old('sks', $mataKuliah->sks) == 2 ? 'selected' : '' }}>
+                    2 SKS
+                </option>
+
+                <option value="3"
+                    {{ old('sks', $mataKuliah->sks) == 3 ? 'selected' : '' }}>
+                    3 SKS
+                </option>
+
+                <option value="4"
+                    {{ old('sks', $mataKuliah->sks) == 4 ? 'selected' : '' }}>
+                    4 SKS
+                </option>
+
+                <option value="5"
+                    {{ old('sks', $mataKuliah->sks) == 5 ? 'selected' : '' }}>
+                    5 SKS
+                </option>
+
+            </select>
+
+        </div>
         </div>
 
         <!-- ROW 3 -->
@@ -229,9 +390,25 @@ input:focus, select:focus{
           </div>
 
           <div>
-            <label>Semester</label>
-            <input type="number" name="semester" value="{{ old('semester', $semester) }}">
-          </div>
+
+    <label>Semester</label>
+
+    <select name="semester">
+
+        @for($i = 1; $i <= 14; $i++)
+
+            <option value="{{ $i }}"
+                {{ old('semester', $mataKuliah->semester) == $i ? 'selected' : '' }}>
+
+                Semester {{ $i }}
+
+            </option>
+
+        @endfor
+
+    </select>
+
+</div>
         </div>
 
         <!-- FULL -->

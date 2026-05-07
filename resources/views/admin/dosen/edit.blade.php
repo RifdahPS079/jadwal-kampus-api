@@ -98,15 +98,18 @@ label{
   display:block;
 }
 
-input{
+input,
+select{
   width:100%;
   padding:12px;
   border-radius:10px;
   border:1px solid #ddd;
   font-size:14px;
+  background:#fff;
 }
 
-input:focus{
+input:focus,
+select:focus{
   border-color:#e5861f;
   box-shadow:0 0 0 3px rgba(229,134,31,.12);
 }
@@ -198,10 +201,30 @@ input:focus{
     </div>
 
     <!-- ERROR -->
-    @if ($errors->any())
-      <div class="alert-err">
-        Terjadi kesalahan, periksa kembali inputan kamu.
-      </div>
+    @if(session('error'))
+
+    <div class="alert-err">
+
+        @if(is_array(session('error')))
+
+            <ul style="margin:0; padding-left:18px;">
+
+                @foreach(session('error') as $err)
+
+                    <li>{{ $err }}</li>
+
+                @endforeach
+
+            </ul>
+
+        @else
+
+            {{ session('error') }}
+
+        @endif
+
+    </div>
+
     @endif
 
     <!-- FORM -->
@@ -226,15 +249,126 @@ input:focus{
 
         <div class="row">
           <div>
-            <label>NIDN</label>
-            <input name="nidn" value="{{ old('nidn', $dosen->nidn) }}">
-            @error('nidn') <div class="small-error">{{ $message }}</div> @enderror
+          <label>NIDN (10 angka)</label>
+
+          <input
+              type="text"
+              name="nidn"
+              value="{{ old('nidn', $dosen->nidn) }}"
+              maxlength="10"
+              minlength="10"
+              inputmode="numeric"
+              pattern="[0-9]{10}"
+              oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+          >
+
+          @error('nidn')
+          <div class="small-error">{{ $message }}</div>
+          @enderror
           </div>
 
           <div>
-            <label>Program Studi</label>
-            <input name="program_studi" value="{{ old('program_studi', $dosen->program_studi) }}">
-            @error('program_studi') <div class="small-error">{{ $message }}</div> @enderror
+           <label>Program Studi</label>
+
+            <select name="program_studi">
+
+              <option value="">-- Pilih Program Studi --</option>
+
+              <option value="Ilmu Komputer"
+                {{ old('program_studi', $dosen->program_studi) == 'Ilmu Komputer' ? 'selected' : '' }}>
+                Ilmu Komputer
+              </option>
+
+              <option value="Sistem Informasi"
+                {{ old('program_studi', $dosen->program_studi) == 'Sistem Informasi' ? 'selected' : '' }}>
+                Sistem Informasi
+              </option>
+
+              <option value="Matematika"
+                {{ old('program_studi', $dosen->program_studi) == 'Matematika' ? 'selected' : '' }}>
+                Matematika
+              </option>
+
+              <option value="Teknik Sipil"
+                {{ old('program_studi', $dosen->program_studi) == 'Teknik Sipil' ? 'selected' : '' }}>
+                Teknik Sipil
+              </option>
+
+              <option value="Sains Data"
+                {{ old('program_studi', $dosen->program_studi) == 'Sains Data' ? 'selected' : '' }}>
+                Sains Data
+              </option>
+
+              <option value="Teknologi Pangan"
+                {{ old('program_studi', $dosen->program_studi) == 'Teknologi Pangan' ? 'selected' : '' }}>
+                Teknologi Pangan
+              </option>
+
+              <option value="Bioteknologi"
+                {{ old('program_studi', $dosen->program_studi) == 'Bioteknologi' ? 'selected' : '' }}>
+                Bioteknologi
+              </option>
+
+              <option value="Teknik Arsitektur"
+                {{ old('program_studi', $dosen->program_studi) == 'Teknik Arsitektur' ? 'selected' : '' }}>
+                Teknik Arsitektur
+              </option>
+
+              <option value="Bisnis Digital"
+                {{ old('program_studi', $dosen->program_studi) == 'Bisnis Digital' ? 'selected' : '' }}>
+                Bisnis Digital
+              </option>
+
+              <option value="Sains Aktuaria"
+                {{ old('program_studi', $dosen->program_studi) == 'Sains Aktuaria' ? 'selected' : '' }}>
+                Sains Aktuaria
+              </option>
+
+              <option value="Teknik Mesin"
+                {{ old('program_studi', $dosen->program_studi) == 'Teknik Mesin' ? 'selected' : '' }}>
+                Teknik Mesin
+              </option>
+
+              <option value="Teknik Perkapalan"
+                {{ old('program_studi', $dosen->program_studi) == 'Teknik Perkapalan' ? 'selected' : '' }}>
+                Teknik Perkapalan
+              </option>
+
+              <option value="Teknik Elektro"
+                {{ old('program_studi', $dosen->program_studi) == 'Teknik Elektro' ? 'selected' : '' }}>
+                Teknik Elektro
+              </option>
+
+              <option value="Teknik Industri"
+                {{ old('program_studi', $dosen->program_studi) == 'Teknik Industri' ? 'selected' : '' }}>
+                Teknik Industri
+              </option>
+
+              <option value="Teknik Lingkungan"
+                {{ old('program_studi', $dosen->program_studi) == 'Teknik Lingkungan' ? 'selected' : '' }}>
+                Teknik Lingkungan
+              </option>
+
+              <option value="Teknik Lingkungan"
+                {{ old('program_studi', $dosen->program_studi) == 'Teknik Sistem Energi' ? 'selected' : '' }}>
+                Teknik Sistem Energi
+              </option>
+
+              <option value="Teknik Lingkungan"
+                {{ old('program_studi', $dosen->program_studi) == 'Teknik Metalurgi' ? 'selected' : '' }}>
+                Teknik Metalurgi
+              </option>
+
+              <option value="Teknik Lingkungan"
+                {{ old('program_studi', $dosen->program_studi) == 'Teknik Robotika & Kecerdasan Buatan' ? 'selected' : '' }}>
+                Teknik Robotika & Kecerdasan Buatan
+              </option>
+
+            </select>
+
+            @error('program_studi')
+            <div class="small-error">{{ $message }}</div>
+            @enderror
           </div>
         </div>
 
