@@ -536,7 +536,7 @@ public function gantiJadwal(Request $r, $jadwalId)
                 return response()->json([
                     'success' => false,
                     'message' =>
-                        'Bentrok! Dosen sudah mengajar di hari dan jam tersebut'
+                        'Anda sudah mengajar di hari dan jam tersebut'
                 ], 422);
             }
         }
