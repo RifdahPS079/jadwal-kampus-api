@@ -16,8 +16,8 @@ class Waktu extends Model
     ];
 
     protected $casts = [
-        'jam_mulai' => 'datetime:H:i:s',   // atau 'string' kalau kamu simpan TIME
-        'jam_selesai' => 'datetime:H:i:s',
+        // 'jam_mulai' => 'datetime:H:i:s',   // atau 'string' kalau kamu simpan TIME
+        // 'jam_selesai' => 'datetime:H:i:s',
         'tanggal' => 'date',
     ];
 

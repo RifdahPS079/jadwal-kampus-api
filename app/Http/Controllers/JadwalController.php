@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Jadwal;
-use App\Models\Waktu;
+
 use App\Models\PengampuMataKuliah;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -11,6 +11,7 @@ use App\Models\Notifikasi;
 use App\Models\Mahasiswa;
 use App\Models\Dosen;
 use Carbon\Carbon;
+use App\Models\Waktu;
 
 
 class JadwalController extends Controller
@@ -455,109 +456,110 @@ class JadwalController extends Controller
         ]);
     }
 
-public function gantiJadwal(Request $r, $id)
+public function gantiJadwal(Request $r, $jadwalId)
 {
     try {
 
-        $jadwal = Jadwal::find($id);
-        
+        $jadwal = Jadwal::with([
+            'pengampu',
+            'pengampu.dosen',
+            'waktu',
+            'ruangan'
+        ])->find($jadwalId);
 
         if (!$jadwal) {
             return response()->json([
+                'success' => false,
                 'message' => 'Jadwal tidak ditemukan'
             ], 404);
         }
 
-        // ✅ SIMPAN DATA LAMA SEBELUM DIUBAH
-        $oldHari = $jadwal->waktu->hari;
-        $oldJam = $jadwal->waktu->jam_mulai . '-' . $jadwal->waktu->jam_selesai;
-        $oldRuangan = $jadwal->ruangan->kode_ruangan;
-
+        // HARUS SUDAH DIBATALKAN
         if ($jadwal->status != 'batal') {
             return response()->json([
+                'success' => false,
                 'message' => 'Jadwal harus dibatalkan dulu'
             ], 400);
         }
 
-        $jadwal = Jadwal::with('pengampu.mataKuliah', 'ruangan', 'waktu')->find($id);
+        // AMBIL WAKTU BARU
+        $waktuBaru = Waktu::find($r->waktu_id);
 
-        // simpan data lama dulu
-        $ruanganLama = $jadwal->ruangan->kode_ruangan;
-        $jamLama = $jadwal->waktu->jam_mulai . ' - ' . $jadwal->waktu->jam_selesai;
+        if (!$waktuBaru) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Waktu baru tidak ditemukan'
+            ], 404);
+        }
 
-        // 🔥 UPDATE JADWAL
+        // DOSEN YANG SEDANG PINDAH
+        $dosenId = $jadwal->pengampu->dosen_id;
+        dd([
+            'jadwal_id' => $jadwal->id,
+            'pengampu' => $jadwal->pengampu,
+            'dosen_id' => $dosenId,
+        ]);
+
+        // CARI SEMUA JADWAL DOSEN INI
+        $jadwalBentrok = Jadwal::with([
+            'waktu',
+            'pengampu'
+        ])
+        ->whereHas('pengampu', function ($q) use ($dosenId) {
+            $q->where('dosen_id', $dosenId);
+        })
+        ->where('id', '!=', $jadwalId)
+        ->where('status', '!=', 'batal')
+        ->get();
+
+        // CEK TABRAKAN
+        foreach ($jadwalBentrok as $j) {
+
+            if (!$j->waktu) {
+                continue;
+            }
+
+            // HARI HARUS SAMA
+            if ($j->waktu->hari != $waktuBaru->hari) {
+                continue;
+            }
+
+            $lamaMulai = strtotime($j->waktu->jam_mulai);
+            $lamaSelesai = strtotime($j->waktu->jam_selesai);
+
+            $baruMulai = strtotime($waktuBaru->jam_mulai);
+            $baruSelesai = strtotime($waktuBaru->jam_selesai);
+
+            // CEK OVERLAP JAM
+            $bentrok =
+                ($baruMulai < $lamaSelesai) &&
+                ($baruSelesai > $lamaMulai);
+
+            if ($bentrok) {
+
+                return response()->json([
+                    'success' => false,
+                    'message' =>
+                        'Bentrok! Dosen sudah mengajar di hari dan jam tersebut'
+                ], 422);
+            }
+        }
+
+        // UPDATE JADWAL
         $jadwal->waktu_id = $r->waktu_id;
         $jadwal->ruangan_id = $r->ruangan_id;
         $jadwal->status = 'pindah';
         $jadwal->save();
 
-        // reload relasi baru
-        $jadwal->load('ruangan', 'waktu');
-
-
-        // 🔥 INSERT NOTIFIKASI
-        $mahasiswas = \App\Models\Mahasiswa::all();
-        $mk = $jadwal->pengampu->mataKuliah->nama_mk;
-        $dosen = $jadwal->pengampu->dosen->nama;
-        $kelas = $jadwal->kelas;
-        $ruangan = $jadwal->ruangan->kode_ruangan;
-        $hari = $jadwal->waktu->hari;
-        $hariBaru = $jadwal->waktu->hari . ', ' . Carbon::parse($jadwal->waktu->jam_mulai)->format('Y-m-d');
-        $jamBaru =
-            Carbon::parse($jadwal->waktu->jam_mulai)->format('H:i') . '-' .
-            Carbon::parse($jadwal->waktu->jam_selesai)->format('H:i');
-      foreach ($mahasiswas as $m) {
-        Notifikasi::create([
-            'role' => 'mahasiswa',
-            'user_id' => $m->id,
-            'tipe' => 'pindah',
-            'is_read' => 0,
-            'pesan' => json_encode([
-                'nama_mk' => $mk,
-                'kelas' => $kelas,
-                'nama_dosen' => $dosen,
-
-                // 🔴 LAMA (FIX)
-                'hari_lama' => $oldHari,
-                'jam_lama' => $oldJam,
-                'ruangan_lama' => $oldRuangan,
-
-                // 🟢 BARU
-                'hari_baru' => $hariBaru,
-                'jam_baru' => $jamBaru,
-                'ruangan_baru' => $ruangan,
-            ]),
-        ]);
-}
-
-    $dosens = Dosen::where('id', '!=', $jadwal->pengampu->dosen->id)->get();
-
-foreach ($dosens as $d) {
-    Notifikasi::create([
-        'role' => 'dosen',
-        'user_id' => $d->id,
-        'tipe' => 'pindah',
-        'is_read' => 0,
-        'pesan' => json_encode([
-            'nama_mk' => $mk,
-            'kelas' => $kelas,
-            'nama_dosen' => $dosen,
-            'hari_lama' => $oldHari,
-            'jam_lama' => $oldJam,
-            'ruangan_lama' => $oldRuangan,
-            'hari_baru' => $hariBaru,
-            'jam_baru' => $jamBaru,
-            'ruangan_baru' => $ruangan,
-        ]),
-    ]);
-}
         return response()->json([
-            'message' => 'Berhasil pindah'
+            'success' => true,
+            'message' => 'Berhasil pindah jadwal'
         ]);
 
     } catch (\Exception $e) {
 
         return response()->json([
+            'success' => false,
             'message' => $e->getMessage()
         ], 500);
     }

@@ -87,7 +87,7 @@ Route::prefix('dosen')
             '/jadwal/{id}/batalkan',
             [JadwalController::class, 'batalkan']
         );
-       Route::post('/jadwal/{id}/ganti', [JadwalController::class, 'gantiJadwal']);
+       
        Route::get('/monitoring', [JadwalController::class, 'monitoringDosen']);
 
        Route::get(
