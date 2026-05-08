@@ -541,6 +541,47 @@ public function gantiJadwal(Request $r, $jadwalId)
             }
         }
 
+        // =====================================
+// CEK BENTROK KELAS
+// =====================================
+
+$kelasBentrok = Jadwal::with('waktu')
+    ->where('kelas', $jadwal->kelas)
+    ->where('id', '!=', $jadwal->id)
+    ->where('status', '!=', 'batal')
+    ->get();
+
+foreach ($kelasBentrok as $k) {
+
+    if (!$k->waktu) {
+        continue;
+    }
+
+    // hari harus sama
+    if ($k->waktu->hari != $waktuBaru->hari) {
+        continue;
+    }
+
+    $lamaMulai = strtotime($k->waktu->jam_mulai);
+    $lamaSelesai = strtotime($k->waktu->jam_selesai);
+
+    $baruMulai = strtotime($waktuBaru->jam_mulai);
+    $baruSelesai = strtotime($waktuBaru->jam_selesai);
+
+    // cek tabrakan jam
+    $bentrokKelas =
+        ($baruMulai < $lamaSelesai) &&
+        ($baruSelesai > $lamaMulai);
+
+    if ($bentrokKelas) {
+
+        return response()->json([
+            'success' => false,
+            'message' =>
+                'Bentrok! Kelas '.$jadwal->kelas.' sudah memiliki jadwal di hari dan jam tersebut'
+        ], 422);
+    }
+}
         // UPDATE JADWAL
         $jadwal->waktu_id = $r->waktu_id;
         $jadwal->ruangan_id = $r->ruangan_id;
