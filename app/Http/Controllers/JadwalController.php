@@ -494,11 +494,7 @@ public function gantiJadwal(Request $r, $jadwalId)
 
         // DOSEN YANG SEDANG PINDAH
         $dosenId = $jadwal->pengampu->dosen_id;
-        dd([
-            'jadwal_id' => $jadwal->id,
-            'pengampu' => $jadwal->pengampu,
-            'dosen_id' => $dosenId,
-        ]);
+        
 
         // CARI SEMUA JADWAL DOSEN INI
         $jadwalBentrok = Jadwal::with([
