@@ -158,11 +158,9 @@ class MahasiswaController extends Controller
         }
 
         return response()->json([
-            'data' => [
-                'ruangans' => $ruangans,
-                'waktus' => $waktus,
-                'matrix' => $matrix
-            ]
+            'ruangans' => $ruangans,
+            'waktus' => $waktus,
+            'matrix' => $matrix
         ]);
     }
 

@@ -68,7 +68,10 @@ class AdminRuanganWaktuWebController extends Controller
 
         $ruangan->update($data);
 
-        return redirect()->route('admin.ruangan_waktu.index')->with('ok', 'Ruangan berhasil diupdate.');
+       return redirect()
+        ->route('admin.ruangan_waktu.index')
+        ->with('ok', 'Ruangan berhasil diupdate.')
+        ->with('highlight_ruangan_id', $ruangan->id);
     }
 
     public function destroyRuangan(Ruangan $ruangan)
@@ -111,7 +114,10 @@ class AdminRuanganWaktuWebController extends Controller
 
         $waktu->update($data);
 
-        return redirect()->route('admin.ruangan_waktu.index')->with('ok', 'Waktu berhasil diupdate.');
+        return redirect()
+            ->route('admin.ruangan_waktu.index')
+            ->with('ok', 'Waktu berhasil diupdate.')
+            ->with('highlight_waktu_id', $waktu->id);
     }
 
     public function destroyWaktu(Waktu $waktu)
@@ -120,15 +126,20 @@ class AdminRuanganWaktuWebController extends Controller
         return redirect()->route('admin.ruangan_waktu.index')->with('ok', 'Waktu berhasil dihapus.');
     }
 
-    public function importRuangan(Request $request)
+   public function importRuangan(Request $request)
     {
         $request->validate([
             'file' => ['required','file','mimes:xlsx,xls,csv'],
         ]);
 
-        Excel::import(new RuanganImport, $request->file('file'));
+        $import = new RuanganImport;
 
-        return redirect()->route('admin.ruangan_waktu.index')->with('ok', 'Import ruangan berhasil.');
+        Excel::import($import, $request->file('file'));
+
+        return redirect()
+            ->route('admin.ruangan_waktu.index')
+            ->with('ok', 'Import ruangan berhasil.')
+            ->with('highlight_ruangan_ids', $import->insertedIds ?? []);
     }
 
     public function importWaktu(Request $request)
@@ -137,9 +148,13 @@ class AdminRuanganWaktuWebController extends Controller
             'file' => ['required','file','mimes:xlsx,xls,csv'],
         ]);
 
-        Excel::import(new WaktuImport, $request->file('file'));
+        $import = new WaktuImport;
 
-        return redirect()->route('admin.ruangan_waktu.index')->with('ok', 'Import waktu berhasil.');
+        Excel::import($import, $request->file('file'));
+
+        return redirect()
+            ->route('admin.ruangan_waktu.index')
+            ->with('ok', 'Import waktu berhasil.')
+            ->with('highlight_waktu_ids', $import->insertedIds ?? []);
     }
-
 }

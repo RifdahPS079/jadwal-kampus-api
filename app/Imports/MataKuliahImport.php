@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 class MataKuliahImport implements ToCollection, WithHeadingRow
 {
+    public array $insertedIds = [];
     public function collection(Collection $rows)
     {
         foreach ($rows as $row) {
@@ -36,6 +37,8 @@ class MataKuliahImport implements ToCollection, WithHeadingRow
                     'sks'           => isset($row['sks']) ? (int)$row['sks'] : 0,
                 ]
             );
+
+            $this->insertedIds[] = $mk->id;
 
             // set pengampu jika ada kode_dosen
             $kodeDosen = trim((string)($row['kode_dosen'] ?? ''));

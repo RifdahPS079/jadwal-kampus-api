@@ -11,6 +11,7 @@ use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 class WaktuImport implements ToCollection, WithHeadingRow
 {
+    public array $insertedIds = [];
     public function collection(Collection $rows)
     {
         foreach ($rows as $row) {
@@ -24,10 +25,12 @@ class WaktuImport implements ToCollection, WithHeadingRow
             }
 
             // unik berdasarkan HARI + JAM. tanggal hanya ikut di-update (opsional)
-            Waktu::updateOrCreate(
+            $waktu = Waktu::updateOrCreate(
                 ['hari' => $hari, 'jam_mulai' => $mulai, 'jam_selesai' => $selesai],
                 ['tanggal' => $tanggal]
             );
+
+            $this->insertedIds[] = $waktu->id;
         }
     }
 

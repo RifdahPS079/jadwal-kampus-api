@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dosen;
+use App\Models\Jadwal;
+use App\Models\Ruangan;
+use App\Models\Waktu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -126,5 +129,50 @@ class DosenController extends Controller
         'data' => $data
     ]);
 }
+public function monitoring(Request $request)
+{
+    $hari = $request->hari;
 
+    $data = Jadwal::with([
+        'pengampu.mataKuliah',
+        'pengampu.dosen',
+        'ruangan',
+        'waktu'
+    ])
+    ->where('status', 'aktif')
+    ->whereHas('waktu', function ($q) use ($hari) {
+        $q->where('hari', $hari);
+    })
+    ->get();
+
+    $ruangans = Ruangan::orderBy('kode_ruangan')->get();
+
+    $waktus = Waktu::where('hari', $hari)
+        ->orderBy('jam_mulai')
+        ->get();
+
+    $matrix = [];
+
+    foreach ($data as $j) {
+
+        if (!$j->waktu_id || !$j->ruangan_id) {
+            continue;
+        }
+
+        $waktuId = $j->waktu_id;
+        $ruanganId = $j->ruangan_id;
+
+        $matrix[$waktuId][$ruanganId] = [
+            'kelas' => $j->kelas ?? '-',
+            'nama_mk' => optional($j->pengampu->mataKuliah)->nama_mk ?? '-',
+            'kode_dosen' => optional($j->pengampu->dosen)->kode_dosen ?? '-',
+        ];
+    }
+
+    return response()->json([
+        'ruangans' => $ruangans,
+        'waktus' => $waktus,
+        'matrix' => $matrix
+    ]);
+}
 }

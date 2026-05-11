@@ -601,7 +601,7 @@
 
                   <tr
                       id="matakuliah-{{ $mk->id }}"
-                      class="{{ session('highlight_id') == $mk->id ? 'highlight-row' : '' }}"
+                      class="{{ in_array($mk->id, session('highlight_ids', [])) ? 'highlight-row' : '' }}"
                   >
                   <td class="td-center">{{ $mk->kode_mk ?? '-' }}</td>
                   <td>{{ $mk->nama_mk ?? '-' }}</td>
@@ -655,21 +655,29 @@
 
   <script>
 
-@if(session('highlight_id'))
+@if(session('highlight_ids'))
 
 window.addEventListener('load', function () {
 
-    const row = document.getElementById(
-        'matakuliah-{{ session('highlight_id') }}'
-    );
+    const ids = @json(session('highlight_ids'));
 
-    if(row){
+    if(ids.length > 0){
 
-        row.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-        });
+        // scroll ke data terakhir hasil import
+        const lastId = ids[ids.length - 1];
 
+        const row = document.getElementById(
+            'matakuliah-' + lastId
+        );
+
+        if(row){
+
+            row.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+        }
     }
 
 });

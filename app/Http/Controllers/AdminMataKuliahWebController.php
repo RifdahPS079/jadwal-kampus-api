@@ -158,8 +158,8 @@ class AdminMataKuliahWebController extends Controller
                 'Mata kuliah berhasil disimpan.'
             )
             ->with(
-                'highlight_id',
-                $mk->id
+                'highlight_ids',
+                [$mk->id]
             );
     }
 
@@ -240,7 +240,8 @@ class AdminMataKuliahWebController extends Controller
                 'semester' => $data['semester'],
                 'tahun_ajaran' => $data['tahun_ajaran'],
             ])
-            ->with('ok', 'Mata kuliah berhasil diupdate.');
+            ->with('ok', 'Mata kuliah berhasil diupdate.')
+            ->with('highlight_ids', [$mataKuliah->id]);
     }
 
     public function destroy(MataKuliah $mataKuliah)
@@ -261,7 +262,8 @@ class AdminMataKuliahWebController extends Controller
             'prodi' => ['nullable','string','max:255'],
         ]);
 
-        Excel::import(new MataKuliahImport, $request->file('file'));
+        $import = new MataKuliahImport;
+        Excel::import($import, $request->file('file'));
 
         // ✅ balik ke filter yang sedang aktif
         $semester = (int) ($request->input('semester', 1));
@@ -269,13 +271,14 @@ class AdminMataKuliahWebController extends Controller
         $qDosen = $request->input('dosen', '');
         $qProdi = $request->input('prodi', '');
 
-        return redirect()
+       return redirect()
             ->route('admin.matakuliah.index', [
                 'semester' => $semester,
                 'tahun_ajaran' => $tahunAjaran,
                 'dosen' => $qDosen,
                 'prodi' => $qProdi,
             ])
-            ->with('ok', 'Import mata kuliah berhasil.');
+            ->with('ok', 'Import mata kuliah berhasil.')
+            ->with('highlight_ids', $import->insertedIds ?? []);
     }
 }

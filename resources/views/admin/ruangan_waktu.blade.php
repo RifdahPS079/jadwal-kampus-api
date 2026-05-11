@@ -241,6 +241,23 @@ select:focus{
   box-shadow:0 0 0 4px rgba(229,134,31,.12);
 }
     .td-center{ text-align:center; }
+
+.highlight-row{
+    animation: highlightFade 4s ease;
+}
+
+@keyframes highlightFade{
+
+    0%{
+        background:#93c5fd;
+    }
+
+    100%{
+        background:transparent;
+    }
+
+}
+
   </style>
 </head>
 
@@ -441,7 +458,20 @@ select:focus{
             </thead>
             <tbody>
               @forelse($ruangans as $r)
-                <tr>
+               <tr
+                  id="ruangan-{{ $r->id }}"
+                  class="
+                      {{
+                          (
+                              session('highlight_ruangan_id') == $r->id
+                              ||
+                              in_array($r->id, session('highlight_ruangan_ids', []))
+                          )
+                          ? 'highlight-row'
+                          : ''
+                      }}
+                  "
+              >
                   <td class="td-center">{{ $r->kode_ruangan ?? '-' }}</td>
                   <td>{{ $r->nama_ruangan ?? '-' }}</td>
                   <td>{{ $r->gedung ?? '-' }}</td>
@@ -485,7 +515,20 @@ select:focus{
             </thead>
             <tbody>
             @forelse($waktus as $w)
-              <tr>
+              <tr
+                id="waktu-{{ $w->id }}"
+                class="
+                    {{
+                        (
+                            session('highlight_waktu_id') == $w->id
+                            ||
+                            in_array($w->id, session('highlight_waktu_ids', []))
+                        )
+                        ? 'highlight-row'
+                        : ''
+                    }}
+                "
+            >
                  <td class="td-center">
                       {{ $w->jam_mulai ? \Carbon\Carbon::parse($w->jam_mulai)->format('H:i') : '-' }}
                     </td>
@@ -524,5 +567,109 @@ select:focus{
       </div>
     </div>
   </div>
+
+  <script>
+
+window.addEventListener('load', function () {
+
+    // =========================
+    // EDIT RUANGAN
+    // =========================
+
+    @if(session('highlight_ruangan_id'))
+
+        const ruanganEdit = document.getElementById(
+            'ruangan-{{ session('highlight_ruangan_id') }}'
+        );
+
+        if(ruanganEdit){
+
+            ruanganEdit.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+        }
+
+    @endif
+
+    // =========================
+    // IMPORT RUANGAN
+    // =========================
+
+    @if(session('highlight_ruangan_ids'))
+
+        const ruanganIds = @json(session('highlight_ruangan_ids'));
+
+        if(ruanganIds.length > 0){
+
+            const lastRuangan = document.getElementById(
+                'ruangan-' + ruanganIds[ruanganIds.length - 1]
+            );
+
+            if(lastRuangan){
+
+                lastRuangan.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+
+            }
+
+        }
+
+    @endif
+
+    // =========================
+    // EDIT WAKTU
+    // =========================
+
+    @if(session('highlight_waktu_id'))
+
+        const waktuEdit = document.getElementById(
+            'waktu-{{ session('highlight_waktu_id') }}'
+        );
+
+        if(waktuEdit){
+
+            waktuEdit.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+        }
+
+    @endif
+
+    // =========================
+    // IMPORT WAKTU
+    // =========================
+
+    @if(session('highlight_waktu_ids'))
+
+        const waktuIds = @json(session('highlight_waktu_ids'));
+
+        if(waktuIds.length > 0){
+
+            const lastWaktu = document.getElementById(
+                'waktu-' + waktuIds[waktuIds.length - 1]
+            );
+
+            if(lastWaktu){
+
+                lastWaktu.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+
+            }
+
+        }
+
+    @endif
+
+});
+
+</script>
 </body>
 </html>
