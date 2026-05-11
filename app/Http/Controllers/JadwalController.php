@@ -582,11 +582,115 @@ foreach ($kelasBentrok as $k) {
         ], 422);
     }
 }
-        // UPDATE JADWAL
-        $jadwal->waktu_id = $r->waktu_id;
-        $jadwal->ruangan_id = $r->ruangan_id;
-        $jadwal->status = 'pindah';
-        $jadwal->save();
+
+// SIMPAN DATA LAMA
+$hariLama = $jadwal->waktu->hari;
+
+$jamLama =
+    Carbon::parse($jadwal->waktu->jam_mulai)->format('H:i')
+    . '-' .
+    Carbon::parse($jadwal->waktu->jam_selesai)->format('H:i');
+
+$ruanganLama = $jadwal->ruangan->kode_ruangan;
+
+// UPDATE JADWAL
+$jadwal->waktu_id = $r->waktu_id;
+$jadwal->ruangan_id = $r->ruangan_id;
+$jadwal->status = 'pindah';
+$jadwal->save();
+
+        // =====================================
+// BUAT NOTIFIKASI PINDAH
+// =====================================
+
+// DATA LAMA
+$hariLama = $jadwal->waktu->hari;
+
+$jamLama =
+    Carbon::parse($jadwal->waktu->jam_mulai)->format('H:i')
+    . '-' .
+    Carbon::parse($jadwal->waktu->jam_selesai)->format('H:i');
+
+$ruanganLama = $jadwal->ruangan->kode_ruangan;
+
+// DATA BARU
+$waktuBaru = Waktu::find($r->waktu_id);
+
+$hariBaru = $waktuBaru->hari;
+
+$jamBaru =
+    Carbon::parse($waktuBaru->jam_mulai)->format('H:i')
+    . '-' .
+    Carbon::parse($waktuBaru->jam_selesai)->format('H:i');
+
+$ruanganBaru = \App\Models\Ruangan::find($r->ruangan_id);
+
+// DATA MK
+$mk = optional($jadwal->pengampu->mataKuliah)->nama_mk;
+$kelas = $jadwal->kelas;
+$namaDosen = optional($jadwal->pengampu->dosen)->nama;
+
+// =====================================
+// NOTIF MAHASISWA
+// =====================================
+
+$mahasiswas = Mahasiswa::all();
+
+foreach ($mahasiswas as $m) {
+
+    Notifikasi::create([
+        'role' => 'mahasiswa',
+        'user_id' => $m->id,
+        'tipe' => 'pindah',
+        'is_read' => 0,
+        'pesan' => json_encode([
+            'nama_mk' => $mk,
+            'kelas' => $kelas,
+            'nama_dosen' => $namaDosen,
+
+            'hari_lama' => $hariLama,
+            'jam_lama' => $jamLama,
+            'ruangan_lama' => $ruanganLama,
+
+            'hari_baru' => $hariBaru,
+            'jam_baru' => $jamBaru,
+            'ruangan_baru' => $ruanganBaru->kode_ruangan,
+        ]),
+    ]);
+}
+
+// =====================================
+// NOTIF DOSEN
+// =====================================
+
+$dosens = Dosen::where(
+    'id',
+    '!=',
+    $jadwal->pengampu->dosen->id
+)->get();
+
+foreach ($dosens as $d) {
+
+    Notifikasi::create([
+        'role' => 'dosen',
+        'user_id' => $d->id,
+        'tipe' => 'pindah',
+        'is_read' => 0,
+        'pesan' => json_encode([
+            'nama_mk' => $mk,
+            'kelas' => $kelas,
+            'nama_dosen' => $namaDosen,
+
+            'hari_lama' => $hariLama,
+            'jam_lama' => $jamLama,
+            'ruangan_lama' => $ruanganLama,
+
+            'hari_baru' => $hariBaru,
+            'jam_baru' => $jamBaru,
+            'ruangan_baru' => $ruanganBaru->kode_ruangan,
+        ]),
+    ]);
+}
 
         return response()->json([
             'success' => true,
