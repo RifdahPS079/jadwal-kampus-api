@@ -281,7 +281,8 @@ class JadwalController extends Controller
         ]);
 
         $request->validate([
-            'alasan_batal' => 'required|string'
+            'alasan_batal' => 'required|string',
+            'pertemuan_ke' => 'required|integer|min:1',
         ]);
 
         $jadwal = Jadwal::with(
@@ -292,13 +293,18 @@ class JadwalController extends Controller
         )->findOrFail($id);
 
         // ✅ UPDATE STATUS
-        $jadwal->status = 'batal';
-
-        // ✅ SIMPAN ALASAN
-        $jadwal->alasan_batal =
-            $request->alasan_batal;
-
-        $jadwal->save();
+        JadwalPertemuan::updateOrCreate(
+        [
+            'jadwal_id' => $jadwal->id,
+            'pertemuan_ke' => $request->pertemuan_ke,
+        ],
+        [
+            'waktu_id' => $jadwal->waktu_id,
+            'ruangan_id' => $jadwal->ruangan_id,
+            'status' => 'batal',
+            'alasan_batal' => $request->alasan_batal,
+        ]
+    );
 
         // DEBUG
         \Log::info('SETELAH SAVE', [
@@ -520,6 +526,12 @@ class JadwalController extends Controller
 
 public function gantiJadwal(Request $r, $jadwalId)
 {
+    $r->validate([
+    'waktu_id' => 'required|exists:waktus,id',
+    'ruangan_id' => 'required|exists:ruangans,id',
+    'pertemuan_ke' => 'required|integer|min:1',
+]);
+
     try {
 
         $jadwal = Jadwal::with([
