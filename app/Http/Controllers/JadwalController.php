@@ -75,6 +75,13 @@ class JadwalController extends Controller
         ]);
     }
 
+    private function periodeBelumAktif()
+    {
+        $periode = PeriodeKuliah::orderByDesc('id')->first();
+
+        return !$periode || (int) $periode->aktif !== 1;
+    }
+
     // =========================
     // ADMIN: list jadwal (detail lengkap) + filter + pagination optional
     // =========================
@@ -380,6 +387,16 @@ class JadwalController extends Controller
     public function jadwalDosenByMataKuliah($mataKuliahId)
         {
         $dosen = auth('dosen')->user();
+        $periode = PeriodeKuliah::latest()->first();
+        if (!$periode || !$periode->aktif) {
+            return response()->json([
+                'success' => true,
+                'periode_aktif' => false,
+                'message' => 'Semester belum dimulai. Silakan menunggu periode aktif dari admin.',
+                'pertemuan_saat_ini' => 0,
+                'data' => [],
+            ]);
+        }
 
         $data = Jadwal::query()
             ->join('waktus', 'waktus.id', '=', 'jadwals.waktu_id')
@@ -433,14 +450,30 @@ class JadwalController extends Controller
 
         return response()->json([
             'success' => true,
+            'periode_aktif' => true,
             'message' => $data->isEmpty() ? 'Data kosong' : 'OK',
             'pertemuan_saat_ini' => $pertemuanSaatIni,
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
     public function monitoringDosen(Request $request)
     {
+        $periode = PeriodeKuliah::latest()->first();
+
+        if (!$periode || !$periode->aktif) {
+            return response()->json([
+                'success' => true,
+                'periode_aktif' => false,
+                'message' => 'Semester belum dimulai. Silakan menunggu periode aktif dari admin.',
+                'data' => [
+                    'hari' => $request->query('hari', 'Senin'),
+                    'ruangans' => [],
+                    'waktus' => [],
+                    'matrix' => [],
+                ],
+            ]);
+        }
         $hari = $request->query('hari', 'Senin');
 
         $ruangans = \App\Models\Ruangan::orderBy('kode_ruangan')->get();
@@ -825,6 +858,21 @@ foreach ($dosens as $d) {
     
     public function monitoringMahasiswa(Request $request)
     {
+        $periode = PeriodeKuliah::latest()->first();
+
+        if (!$periode || !$periode->aktif) {
+            return response()->json([
+                'success' => true,
+                'periode_aktif' => false,
+                'message' => 'Belum ada perkuliahan aktif. Jadwal akan tampil setelah periode diaktifkan admin.',
+                'data' => [
+                    'hari' => $request->query('hari', 'Senin'),
+                    'ruangans' => [],
+                    'waktus' => [],
+                    'matrix' => [],
+                ],
+            ]);
+        }
         $hari = $request->query('hari', 'Senin');
 
         $ruangans = \App\Models\Ruangan::orderBy('kode_ruangan')->get();

@@ -16,12 +16,15 @@ return new class extends Migration
             $table->integer('semester');
 
             // tanggal awal kuliah
-            $table->date('tanggal_mulai');
+            $table->date('tanggal_mulai');  
+
+            $table->integer('jumlah_pertemuan')->default(16);
 
             // optional
             $table->boolean('aktif')->default(true);
 
             $table->timestamps();
+
         });
     }
 

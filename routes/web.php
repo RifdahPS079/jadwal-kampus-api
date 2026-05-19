@@ -41,6 +41,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::resource('jadwal', JadwalController::class);
 
+        Route::post('/periode-kuliah', [AdminMonitoringController::class, 'simpanPeriode'])
+            ->name('periode.simpan');
+        
 
         /*
         |--------------------------------------------------------------------------
@@ -110,3 +113,5 @@ Route::prefix('admin')->name('admin.')->group(function () {
     ]);
 });
 });
+
+

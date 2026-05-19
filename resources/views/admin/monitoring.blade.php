@@ -474,6 +474,90 @@ input, select{
           <span><span class="dot red"></span>Kosong</span>
         </div>
 
+        <div class="panel" style="margin-top:14px; margin-bottom:14px;">
+        <h4>Kelola Periode Perkuliahan</h4>
+
+        <div class="notice" style="margin-bottom:12px;">
+          Periode ini digunakan untuk menghitung pertemuan minggu ini pada aplikasi dosen.
+        </div>
+
+        <form method="POST" action="{{ route('admin.periode.simpan') }}">
+          @csrf
+
+          <div class="row">
+            <div class="col">
+              <label>Tahun Ajaran</label>
+              <input
+                type="text"
+                name="tahun_ajaran"
+                value="{{ old('tahun_ajaran', $periodeAktif->tahun_ajaran ?? '2025/2026') }}"
+                placeholder="Contoh: 2025/2026"
+                required
+              >
+
+              <div class="col">
+              <label>Status Periode</label>
+              <select name="aktif" required>
+                <option value="0" {{ old('aktif', $periodeAktif->aktif ?? 0) == 0 ? 'selected' : '' }}>
+                  Belum Aktif
+                </option>
+                <option value="1" {{ old('aktif', $periodeAktif->aktif ?? 0) == 1 ? 'selected' : '' }}>
+                  Aktif
+                </option>
+              </select>
+            </div>
+            </div>
+
+            <div class="col">
+              <label>Semester</label>
+              <select name="semester" required>
+                <option value="Ganjil" {{ old('semester', $periodeAktif->semester ?? '') == 'Ganjil' ? 'selected' : '' }}>
+                  Ganjil
+                </option>
+                <option value="Genap" {{ old('semester', $periodeAktif->semester ?? '') == 'Genap' ? 'selected' : '' }}>
+                  Genap
+                </option>
+              </select>
+            </div>
+
+            <div class="col">
+              <label>Tanggal Mulai Perkuliahan</label>
+              <input
+                type="date"
+                name="tanggal_mulai"
+                value="{{ old('tanggal_mulai', $periodeAktif->tanggal_mulai ?? '') }}"
+                required
+              >
+            </div>
+
+            <div class="col">
+              <label>Jumlah Pertemuan</label>
+              <input
+                type="number"
+                name="jumlah_pertemuan"
+                value="{{ old('jumlah_pertemuan', $periodeAktif->jumlah_pertemuan ?? 16) }}"
+                min="1"
+                max="20"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="actions" style="margin-top:10px;">
+            <button class="btn btn-orange" type="submit">
+              Simpan Periode Aktif
+            </button>
+          </div>
+        </form>
+      </div>
+
+      @if(!$periodeAktif || !$periodeAktif->aktif)
+        <div class="notice" style="background:#ffe6e6; color:#8a0000; border-color:#ffb3b3;">
+          <b>Perhatian!</b> Periode perkuliahan belum aktif.
+          Jadwal boleh sudah dimasukkan, tetapi dosen dan mahasiswa belum dapat menjalankan monitoring perkuliahan.
+        </div>
+      @endif
+
         <div class="toolbar">
           {{-- Filter hari --}}
           <form method="GET" action="{{ route('admin.monitoring') }}">

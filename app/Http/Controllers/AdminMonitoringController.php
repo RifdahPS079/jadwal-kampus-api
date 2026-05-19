@@ -9,6 +9,7 @@ use App\Imports\JadwalImport;
 use App\Models\Waktu;
 use App\Models\Ruangan;
 use App\Models\Jadwal;
+use App\Models\PeriodeKuliah;
 
 // 🔥 TAMBAHAN WAJIB (INI YANG BIKIN ERROR TADI)
 use App\Models\Dosen;
@@ -140,6 +141,8 @@ class AdminMonitoringController extends Controller
             return $terpakai < $totalRuangan; // masih ada ruang kosong
         });
         
+        $periodeAktif = PeriodeKuliah::where('aktif', true)->latest()->first();
+
         return view('admin.monitoring', compact(
             'daftarHari',
             'hari',
@@ -154,8 +157,32 @@ class AdminMonitoringController extends Controller
             'kelasList',
             'waktusKosong',
             'jadwalTerpakai',
-            'allWaktus'
+            'allWaktus',
+            'periodeAktif'
         ));
+    }
+
+    public function simpanPeriode(Request $request)
+    {
+        $data = $request->validate([
+            'tahun_ajaran' => ['required', 'string', 'max:20'],
+            'semester' => ['required', 'in:Ganjil,Genap'],
+            'tanggal_mulai' => ['required', 'date'],
+            'jumlah_pertemuan' => ['required', 'integer', 'min:1', 'max:20'],
+            'aktif' => ['required', 'boolean'],
+        ]);
+        PeriodeKuliah::query()->update(['aktif' => false]);
+        PeriodeKuliah::create([
+            'tahun_ajaran' => $data['tahun_ajaran'],
+            'semester' => $data['semester'],
+            'tanggal_mulai' => $data['tanggal_mulai'],
+            'jumlah_pertemuan' => $data['jumlah_pertemuan'],
+            'aktif' => $data['aktif'],
+        ]);
+
+        return redirect()
+            ->route('admin.monitoring')
+            ->with('success', 'Periode perkuliahan berhasil disimpan.');
     }
 
     private function hariIndonesia(int $dayOfWeekIso): string

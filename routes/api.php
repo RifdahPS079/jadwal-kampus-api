@@ -132,7 +132,8 @@ Route::prefix('mahasiswa')
         Route::get('/mahasiswa/jadwal-saya', [MahasiswaController::class, 'jadwalSaya']);
     });
 
-    Route::middleware('auth:mahasiswa')->get('/mahasiswa/monitoring', [MahasiswaController::class, 'monitoring']);
+    // Route::middleware('auth:mahasiswa')->get('/mahasiswa/monitoring', [MahasiswaController::class, 'monitoring']);
+    Route::get('/mahasiswa/monitoring', [JadwalController::class, 'monitoringMahasiswa']);
     Route::post('/lupa-katasandi', [AuthController::class, 'lupaKatasandi']);
     Route::post('/verifikasi-akun', [AuthController::class, 'verifikasiAkun']);
     Route::post('/reset-password-manual', [AuthController::class, 'resetPasswordManual']);
