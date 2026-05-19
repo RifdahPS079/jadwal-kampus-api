@@ -9,9 +9,11 @@ use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
+
 class WaktuImport implements ToCollection, WithHeadingRow
 {
     public array $insertedIds = [];
+    public array $duplicateTimes = [];
     public function collection(Collection $rows)
     {
         foreach ($rows as $row) {
@@ -25,10 +27,24 @@ class WaktuImport implements ToCollection, WithHeadingRow
             }
 
             // unik berdasarkan HARI + JAM. tanggal hanya ikut di-update (opsional)
-            $waktu = Waktu::updateOrCreate(
-                ['hari' => $hari, 'jam_mulai' => $mulai, 'jam_selesai' => $selesai],
-                ['tanggal' => $tanggal]
-            );
+            $exists = Waktu::where('hari', $hari)
+                ->where('jam_mulai', $mulai)
+                ->exists();
+
+            if ($exists) {
+
+                $this->duplicateTimes[] =
+                     $hari . ' ' . $mulai;
+
+                continue;
+            }
+
+            $waktu = Waktu::create([
+                'hari' => $hari,
+                'jam_mulai' => $mulai,
+                'jam_selesai' => $selesai,
+                'tanggal' => $tanggal,
+            ]);
 
             $this->insertedIds[] = $waktu->id;
         }

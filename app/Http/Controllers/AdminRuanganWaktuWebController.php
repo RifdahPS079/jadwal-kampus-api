@@ -34,13 +34,58 @@ class AdminRuanganWaktuWebController extends Controller
             'gedung'       => ['nullable', 'string', 'max:255'],
         ]);
 
-        // kalau kamu mau unik berdasarkan kode_ruangan:
-        Ruangan::updateOrCreate(
-            ['kode_ruangan' => $data['kode_ruangan']],
-            $data
-        );
+        // =========================
+        // CEK KODE RUANGAN
+        // =========================
 
-        return redirect()->route('admin.ruangan_waktu.index')->with('ok', 'Ruangan berhasil disimpan.');
+        $kodeExists = Ruangan::where(
+            'kode_ruangan',
+            $data['kode_ruangan']
+        )->exists();
+
+        if ($kodeExists) {
+
+            return back()
+                ->withErrors([
+                    'kode_ruangan' =>
+                        'Kode ruangan "' .
+                        $data['kode_ruangan'] .
+                        '" sudah tersedia.'
+                ])
+                ->withInput();
+        }
+
+        // =========================
+        // CEK NAMA RUANGAN
+        // =========================
+
+        $namaExists = Ruangan::where(
+            'nama_ruangan',
+            $data['nama_ruangan']
+        )->exists();
+
+        if ($namaExists) {
+
+            return back()
+                ->withErrors([
+                    'nama_ruangan' =>
+                        'Nama ruangan "' .
+                        $data['nama_ruangan'] .
+                        '" sudah tersedia.'
+                ])
+                ->withInput();
+        }
+
+        // =========================
+        // SIMPAN
+        // =========================
+
+        $ruangan = Ruangan::create($data);
+
+        return redirect()
+            ->route('admin.ruangan_waktu.index')
+            ->with('ok', 'Ruangan berhasil disimpan.')
+            ->with('highlight_ruangan_id', $ruangan->id);
     }
 
     public function editRuangan(Ruangan $ruangan)
@@ -83,7 +128,7 @@ class AdminRuanganWaktuWebController extends Controller
     // =========================
     // WAKTU
     // =========================
-    public function storeWaktu(Request $request)
+  public function storeWaktu(Request $request)
     {
         $data = $request->validate([
             'jam_mulai'   => ['required'],
@@ -92,12 +137,43 @@ class AdminRuanganWaktuWebController extends Controller
             'tanggal'     => ['nullable','date'],
         ]);
 
-        \App\Models\Waktu::updateOrCreate(
-            ['hari' => $data['hari'], 'jam_mulai' => $data['jam_mulai'], 'jam_selesai' => $data['jam_selesai']],
-            ['tanggal' => $data['tanggal'] ?? null]
-        );
+        // =========================
+        // CEK DUPLIKAT WAKTU
+        // =========================
 
-        return redirect()->route('admin.ruangan_waktu.index')->with('ok', 'Waktu berhasil disimpan.');
+        $exists = Waktu::where('hari', $data['hari'])
+            ->where('jam_mulai', $data['jam_mulai'])
+            ->exists();
+
+        if ($exists) {
+
+            return back()
+            ->withErrors([
+                'waktu' =>
+                    'Jam mulai '
+                    . $data['jam_mulai']
+                    . ' pada hari '
+                    . $data['hari']
+                    . ' sudah tersedia.'
+            ])
+            ->withInput();
+        }
+
+        // =========================
+        // SIMPAN
+        // =========================
+
+        $waktu = Waktu::create([
+            'hari'        => $data['hari'],
+            'jam_mulai'   => $data['jam_mulai'],
+            'jam_selesai' => $data['jam_selesai'],
+            'tanggal'     => $data['tanggal'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('admin.ruangan_waktu.index')
+            ->with('ok', 'Waktu berhasil disimpan.')
+            ->with('highlight_waktu_id', $waktu->id);
     }
 
     public function editWaktu(Waktu $waktu)
@@ -112,7 +188,37 @@ class AdminRuanganWaktuWebController extends Controller
             'jam_selesai' => ['required'],
         ]);
 
-        $waktu->update($data);
+        // =========================
+        // CEK DUPLIKAT JAM MULAI
+        // =========================
+
+        $exists = Waktu::where('hari', $waktu->hari)
+            ->where('jam_mulai', $data['jam_mulai'])
+            ->where('id', '!=', $waktu->id)
+            ->exists();
+
+        if ($exists) {
+
+            return back()
+                ->withErrors([
+                    'waktu' =>
+                        'Jam mulai '
+                        . $data['jam_mulai']
+                        . ' pada hari '
+                        . $waktu->hari
+                        . ' sudah tersedia.'
+                ])
+                ->withInput();
+        }
+
+        // =========================
+        // UPDATE
+        // =========================
+
+        $waktu->update([
+            'jam_mulai'   => $data['jam_mulai'],
+            'jam_selesai' => $data['jam_selesai'],
+        ]);
 
         return redirect()
             ->route('admin.ruangan_waktu.index')
@@ -136,13 +242,25 @@ class AdminRuanganWaktuWebController extends Controller
 
         Excel::import($import, $request->file('file'));
 
+        // 🔥 kalau ada duplikat
+        if (count($import->duplicateCodes) > 0) {
+
+            return redirect()
+                ->route('admin.ruangan_waktu.index')
+                ->withErrors([
+                    'kode_ruangan' =>
+                        'Kode ruangan berikut sudah tersedia: ' .
+                        implode(', ', $import->duplicateCodes)
+                ]);
+        }
+
         return redirect()
             ->route('admin.ruangan_waktu.index')
             ->with('ok', 'Import ruangan berhasil.')
             ->with('highlight_ruangan_ids', $import->insertedIds ?? []);
     }
 
-    public function importWaktu(Request $request)
+   public function importWaktu(Request $request)
     {
         $request->validate([
             'file' => ['required','file','mimes:xlsx,xls,csv'],
@@ -151,6 +269,25 @@ class AdminRuanganWaktuWebController extends Controller
         $import = new WaktuImport;
 
         Excel::import($import, $request->file('file'));
+
+        // =========================
+        // ADA DUPLIKAT
+        // =========================
+
+        if (!empty($import->duplicateTimes)) {
+
+            return redirect()
+                ->route('admin.ruangan_waktu.index')
+                ->withErrors([
+                    'waktu' =>
+                        'Waktu berikut sudah tersedia: '
+                        . implode(', ', $import->duplicateTimes)
+                ]);
+        }
+
+        // =========================
+        // SUCCESS
+        // =========================
 
         return redirect()
             ->route('admin.ruangan_waktu.index')

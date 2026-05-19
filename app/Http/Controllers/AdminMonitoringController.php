@@ -60,6 +60,7 @@ class AdminMonitoringController extends Controller
                 'waktu',
                 'ruangan',
                 'pengampu.dosen',
+                'pengampu.dosen2',
                 'pengampu.mataKuliah',
             ])
             ->whereIn('waktu_id', $waktus->pluck('id'))
@@ -72,7 +73,13 @@ class AdminMonitoringController extends Controller
 
             $j->kelas = $j->kelas ?? '-';
             $j->nama_mk = optional(optional($j->pengampu)->mataKuliah)->nama_mk ?? '-';
-            $j->kode_dosen = optional(optional($j->pengampu)->dosen)->kode_dosen ?? '-';
+            $dosen1 = optional(optional($j->pengampu)->dosen)->kode_dosen;
+            $dosen2 = optional(optional($j->pengampu)->dosen2)->kode_dosen;
+
+            $j->kode_dosen =
+                $dosen2
+                    ? $dosen1 . '/' . $dosen2
+                    : ($dosen1 ?? '-');
             $j->nama_dosen = optional(optional($j->pengampu)->dosen)->nama ?? '-';
 
             if ($j->status != 'batal') {

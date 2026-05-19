@@ -12,7 +12,7 @@ use App\Models\Mahasiswa;
 use App\Models\Dosen;
 use Carbon\Carbon;
 use App\Models\Waktu;
-
+use App\Models\PeriodeKuliah;
 
 class JadwalController extends Controller
 {
@@ -406,9 +406,35 @@ class JadwalController extends Controller
             ->orderBy('waktus.jam_mulai')
             ->get();
 
+        $periode = PeriodeKuliah::where('aktif', true)
+            ->latest()
+            ->first();
+
+        $pertemuanSaatIni = 1;
+
+        if ($periode) {
+
+            $mulai = Carbon::parse($periode->tanggal_mulai);
+
+            $hariIni = Carbon::now();
+
+            $selisihHari = $mulai->diffInDays($hariIni);
+
+            $pertemuanSaatIni = floor($selisihHari / 7) + 1;
+
+            if ($pertemuanSaatIni < 1) {
+                $pertemuanSaatIni = 1;
+            }
+
+            if ($pertemuanSaatIni > 16) {
+                $pertemuanSaatIni = 16;
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => $data->isEmpty() ? 'Data kosong' : 'OK',
+            'pertemuan_saat_ini' => $pertemuanSaatIni,
             'data' => $data
         ]);
     }

@@ -32,4 +32,9 @@ class PengampuMataKuliah extends Model
     {
         return $this->hasMany(Jadwal::class, 'pengampu_id');
     }
+
+    public function dosen2()
+    {
+        return $this->belongsTo(Dosen::class, 'dosen2_id');
+    }
 }

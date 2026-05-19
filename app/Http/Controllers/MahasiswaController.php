@@ -144,7 +144,7 @@ class MahasiswaController extends Controller
         $ruangans = \App\Models\Ruangan::all();
         $waktus = \App\Models\Waktu::where('hari', $hari)->get();
 
-        $matrix = [];
+        $matrix = new \stdClass();
 
         foreach ($data as $j) {
             $waktuId = $j->waktu_id;

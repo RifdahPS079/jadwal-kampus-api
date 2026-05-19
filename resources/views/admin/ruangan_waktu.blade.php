@@ -296,6 +296,30 @@ select:focus{
         <div class="panel">
           <h4>Tambah Ruangan</h4>
 
+          @if(
+              $errors->has('kode_ruangan')
+              ||
+              $errors->has('nama_ruangan')
+          )
+
+          <div style="
+              background:#ffe6e6;
+              color:red;
+              padding:12px;
+              border-radius:10px;
+              margin-bottom:12px;
+          ">
+
+              @if($errors->has('kode_ruangan'))
+                  <div>{{ $errors->first('kode_ruangan') }}</div>
+              @endif
+
+              @if($errors->has('nama_ruangan'))
+                  <div>{{ $errors->first('nama_ruangan') }}</div>
+              @endif
+
+          </div>
+          @endif
           <form method="POST" action="{{ route('admin.ruangan.store') }}">
             @csrf
 
@@ -303,13 +327,13 @@ select:focus{
               <div class="col">
                 <label>Kode Ruangan</label>
                 <input name="kode_ruangan" value="{{ old('kode_ruangan') }}" placeholder="Contoh: R.MACCA">
-                @error('kode_ruangan') <div class="small-err">{{ $message }}</div> @enderror
+
               </div>
 
               <div class="col">
                 <label>Nama Ruangan</label>
                 <input name="nama_ruangan" value="{{ old('nama_ruangan') }}" placeholder="Contoh: Ruang MACCA">
-                @error('nama_ruangan') <div class="small-err">{{ $message }}</div> @enderror
+              
               </div>
             </div>
 
@@ -334,14 +358,20 @@ select:focus{
         {{-- PANEL WAKTU --}}
         <div class="panel">
           <h4>Tambah Waktu</h4>
+          @if($errors->has('waktu'))
+          <div style="
+              background:#ffe6e6;
+              color:red;
+              padding:14px;
+              border-radius:12px;
+              margin-bottom:14px;
+              font-size:15px;
+          ">
+              {{ $errors->first('waktu') }}
+          </div>
+      @endif
 
-          @if($errors->any())
-            <div style="background:#ffe6e6; padding:10px; border-radius:10px; margin-bottom:10px;">
-              @foreach($errors->all() as $err)
-                <div style="color:red;">{{ $err }}</div>
-              @endforeach
-            </div>
-          @endif
+
           <form method="POST" action="{{ route('admin.waktu.store') }}">
             @csrf
 

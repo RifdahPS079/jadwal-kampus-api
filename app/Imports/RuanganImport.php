@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 class RuanganImport implements ToCollection, WithHeadingRow
 {
     public array $insertedIds = [];
+    public array $duplicateCodes = [];
 
     public function collection(Collection $rows)
     {
@@ -17,15 +18,26 @@ class RuanganImport implements ToCollection, WithHeadingRow
 
             $kode = trim((string) ($row['kode_ruangan'] ?? ''));
 
-            if ($kode === '') continue;
+            if ($kode === '') {
+                continue;
+            }
 
-            $ruangan = Ruangan::updateOrCreate(
-                ['kode_ruangan' => $kode],
-                [
-                    'nama_ruangan' => trim((string) ($row['nama_ruangan'] ?? '')) ?: null,
-                    'gedung'       => trim((string) ($row['gedung'] ?? '')) ?: null,
-                ]
-            );
+            // 🔥 CEK DUPLIKAT
+            $exists = Ruangan::where('kode_ruangan', $kode)->exists();
+
+            if ($exists) {
+
+                $this->duplicateCodes[] = $kode;
+
+                continue;
+            }
+
+            // 🔥 SIMPAN BARU
+            $ruangan = Ruangan::create([
+                'kode_ruangan' => $kode,
+                'nama_ruangan' => trim((string) ($row['nama_ruangan'] ?? '')) ?: null,
+                'gedung'       => trim((string) ($row['gedung'] ?? '')) ?: null,
+            ]);
 
             $this->insertedIds[] = $ruangan->id;
         }

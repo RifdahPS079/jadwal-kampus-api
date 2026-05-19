@@ -151,7 +151,7 @@ public function monitoring(Request $request)
         ->orderBy('jam_mulai')
         ->get();
 
-    $matrix = [];
+    $matrix = new \stdClass();
 
     foreach ($data as $j) {
 

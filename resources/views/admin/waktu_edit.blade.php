@@ -183,16 +183,13 @@ input:focus{
     </div>
 
     <!-- ERROR -->
-    @if($errors->any())
-      <div class="alert-err">
-        <b>Terjadi error:</b>
-        <ul>
-          @foreach($errors->all() as $e)
-            <li>{{ $e }}</li>
-          @endforeach
-        </ul>
-      </div>
-    @endif
+   @if($errors->has('waktu'))
+
+  <div class="alert-err">
+      {{ $errors->first('waktu') }}
+  </div>
+
+@endif
 
     <!-- FORM -->
     <div class="card">
