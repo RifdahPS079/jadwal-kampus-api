@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\JadwalPertemuan;
 
 class Jadwal extends Model
 {
@@ -33,5 +34,10 @@ class Jadwal extends Model
     public function waktu()
     {
         return $this->belongsTo(Waktu::class, 'waktu_id');
+    }
+
+    public function pertemuans()
+    {
+        return $this->hasMany(JadwalPertemuan::class, 'jadwal_id');
     }
 }

@@ -13,6 +13,7 @@ use App\Models\Dosen;
 use Carbon\Carbon;
 use App\Models\Waktu;
 use App\Models\PeriodeKuliah;
+use App\Models\JadwalPertemuan;
 
 class JadwalController extends Controller
 {
@@ -654,11 +655,24 @@ $jamLama =
 
 $ruanganLama = $jadwal->ruangan->kode_ruangan;
 
-// UPDATE JADWAL
-$jadwal->waktu_id = $r->waktu_id;
-$jadwal->ruangan_id = $r->ruangan_id;
-$jadwal->status = 'pindah';
-$jadwal->save();
+$r->validate([
+    'waktu_id' => 'required|exists:waktus,id',
+    'ruangan_id' => 'required|exists:ruangans,id',
+    'pertemuan_ke' => 'required|integer|min:1|max:20',
+]);
+
+JadwalPertemuan::updateOrCreate(
+    [
+        'jadwal_id' => $jadwal->id,
+        'pertemuan_ke' => $r->pertemuan_ke,
+    ],
+    [
+        'waktu_id' => $r->waktu_id,
+        'ruangan_id' => $r->ruangan_id,
+        'status' => 'pindah',
+        'alasan_batal' => $jadwal->alasan_batal,
+    ]
+);
 
         // =====================================
 // BUAT NOTIFIKASI PINDAH
