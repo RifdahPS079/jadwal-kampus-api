@@ -464,14 +464,16 @@ class JadwalController extends Controller
         if (!$periode || !$periode->aktif) {
             return response()->json([
                 'success' => true,
-                'periode_aktif' => false,
-                'message' => 'Semester belum dimulai. Silakan menunggu periode aktif dari admin.',
+                'periode_aktif' => true,
+                'message' => 'OK',
                 'data' => [
-                    'hari' => $request->query('hari', 'Senin'),
-                    'ruangans' => [],
-                    'waktus' => [],
-                    'matrix' => [],
-                ],
+                    'periode_aktif' => true,
+                    'message' => 'OK',
+                    'hari' => $hari,
+                    'ruangans' => $ruangans,
+                    'waktus' => $waktus,
+                    'matrix' => $matrix,
+                ]
             ]);
         }
         $hari = $request->query('hari', 'Senin');
