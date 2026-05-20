@@ -502,15 +502,13 @@ class JadwalController extends Controller
     }
 
     $hari = $request->query('hari', 'Senin');
-    $pertemuanKe = (int) $request->query('pertemuan_ke', 1);
+    $pertemuanKe = (int) $request->query('pertemuan_ke', $this->pertemuanSaatIni());
 
     $ruangans = \App\Models\Ruangan::orderBy('kode_ruangan')->get();
 
     $waktus = \App\Models\Waktu::where('hari', $hari)
         ->orderBy('jam_mulai')
         ->get();
-
-    $pertemuanKe = $request->query('pertemuan_ke', 1);
 
     $jadwals = \App\Models\Jadwal::with([
         'waktu',
@@ -997,8 +995,7 @@ foreach ($dosens as $d) {
             ]);
         }
         $hari = $request->query('hari', 'Senin');
-        $pertemuanKe = (int) $request->query('pertemuan_ke', 1);
-
+        $pertemuanKe = (int) $request->query('pertemuan_ke', $this->pertemuanSaatIni());
         $ruangans = \App\Models\Ruangan::orderBy('kode_ruangan')->get();
 
         $waktus = \App\Models\Waktu::where('hari', $hari)
@@ -1011,8 +1008,7 @@ foreach ($dosens as $d) {
             'pengampu.mataKuliah',
             'pengampu.dosen'
         ])
-        ->whereIn('waktu_id', $waktus->pluck('id'))
-        ->where('status', '!=', 'batal') // opsional
+
         ->get();
 
         $matrix = [];

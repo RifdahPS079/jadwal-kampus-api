@@ -10,6 +10,7 @@ use App\Models\Waktu;
 use App\Models\Ruangan;
 use App\Models\Jadwal;
 use App\Models\PeriodeKuliah;
+use App\Models\JadwalPertemuan;
 
 // 🔥 TAMBAHAN WAJIB (INI YANG BIKIN ERROR TADI)
 use App\Models\Dosen;
@@ -31,6 +32,20 @@ class AdminMonitoringController extends Controller
         return back()
             ->with('success', 'Import jadwal berhasil.')
             ->with('new_jadwal_id', optional($last)->id);
+    }
+
+    private function pertemuanSaatIni()
+    {
+        $periode = PeriodeKuliah::where('aktif', 1)->latest()->first();
+
+        if (!$periode) return 1;
+
+        $mulai = Carbon::parse($periode->tanggal_mulai);
+        $hariIni = Carbon::now();
+
+        $pertemuan = floor($mulai->diffInDays($hariIni) / 7) + 1;
+
+        return max(1, min($pertemuan, $periode->jumlah_pertemuan ?? 16));
     }
 
     public function index(Request $request)
@@ -57,6 +72,8 @@ class AdminMonitoringController extends Controller
         ->orderBy('jam_mulai')
         ->get();
 
+       $pertemuanKe = $this->pertemuanSaatIni();
+
         $jadwals = Jadwal::with([
                 'waktu',
                 'ruangan',
@@ -64,29 +81,50 @@ class AdminMonitoringController extends Controller
                 'pengampu.dosen2',
                 'pengampu.mataKuliah',
             ])
-            ->whereIn('waktu_id', $waktus->pluck('id'))
+
             ->get();
 
         $matrix = [];
 
         foreach ($jadwals as $j) {
-            if (!$j->waktu_id || !$j->ruangan_id) continue;
+        $jp = JadwalPertemuan::with(['waktu', 'ruangan'])
+            ->where('jadwal_id', $j->id)
+            ->where('pertemuan_ke', $pertemuanKe)
+            ->first();
 
-            $j->kelas = $j->kelas ?? '-';
-            $j->nama_mk = optional(optional($j->pengampu)->mataKuliah)->nama_mk ?? '-';
-            $dosen1 = optional(optional($j->pengampu)->dosen)->kode_dosen;
-            $dosen2 = optional(optional($j->pengampu)->dosen2)->kode_dosen;
-
-            $j->kode_dosen =
-                $dosen2
-                    ? $dosen1 . '/' . $dosen2
-                    : ($dosen1 ?? '-');
-            $j->nama_dosen = optional(optional($j->pengampu)->dosen)->nama ?? '-';
-
-            if ($j->status != 'batal') {
-                $matrix[$j->waktu_id][$j->ruangan_id] = $j;
-            }
+        if ($jp && $jp->status === 'batal') {
+            continue;
         }
+
+        $waktuTampil = $j->waktu;
+        $ruanganTampil = $j->ruangan;
+        $waktuId = $j->waktu_id;
+        $ruanganId = $j->ruangan_id;
+
+        if ($jp && $jp->status === 'pindah') {
+            $waktuTampil = $jp->waktu;
+            $ruanganTampil = $jp->ruangan;
+            $waktuId = $jp->waktu_id;
+            $ruanganId = $jp->ruangan_id;
+        }
+
+        if (!$waktuTampil || !$ruanganTampil) continue;
+        if ($waktuTampil->hari !== $hari) continue;
+
+        $j->kelas = $j->kelas ?? '-';
+        $j->nama_mk = optional(optional($j->pengampu)->mataKuliah)->nama_mk ?? '-';
+
+        $dosen1 = optional(optional($j->pengampu)->dosen)->kode_dosen;
+        $dosen2 = optional(optional($j->pengampu)->dosen2)->kode_dosen;
+
+        $j->kode_dosen = $dosen2
+            ? $dosen1 . '/' . $dosen2
+            : ($dosen1 ?? '-');
+
+        $j->nama_dosen = optional(optional($j->pengampu)->dosen)->nama ?? '-';
+
+        $matrix[$waktuId][$ruanganId] = $j;
+    }
 
         // 🔥 DATA UNTUK DROPDOWN EDIT
         $dosens = Dosen::all();
