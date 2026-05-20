@@ -449,48 +449,67 @@ class JadwalController extends Controller
 
     $data = $jadwals->map(function ($j) use ($pertemuanKe) {
 
-        $jp = JadwalPertemuan::with(['waktu', 'ruangan'])
-            ->where('jadwal_id', $j->id)
-            ->where('pertemuan_ke', $pertemuanKe)
-            ->first();
+    $jp = JadwalPertemuan::with(['waktu', 'ruangan'])
+        ->where('jadwal_id', $j->id)
+        ->where('pertemuan_ke', $pertemuanKe)
+        ->first();
 
-        // Default: jadwal asli
-        $waktu = $j->waktu;
-        $ruangan = $j->ruangan;
-        $status = 'aktif';
+    // 🔥 SIMPAN JADWAL ASLI
+    $waktuAsli = Waktu::find($j->waktu_id);
+    $ruanganAsli = \App\Models\Ruangan::find($j->ruangan_id);
 
-        // Kalau batal, tetap tampilkan jadwal asli
-        if ($jp && $jp->status === 'batal') {
-            $status = 'batal';
-        }
+    $waktu = $waktuAsli;
+    $ruangan = $ruanganAsli;
 
-        // Kalau sudah pindah, tampilkan jadwal pengganti
-        if ($jp && $jp->status === 'pindah') {
-            $waktu = $jp->waktu;
-            $ruangan = $jp->ruangan;
-            $status = 'pindah';
-        }
+    $status = 'aktif';
 
-        return [
-            'id' => $j->id,
-            'hari' => $waktu?->hari,
-            'jam_mulai' => $waktu?->jam_mulai,
-            'jam_selesai' => $waktu?->jam_selesai,
-            'kode_ruangan' => $ruangan?->kode_ruangan,
-            'nama_ruangan' => $ruangan?->nama_ruangan,
+    // =====================
+    // JIKA BATAL
+    // =====================
 
-            'hari_asli' => $j->waktu?->hari,
-            'jam_mulai_asli' => $j->waktu?->jam_mulai,
-            'jam_selesai_asli' => $j->waktu?->jam_selesai,
-            'kode_ruangan_asli' => $j->ruangan?->kode_ruangan,
-            'nama_ruangan_asli' => $j->ruangan?->nama_ruangan,
-            
-            'program_studi' => $j->program_studi,
-            'kelas' => $j->kelas,
-            'status' => $status,
-            'alasan_batal' => $jp?->alasan_batal,
-        ];
-    });
+    if ($jp && $jp->status === 'batal') {
+
+        $status = 'batal';
+
+        // 🔥 PAKAI DATA ASLI
+        $waktu = $waktuAsli;
+        $ruangan = $ruanganAsli;
+    }
+
+    // =====================
+    // JIKA PINDAH
+    // =====================
+
+    if ($jp && $jp->status === 'pindah') {
+
+        $status = 'pindah';
+
+        $waktu = $jp->waktu;
+        $ruangan = $jp->ruangan;
+    }
+
+    return [
+    'id' => $j->id,
+
+    // data yang tampil
+    'hari' => $status === 'batal' ? $waktuAsli?->hari : $waktu?->hari,
+    'jam_mulai' => $status === 'batal' ? $waktuAsli?->jam_mulai : $waktu?->jam_mulai,
+    'jam_selesai' => $status === 'batal' ? $waktuAsli?->jam_selesai : $waktu?->jam_selesai,
+    'kode_ruangan' => $status === 'batal' ? $ruanganAsli?->kode_ruangan : $ruangan?->kode_ruangan,
+    'nama_ruangan' => $status === 'batal' ? $ruanganAsli?->nama_ruangan : $ruangan?->nama_ruangan,
+
+    // data asli cadangan
+    'hari_asli' => $waktuAsli?->hari,
+    'jam_mulai_asli' => $waktuAsli?->jam_mulai,
+    'jam_selesai_asli' => $waktuAsli?->jam_selesai,
+    'kode_ruangan_asli' => $ruanganAsli?->kode_ruangan,
+
+    'program_studi' => $j->program_studi,
+    'kelas' => $j->kelas,
+    'status' => $status,
+    'alasan_batal' => $jp?->alasan_batal,
+];
+});
 
     return response()->json([
         'success' => true,
@@ -787,13 +806,13 @@ $r->validate([
 JadwalPertemuan::updateOrCreate(
     [
         'jadwal_id' => $jadwal->id,
-        'pertemuan_ke' => $r->pertemuan_ke,
+        'pertemuan_ke' => $request->pertemuan_ke,
     ],
     [
-        'waktu_id' => $r->waktu_id,
-        'ruangan_id' => $r->ruangan_id,
-        'status' => 'pindah',
-        'alasan_batal' => $jadwalPertemuan->alasan_batal,
+        'waktu_id' => null,
+        'ruangan_id' => null,
+        'status' => 'batal',
+        'alasan_batal' => $request->alasan_batal,
     ]
 );
 
