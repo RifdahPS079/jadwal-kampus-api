@@ -478,6 +478,13 @@ class JadwalController extends Controller
             'jam_selesai' => $waktu?->jam_selesai,
             'kode_ruangan' => $ruangan?->kode_ruangan,
             'nama_ruangan' => $ruangan?->nama_ruangan,
+
+            'hari_asli' => $j->waktu?->hari,
+            'jam_mulai_asli' => $j->waktu?->jam_mulai,
+            'jam_selesai_asli' => $j->waktu?->jam_selesai,
+            'kode_ruangan_asli' => $j->ruangan?->kode_ruangan,
+            'nama_ruangan_asli' => $j->ruangan?->nama_ruangan,
+            
             'program_studi' => $j->program_studi,
             'kelas' => $j->kelas,
             'status' => $status,
