@@ -328,16 +328,27 @@ class JadwalController extends Controller
         $mk = $jadwal->pengampu->mataKuliah->nama_mk;
         $kelas = $jadwal->kelas;
         $dosen = $jadwal->pengampu->dosen->nama;
-        $ruangan = $jadwal->ruangan->kode_ruangan;
+        $jpLama = JadwalPertemuan::with(['waktu', 'ruangan'])
+            ->where('jadwal_id', $jadwal->id)
+            ->where('pertemuan_ke', $request->pertemuan_ke)
+            ->first();
 
-        $hari = $jadwal->waktu->hari;
+        $waktuLama = $jpLama && $jpLama->waktu
+            ? $jpLama->waktu
+            : $jadwal->waktu;
+
+        $ruanganLamaObj = $jpLama && $jpLama->ruangan
+            ? $jpLama->ruangan
+            : $jadwal->ruangan;
+
+        $hari = $waktuLama->hari;
 
         $jam =
-            Carbon::parse($jadwal->waktu->jam_mulai)
-                ->format('H:i')
+            Carbon::parse($waktuLama->jam_mulai)->format('H:i')
             . '-' .
-            Carbon::parse($jadwal->waktu->jam_selesai)
-                ->format('H:i');
+            Carbon::parse($waktuLama->jam_selesai)->format('H:i');
+
+        $ruangan = $ruanganLamaObj->kode_ruangan;
 
         $alasan = $request->alasan_batal;
 
