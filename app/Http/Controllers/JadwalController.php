@@ -83,6 +83,20 @@ class JadwalController extends Controller
         return !$periode || (int) $periode->aktif !== 1;
     }
 
+    private function pertemuanSaatIni()
+    {
+        $periode = PeriodeKuliah::where('aktif', 1)->latest()->first();
+
+        if (!$periode) return 1;
+
+        $mulai = Carbon::parse($periode->tanggal_mulai);
+        $hariIni = Carbon::now();
+
+        $pertemuan = floor($mulai->diffInDays($hariIni) / 7) + 1;
+
+        return max(1, min($pertemuan, $periode->jumlah_pertemuan ?? 16));
+    }
+
     // =========================
     // ADMIN: list jadwal (detail lengkap) + filter + pagination optional
     // =========================
@@ -325,7 +339,7 @@ class JadwalController extends Controller
             Carbon::parse($jadwal->waktu->jam_selesai)
                 ->format('H:i');
 
-        $alasan = $jadwal->alasan_batal;
+        $alasan = $request->alasan_batal;
 
         $mahasiswas = Mahasiswa::all();
 
@@ -391,190 +405,198 @@ class JadwalController extends Controller
     }
 }
     
-    public function jadwalDosenByMataKuliah($mataKuliahId)
-        {
-        $dosen = auth('dosen')->user();
-        $pertemuanKe = (int) request()->query('pertemuan_ke', 1);
-        $periode = PeriodeKuliah::latest()->first();
-        if (!$periode || !$periode->aktif) {
-            return response()->json([
-                'success' => true,
-                'periode_aktif' => false,
-                'message' => 'Semester belum dimulai. Silakan menunggu periode aktif dari admin.',
-                'pertemuan_saat_ini' => 0,
-                'data' => [],
-            ]);
-        }
+    public function jadwalDosenByMataKuliah(Request $request, $mataKuliahId)
+{
+    $dosen = auth('dosen')->user();
 
-        $data = Jadwal::query()
-            ->join('waktus', 'waktus.id', '=', 'jadwals.waktu_id')
-            ->join('ruangans', 'ruangans.id', '=', 'jadwals.ruangan_id')
-            ->join('pengampu_mata_kuliahs as pmk', 'pmk.id', '=', 'jadwals.pengampu_id')
-            ->join('mata_kuliahs as mk', 'mk.id', '=', 'pmk.mata_kuliah_id')
+    $periode = PeriodeKuliah::where('aktif', 1)->latest()->first();
 
-            ->where('pmk.dosen_id', $dosen->id)
-            ->where('mk.id', $mataKuliahId)
-
-            ->select([
-                'jadwals.id',
-                'waktus.hari',
-                'waktus.jam_mulai',
-                'waktus.jam_selesai',
-                'ruangans.kode_ruangan',
-                'ruangans.nama_ruangan',
-                'jadwals.program_studi',
-                'jadwals.kelas',
-                'jadwals.status',
-            ])
-
-            ->orderByRaw("FIELD(waktus.hari,'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
-            ->orderBy('waktus.jam_mulai')
-            ->get();
-
-        $periode = PeriodeKuliah::where('aktif', true)
-            ->latest()
-            ->first();
-
-        $pertemuanSaatIni = 1;
-
-        if ($periode) {
-
-            $mulai = Carbon::parse($periode->tanggal_mulai);
-
-            $hariIni = Carbon::now();
-
-            $selisihHari = $mulai->diffInDays($hariIni);
-
-            $pertemuanSaatIni = floor($selisihHari / 7) + 1;
-
-            if ($pertemuanSaatIni < 1) {
-                $pertemuanSaatIni = 1;
-            }
-
-            if ($pertemuanSaatIni > 16) {
-                $pertemuanSaatIni = 16;
-            }
-        }
-
-        $data = $data->map(function ($item) use ($pertemuanKe) {
-
-        $jp = JadwalPertemuan::with(['waktu', 'ruangan'])
-            ->where('jadwal_id', $item->id)
-            ->where('pertemuan_ke', $pertemuanKe)
-            ->first();
-
-        if ($jp) {
-            $item->status = $jp->status;
-
-            if ($jp->status == 'pindah') {
-                $item->hari = optional($jp->waktu)->hari;
-                $item->jam_mulai = optional($jp->waktu)->jam_mulai;
-                $item->jam_selesai = optional($jp->waktu)->jam_selesai;
-                $item->kode_ruangan = optional($jp->ruangan)->kode_ruangan;
-                $item->nama_ruangan = optional($jp->ruangan)->nama_ruangan;
-            }
-        }
-
-        return $item;
-    });
-
+    if (!$periode) {
         return response()->json([
             'success' => true,
-            'periode_aktif' => true,
-            'message' => $data->isEmpty() ? 'Data kosong' : 'OK',
-            'pertemuan_saat_ini' => $pertemuanSaatIni,
-            'data' => $data,
+            'periode_aktif' => false,
+            'message' => 'Semester belum dimulai. Silakan menunggu periode aktif dari admin.',
+            'pertemuan_saat_ini' => 0,
+            'data' => [],
         ]);
     }
 
-    public function monitoringDosen(Request $request)
-    {
-        $periode = PeriodeKuliah::latest()->first();
+    $pertemuanSaatIni = $this->pertemuanSaatIni();
+    $pertemuanKe = (int) $request->query('pertemuan_ke', $pertemuanSaatIni);
 
-        if (!$periode || !$periode->aktif) {
-            return response()->json([
-                'success' => true,
-                'periode_aktif' => true,
-                'message' => 'OK',
-                'data' => [
-                    'periode_aktif' => true,
-                    'message' => 'OK',
-                    'hari' => $hari,
-                    'ruangans' => $ruangans,
-                    'waktus' => $waktus,
-                    'matrix' => $matrix,
-                ]
-            ]);
-        }
-        $hari = $request->query('hari', 'Senin');
-        $pertemuanKe = (int) $request->query('pertemuan_ke', 1);
+    $jadwals = Jadwal::with([
+        'waktu',
+        'ruangan',
+        'pengampu.mataKuliah',
+        'pengampu.dosen',
+    ])
+    ->whereHas('pengampu', function ($q) use ($dosen, $mataKuliahId) {
+        $q->where('dosen_id', $dosen->id)
+          ->where('mata_kuliah_id', $mataKuliahId);
+    })
+    ->get();
 
-        $ruangans = \App\Models\Ruangan::orderBy('kode_ruangan')->get();
-
-        $waktus = \App\Models\Waktu::where('hari', $hari)
-            ->orderBy('jam_mulai')
-            ->get();
-
-        $jadwals = \App\Models\Jadwal::with([
-            'waktu',
-            'ruangan',
-            'pengampu.mataKuliah',
-            'pengampu.dosen'
-        ])
-        ->whereIn('waktu_id', $waktus->pluck('id'))
-        ->get();
-
-        $matrix = [];
-
-        foreach ($jadwals as $j) {
+    $data = $jadwals->map(function ($j) use ($pertemuanKe) {
 
         $jp = JadwalPertemuan::with(['waktu', 'ruangan'])
             ->where('jadwal_id', $j->id)
             ->where('pertemuan_ke', $pertemuanKe)
             ->first();
 
-        if ($jp && $jp->status == 'batal') {
-            continue;
+        // Default: jadwal asli
+        $waktu = $j->waktu;
+        $ruangan = $j->ruangan;
+        $status = 'aktif';
+
+        // Kalau batal, tetap tampilkan jadwal asli
+        if ($jp && $jp->status === 'batal') {
+            $status = 'batal';
         }
 
-        $waktuId = $jp && $jp->status == 'pindah'
-            ? $jp->waktu_id
-            : $j->waktu_id;
-
-        $ruanganId = $jp && $jp->status == 'pindah'
-            ? $jp->ruangan_id
-            : $j->ruangan_id;
-
-        $waktuTampil = $jp && $jp->status == 'pindah'
-            ? $jp->waktu
-            : $j->waktu;
-
-        if (!$waktuTampil) {
-            continue;
+        // Kalau sudah pindah, tampilkan jadwal pengganti
+        if ($jp && $jp->status === 'pindah') {
+            $waktu = $jp->waktu;
+            $ruangan = $jp->ruangan;
+            $status = 'pindah';
         }
 
-        if ($waktuTampil->hari != $hari) {
+        return [
+            'id' => $j->id,
+            'hari' => $waktu?->hari,
+            'jam_mulai' => $waktu?->jam_mulai,
+            'jam_selesai' => $waktu?->jam_selesai,
+            'kode_ruangan' => $ruangan?->kode_ruangan,
+            'nama_ruangan' => $ruangan?->nama_ruangan,
+            'program_studi' => $j->program_studi,
+            'kelas' => $j->kelas,
+            'status' => $status,
+            'alasan_batal' => $jp?->alasan_batal,
+        ];
+    });
+
+    return response()->json([
+        'success' => true,
+        'periode_aktif' => true,
+        'message' => $data->isEmpty() ? 'Data kosong' : 'OK',
+        'pertemuan_saat_ini' => $pertemuanSaatIni,
+        'pertemuan_dipilih' => $pertemuanKe,
+        'data' => $data,
+    ]);
+}
+    public function monitoringDosen(Request $request)
+{
+    $periode = PeriodeKuliah::latest()->first();
+
+    if (!$periode || !$periode->aktif) {
+        return response()->json([
+            'success' => true,
+            'periode_aktif' => false,
+            'message' => 'Semester belum dimulai. Silakan menunggu periode aktif dari admin.',
+            'data' => [
+                'hari' => $request->query('hari', 'Senin'),
+                'ruangans' => [],
+                'waktus' => [],
+                'matrix' => [],
+            ],
+        ]);
+    }
+
+    $hari = $request->query('hari', 'Senin');
+    $pertemuanKe = (int) $request->query('pertemuan_ke', 1);
+
+    $ruangans = \App\Models\Ruangan::orderBy('kode_ruangan')->get();
+
+    $waktus = \App\Models\Waktu::where('hari', $hari)
+        ->orderBy('jam_mulai')
+        ->get();
+
+    $pertemuanKe = $request->query('pertemuan_ke', 1);
+
+    $jadwals = \App\Models\Jadwal::with([
+        'waktu',
+        'ruangan',
+        'pengampu.mataKuliah',
+        'pengampu.dosen'
+    ])
+    ->get()
+    ->map(function ($j) use ($pertemuanKe) {
+
+        $jp = \App\Models\JadwalPertemuan::where(
+            'jadwal_id',
+            $j->id
+        )
+        ->where('pertemuan_ke', $pertemuanKe)
+        ->first();
+
+        if ($jp) {
+
+            $j->status = $jp->status;
+
+            if ($jp->waktu_id) {
+                $j->waktu = \App\Models\Waktu::find($jp->waktu_id);
+            }
+
+            if ($jp->ruangan_id) {
+                $j->ruangan = \App\Models\Ruangan::find($jp->ruangan_id);
+            }
+        }
+
+        return $j;
+    });
+
+    $matrix = [];
+
+    foreach ($jadwals as $j) {
+
+        $jp = JadwalPertemuan::with(['waktu', 'ruangan'])
+            ->where('jadwal_id', $j->id)
+            ->where('pertemuan_ke', $pertemuanKe)
+            ->first();
+
+        $waktuId = $j->waktu_id;
+        $ruanganId = $j->ruangan_id;
+        $hariTampil = optional($j->waktu)->hari;
+        $status = $j->status ?? 'aktif';
+
+        if ($jp) {
+            $status = $jp->status;
+
+            if ($jp->status == 'batal') {
+                continue;
+            }
+
+            if ($jp->status == 'pindah') {
+                $waktuId = $jp->waktu_id;
+                $ruanganId = $jp->ruangan_id;
+                $hariTampil = optional($jp->waktu)->hari;
+            }
+        }
+
+        if ($hariTampil != $hari) {
             continue;
         }
 
         $matrix[$waktuId][$ruanganId] = [
             'id' => $j->id,
             'kelas' => $j->kelas,
-            'nama_mk' => optional($j->pengampu->mataKuliah)->nama_mk,
-            'kode_dosen' => optional($j->pengampu->dosen)->kode_dosen,
-            'status' => $jp->status ?? 'aktif',
+            'nama_mk' => optional(optional($j->pengampu)->mataKuliah)->nama_mk,
+            'kode_dosen' => optional(optional($j->pengampu)->dosen)->kode_dosen,
+            'status' => $status,
         ];
     }
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'hari' => $hari,
-                'ruangans' => $ruangans,
-                'waktus' => $waktus,
-                'matrix' => $matrix,
-            ]
-        ]);
-    }
+
+    return response()->json([
+        'success' => true,
+        'periode_aktif' => true,
+        'message' => 'OK',
+        'data' => [
+            'hari' => $hari,
+            'ruangans' => $ruangans,
+            'waktus' => $waktus,
+            'matrix' => $matrix,
+        ]
+    ]);
+}
 
 public function gantiJadwal(Request $r, $jadwalId)
 {
@@ -592,6 +614,18 @@ public function gantiJadwal(Request $r, $jadwalId)
             'waktu',
             'ruangan'
         ])->find($jadwalId);
+
+        $jadwalPertemuan = JadwalPertemuan::where('jadwal_id', $jadwal->id)
+    ->where('pertemuan_ke', $r->pertemuan_ke)
+    ->where('status', 'batal')
+    ->first();
+
+if (!$jadwalPertemuan) {
+    return response()->json([
+        'success' => false,
+        'message' => 'Pertemuan ini harus dibatalkan dulu sebelum dipindahkan'
+    ], 400);
+}
 
         $pertemuan = JadwalPertemuan::where('jadwal_id', $jadwal->id)
             ->where('pertemuan_ke', $r->pertemuan_ke)
@@ -743,7 +777,7 @@ JadwalPertemuan::updateOrCreate(
         'waktu_id' => $r->waktu_id,
         'ruangan_id' => $r->ruangan_id,
         'status' => 'pindah',
-        'alasan_batal' => $pertemuan->alasan_batal,
+        'alasan_batal' => $jadwalPertemuan->alasan_batal,
     ]
 );
 
