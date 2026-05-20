@@ -394,6 +394,7 @@ class JadwalController extends Controller
     public function jadwalDosenByMataKuliah($mataKuliahId)
         {
         $dosen = auth('dosen')->user();
+        $pertemuanKe = (int) request()->query('pertemuan_ke', 1);
         $periode = PeriodeKuliah::latest()->first();
         if (!$periode || !$periode->aktif) {
             return response()->json([
@@ -454,6 +455,28 @@ class JadwalController extends Controller
                 $pertemuanSaatIni = 16;
             }
         }
+
+        $data = $data->map(function ($item) use ($pertemuanKe) {
+
+        $jp = JadwalPertemuan::with(['waktu', 'ruangan'])
+            ->where('jadwal_id', $item->id)
+            ->where('pertemuan_ke', $pertemuanKe)
+            ->first();
+
+        if ($jp) {
+            $item->status = $jp->status;
+
+            if ($jp->status == 'pindah') {
+                $item->hari = optional($jp->waktu)->hari;
+                $item->jam_mulai = optional($jp->waktu)->jam_mulai;
+                $item->jam_selesai = optional($jp->waktu)->jam_selesai;
+                $item->kode_ruangan = optional($jp->ruangan)->kode_ruangan;
+                $item->nama_ruangan = optional($jp->ruangan)->nama_ruangan;
+            }
+        }
+
+        return $item;
+    });
 
         return response()->json([
             'success' => true,
@@ -583,10 +606,14 @@ public function gantiJadwal(Request $r, $jadwalId)
         }
 
         // HARUS SUDAH DIBATALKAN
-        if ($jadwal->status != 'batal') {
+        $pertemuan = JadwalPertemuan::where('jadwal_id', $jadwal->id)
+            ->where('pertemuan_ke', $r->pertemuan_ke)
+            ->first();
+
+        if (!$pertemuan || $pertemuan->status != 'batal') {
             return response()->json([
                 'success' => false,
-                'message' => 'Jadwal harus dibatalkan dulu'
+                'message' => 'Pertemuan ini belum dibatalkan'
             ], 400);
         }
 
