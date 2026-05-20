@@ -1006,9 +1006,9 @@ foreach ($dosens as $d) {
             ]);
         }
         $hari = $request->query('hari', 'Senin');
-        $pertemuanKe = (int) $request->query('pertemuan_ke', $this->pertemuanSaatIni());
+        
         $ruangans = \App\Models\Ruangan::orderBy('kode_ruangan')->get();
-
+        $pertemuanKe = (int) $request->query('pertemuan_ke', $this->pertemuanSaatIni());
         $waktus = \App\Models\Waktu::where('hari', $hari)
             ->orderBy('jam_mulai')
             ->get();
