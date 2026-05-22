@@ -328,18 +328,8 @@ class JadwalController extends Controller
         $mk = $jadwal->pengampu->mataKuliah->nama_mk;
         $kelas = $jadwal->kelas;
         $dosen = $jadwal->pengampu->dosen->nama;
-        $jpLama = JadwalPertemuan::with(['waktu', 'ruangan'])
-            ->where('jadwal_id', $jadwal->id)
-            ->where('pertemuan_ke', $request->pertemuan_ke)
-            ->first();
-
-        $waktuLama = $jpLama && $jpLama->waktu
-            ? $jpLama->waktu
-            : $jadwal->waktu;
-
-        $ruanganLamaObj = $jpLama && $jpLama->ruangan
-            ? $jpLama->ruangan
-            : $jadwal->ruangan;
+        $waktuLama = $jadwal->waktu;
+        $ruanganLamaObj = $jadwal->ruangan;
 
         $hari = $waktuLama->hari;
 
@@ -806,13 +796,13 @@ $r->validate([
 JadwalPertemuan::updateOrCreate(
     [
         'jadwal_id' => $jadwal->id,
-        'pertemuan_ke' => $request->pertemuan_ke,
+        'pertemuan_ke' => $r->pertemuan_ke,
     ],
     [
-        'waktu_id' => null,
-        'ruangan_id' => null,
-        'status' => 'batal',
-        'alasan_batal' => $request->alasan_batal,
+        'waktu_id' => $r->waktu_id,
+        'ruangan_id' => $r->ruangan_id,
+        'status' => 'pindah',
+        'alasan_batal' => $jadwalPertemuan->alasan_batal,
     ]
 );
 
