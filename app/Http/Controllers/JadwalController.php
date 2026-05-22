@@ -313,8 +313,8 @@ class JadwalController extends Controller
             'pertemuan_ke' => $request->pertemuan_ke,
         ],
         [
-            'waktu_id' => $jadwal->waktu_id,
-            'ruangan_id' => $jadwal->ruangan_id,
+            'waktu_id' => null,
+            'ruangan_id' => null,
             'status' => 'batal',
             'alasan_batal' => $request->alasan_batal,
         ]
@@ -686,93 +686,99 @@ if (!$jadwalPertemuan) {
             ], 404);
         }
 
-        // DOSEN YANG SEDANG PINDAH
-        $dosenId = $jadwal->pengampu->dosen_id;
-        
+       // ===============================
+// CEK BENTROK JADWAL PENGGANTI
+// ===============================
 
-        // CARI SEMUA JADWAL DOSEN INI
-        $jadwalBentrok = Jadwal::with([
-            'waktu',
-            'pengampu'
-        ])
-        ->whereHas('pengampu', function ($q) use ($dosenId) {
-            $q->where('dosen_id', $dosenId);
-        })
-        ->where('id', '!=', $jadwalId)
-        ->where('status', '!=', 'batal')
-        ->get();
+$waktuBaru = Waktu::findOrFail($r->waktu_id);
 
-        // CEK TABRAKAN
-        foreach ($jadwalBentrok as $j) {
+$baruMulai = strtotime($waktuBaru->jam_mulai);
+$baruSelesai = strtotime($waktuBaru->jam_selesai);
 
-            if (!$j->waktu) {
-                continue;
-            }
+$dosenId = $jadwal->pengampu->dosen_id;
+$kelasYangDipindah = $jadwal->kelas;
+$pengampuId = $jadwal->pengampu_id;
 
-            // HARI HARUS SAMA
-            if ($j->waktu->hari != $waktuBaru->hari) {
-                continue;
-            }
+$semuaJadwal = Jadwal::with([
+    'waktu',
+    'ruangan',
+    'pengampu.dosen',
+    'pengampu.mataKuliah'
+])
+->where('id', '!=', $jadwal->id)
+->get();
 
-            $lamaMulai = strtotime($j->waktu->jam_mulai);
-            $lamaSelesai = strtotime($j->waktu->jam_selesai);
+foreach ($semuaJadwal as $j) {
 
-            $baruMulai = strtotime($waktuBaru->jam_mulai);
-            $baruSelesai = strtotime($waktuBaru->jam_selesai);
+    // ambil jadwal pertemuan khusus jika ada
+    $jp = JadwalPertemuan::with(['waktu', 'ruangan'])
+        ->where('jadwal_id', $j->id)
+        ->where('pertemuan_ke', $r->pertemuan_ke)
+        ->first();
 
-            // CEK OVERLAP JAM
-            $bentrok =
-                ($baruMulai < $lamaSelesai) &&
-                ($baruSelesai > $lamaMulai);
-
-            if ($bentrok) {
-
-                return response()->json([
-                    'success' => false,
-                    'message' =>
-                        'Anda sudah mengajar di hari dan jam tersebut'
-                ], 422);
-            }
-        }
-
-        // =====================================
-// CEK BENTROK KELAS
-// =====================================
-
-$kelasBentrok = Jadwal::with('waktu')
-    ->where('kelas', $jadwal->kelas)
-    ->where('id', '!=', $jadwal->id)
-    ->where('status', '!=', 'batal')
-    ->get();
-
-foreach ($kelasBentrok as $k) {
-
-    if (!$k->waktu) {
+    // kalau pertemuan itu batal, lewati
+    if ($jp && $jp->status === 'batal') {
         continue;
     }
 
-    // hari harus sama
-    if ($k->waktu->hari != $waktuBaru->hari) {
+    // kalau jadwal lain sudah pindah, pakai waktu pindahnya
+    $waktuCek = ($jp && $jp->status === 'pindah')
+        ? $jp->waktu
+        : $j->waktu;
+
+    $ruanganCek = ($jp && $jp->status === 'pindah')
+        ? $jp->ruangan
+        : $j->ruangan;
+
+    if (!$waktuCek) {
         continue;
     }
 
-    $lamaMulai = strtotime($k->waktu->jam_mulai);
-    $lamaSelesai = strtotime($k->waktu->jam_selesai);
+    // beda hari tidak bentrok
+    if ($waktuCek->hari !== $waktuBaru->hari) {
+        continue;
+    }
 
-    $baruMulai = strtotime($waktuBaru->jam_mulai);
-    $baruSelesai = strtotime($waktuBaru->jam_selesai);
+    $lamaMulai = strtotime($waktuCek->jam_mulai);
+    $lamaSelesai = strtotime($waktuCek->jam_selesai);
 
-    // cek tabrakan jam
-    $bentrokKelas =
+    $jamBentrok =
         ($baruMulai < $lamaSelesai) &&
         ($baruSelesai > $lamaMulai);
 
-    if ($bentrokKelas) {
+    if (!$jamBentrok) {
+        continue;
+    }
 
+    // 1. Bentrok dosen
+    if ($j->pengampu && $j->pengampu->dosen_id == $dosenId) {
         return response()->json([
             'success' => false,
-            'message' =>
-                'Bentrok! Kelas '.$jadwal->kelas.' sudah memiliki jadwal di hari dan jam tersebut'
+            'message' => 'Bentrok! Dosen sudah memiliki jadwal mengajar di hari dan jam tersebut.'
+        ], 422);
+    }
+
+    // 2. Bentrok kelas
+    if ($j->kelas === $kelasYangDipindah) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Bentrok! Kelas '.$kelasYangDipindah.' sudah memiliki jadwal di hari dan jam tersebut.'
+        ], 422);
+    }
+
+    // 3. Bentrok mata kuliah / pengampu yang sama
+    if ($j->pengampu_id == $pengampuId) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Bentrok! Mata kuliah ini sudah memiliki jadwal di hari dan jam tersebut.'
+        ], 422);
+    }
+
+    // 4. Bentrok ruangan
+    if ($ruanganCek && $ruanganCek->id == $r->ruangan_id) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Bentrok! Ruangan sudah digunakan pada hari dan jam tersebut.'
         ], 422);
     }
 }
