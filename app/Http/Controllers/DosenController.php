@@ -6,6 +6,7 @@ use App\Models\Dosen;
 use App\Models\Jadwal;
 use App\Models\Ruangan;
 use App\Models\Waktu;
+use App\Models\PengampuMataKuliah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -103,35 +104,30 @@ class DosenController extends Controller
     {
         $dosen = auth('dosen')->user();
 
-        $data = \App\Models\PengampuMataKuliah::with([
-            'mataKuliah',
-            'dosen',
-            'dosen2'
-        ])
-        ->where(function ($q) use ($dosen) {
-            $q->where('dosen_id', $dosen->id)
-            ->orWhere('dosen2_id', $dosen->id);
-        })
-        ->get()
-        ->map(function ($p) {
-            return [
-                'id' => optional($p->mataKuliah)->id,
-                'nama_mk' => optional($p->mataKuliah)->nama_mk,
-                'kode_mk' => optional($p->mataKuliah)->kode_mk,
-                'sks' => optional($p->mataKuliah)->sks,
-                'semester' => $p->semester,
-                'tahun_ajaran' => $p->tahun_ajaran,
-                'dosen_1' => optional($p->dosen)->nama,
-                'dosen_2' => optional($p->dosen2)->nama,
-            ];
-        });
+        $data = PengampuMataKuliah::with(['mataKuliah', 'dosen', 'dosen2'])
+            ->where(function ($q) use ($dosen) {
+                $q->where('dosen_id', $dosen->id)
+                ->orWhere('dosen2_id', $dosen->id);
+            })
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->mataKuliah->id,
+                    'nama_mk' => $p->mataKuliah->nama_mk,
+                    'kode_mk' => $p->mataKuliah->kode_mk,
+                    'sks' => $p->mataKuliah->sks,
+                    'semester' => $p->semester,
+                    'tahun_ajaran' => $p->tahun_ajaran,
+                    'dosen_pengampu' => optional($p->dosen)->kode_dosen .
+                        (optional($p->dosen2)->kode_dosen ? '/' . optional($p->dosen2)->kode_dosen : ''),
+                ];
+            });
 
         return response()->json([
             'success' => true,
-            'data' => $data
+            'data' => $data,
         ]);
     }
-    
 public function monitoring(Request $request)
 {
     $hari = $request->hari;

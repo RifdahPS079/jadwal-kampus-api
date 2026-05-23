@@ -998,11 +998,23 @@ document.getElementById('program_studi').addEventListener('change', function () 
             namaDosen += ' / ' + p.dosen2.nama;
         }
 
+        let namaDosen = p.dosen?.nama ?? '-';
+
+        if (p.dosen2 && p.dosen2.nama) {
+            namaDosen += ' / ' + p.dosen2.nama;
+        }
+
+        let namaDosen = p.dosen?.nama ?? '-';
+
+        if (p.dosen2 && p.dosen2.nama) {
+            namaDosen += ' / ' + p.dosen2.nama;
+        }
+
         option.textContent =
             p.mata_kuliah.nama_mk + ' - ' + namaDosen;
 
-        matkulSelect.appendChild(option);
-    });
+                matkulSelect.appendChild(option);
+            });
 
 });
 
