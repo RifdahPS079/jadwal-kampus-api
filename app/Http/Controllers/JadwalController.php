@@ -383,18 +383,18 @@ class JadwalController extends Controller
         $mk = $jadwal->pengampu->mataKuliah->nama_mk;
         $kelas = $jadwal->kelas;
         $dosen = $jadwal->pengampu->dosen->nama;
-        $waktuLama = $jadwal->waktu;
-        $ruanganLamaObj = $jadwal->ruangan;
+        $waktuLama = Waktu::find($jadwal->waktu_id);
+        $ruanganLamaObj = \App\Models\Ruangan::find($jadwal->ruangan_id);
 
-        $hari = $waktuLama->hari;
-        $tanggalLama = $this->tanggalPertemuan($hari, $request->pertemuan_ke);
+        $hariLama = $waktuLama->hari;
+        $tanggalLama = $this->tanggalPertemuan($hariLama, $r->pertemuan_ke);
 
-        $jam =
+        $jamLama =
             Carbon::parse($waktuLama->jam_mulai)->format('H:i')
             . '-' .
             Carbon::parse($waktuLama->jam_selesai)->format('H:i');
 
-        $ruangan = $ruanganLamaObj->kode_ruangan;
+        $ruanganLama = $ruanganLamaObj->kode_ruangan;
 
         $alasan = $request->alasan_batal;
 
@@ -415,7 +415,7 @@ class JadwalController extends Controller
                     'jam_lama' => $jam,
                     'ruangan_lama' => $ruangan,
                     'tanggal_lama' => $tanggalLama,
-                    // ✅ INI PENTING
+
                     'alasan_batal' => $alasan,
                 ]),
             ]);
@@ -852,13 +852,14 @@ foreach ($semuaJadwal as $j) {
 }
 
 // SIMPAN DATA LAMA
-$hariLama = $jadwal->waktu->hari;
-$tanggalLama = $this->tanggalPertemuan($hariLama, $r->pertemuan_ke);
+$waktuLamaObj = Waktu::find($jadwal->waktu_id);
 
+$hariLama = $waktuLamaObj->hari;
+$tanggalLama = $this->tanggalPertemuan($hariLama, $r->pertemuan_ke);
 $jamLama =
-    Carbon::parse($jadwal->waktu->jam_mulai)->format('H:i')
+    Carbon::parse($waktuLamaObj->jam_mulai)->format('H:i')
     . '-' .
-    Carbon::parse($jadwal->waktu->jam_selesai)->format('H:i');
+    Carbon::parse($waktuLamaObj->jam_selesai)->format('H:i');
 
 $ruanganLama = $jadwal->ruangan->kode_ruangan;
 
