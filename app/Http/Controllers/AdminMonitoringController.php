@@ -129,7 +129,7 @@ class AdminMonitoringController extends Controller
         // 🔥 DATA UNTUK DROPDOWN EDIT
         $dosens = Dosen::all();
         $matakuliahs = MataKuliah::all();
-       $pengampus = PengampuMataKuliah::with([
+      $pengampus = PengampuMataKuliah::with([
             'dosen',
             'dosen2',
             'mataKuliah'
@@ -142,12 +142,12 @@ class AdminMonitoringController extends Controller
 
                 'dosen' => [
                     'nama' => optional($p->dosen)->nama,
-                    'kode_dosen' => optional($p->dosen)->kode_dosen,
+
                 ],
 
                 'dosen2' => [
                     'nama' => optional($p->dosen2)->nama,
-                    'kode_dosen' => optional($p->dosen2)->kode_dosen,
+                    
                 ],
 
                 'mata_kuliah' => [
@@ -156,7 +156,7 @@ class AdminMonitoringController extends Controller
                 ]
             ];
         });
-        
+                
         $programStudis = MataKuliah::select('program_studi')
             ->whereNotNull('program_studi')
             ->where('program_studi', '!=', '')

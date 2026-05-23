@@ -245,60 +245,64 @@ class JadwalController extends Controller
         $this->validateFilters($request);
 
         $dosen = auth('dosen')->user();
+
         $hariOrder = "FIELD(waktus.hari,'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')";
 
-        $query = Jadwal::query()
-            ->join('waktus', 'waktus.id', '=', 'jadwals.waktu_id')
-            ->join('ruangans', 'ruangans.id', '=', 'jadwals.ruangan_id')
-            ->join('pengampu_mata_kuliahs as pmk', 'pmk.id', '=', 'jadwals.pengampu_id')
-            ->join('mata_kuliahs as mk', 'mk.id', '=', 'pmk.mata_kuliah_id')
-            ->where(function ($q) use ($dosen) {
-                $q->where('pmk.dosen_id', $dosen->id)
-                ->orWhere('pmk.dosen2_id', $dosen->id);
-            })
-            ->select([
-                'jadwals.id',
-                'waktus.hari',
-                'waktus.jam_mulai',
-                'waktus.jam_selesai',
-                'ruangans.kode_ruangan',
-                'ruangans.nama_ruangan',
-                'mk.kode_mk',
-                'mk.nama_mk',
-                'mk.sks',
-                'pmk.semester',
-                'pmk.tahun_ajaran',
-                'jadwals.program_studi',
-                'jadwals.kelas',
+        $query = Jadwal::with([
+                'waktu',
+                'ruangan',
+                'pengampu.mataKuliah',
+                'pengampu.dosen',
+                'pengampu.dosen2',
             ])
-            ->when($request->query('hari'), fn($q) => $q->where('waktus.hari', $request->query('hari')))
-            ->when($request->query('program_studi'), fn($q) => $q->where('jadwals.program_studi', $request->query('program_studi')))
-            ->when($request->query('kelas'), fn($q) => $q->where('jadwals.kelas', $request->query('kelas')))
-            ->when($request->query('semester'), fn($q) => $q->where('pmk.semester', $request->query('semester')))
-            ->when($request->query('tahun_ajaran'), fn($q) => $q->where('pmk.tahun_ajaran', $request->query('tahun_ajaran')))
+            ->whereHas('pengampu', function ($q) use ($dosen) {
+                $q->where('dosen_id', $dosen->id)
+                ->orWhere('dosen2_id', $dosen->id);
+            })
+            ->when($request->query('hari'), function ($q) use ($request) {
+                $q->whereHas('waktu', fn($w) => $w->where('hari', $request->query('hari')));
+            })
+            ->when($request->query('program_studi'), fn($q) =>
+                $q->where('program_studi', $request->query('program_studi'))
+            )
+            ->when($request->query('kelas'), fn($q) =>
+                $q->where('kelas', $request->query('kelas'))
+            )
+            ->when($request->query('semester'), function ($q) use ($request) {
+                $q->whereHas('pengampu', fn($p) =>
+                    $p->where('semester', $request->query('semester'))
+                );
+            })
+            ->when($request->query('tahun_ajaran'), function ($q) use ($request) {
+                $q->whereHas('pengampu', fn($p) =>
+                    $p->where('tahun_ajaran', $request->query('tahun_ajaran'))
+                );
+            })
+            ->join('waktus', 'waktus.id', '=', 'jadwals.waktu_id')
             ->orderByRaw($hariOrder)
-            ->orderBy('waktus.jam_mulai');
+            ->orderBy('waktus.jam_mulai')
+            ->select('jadwals.*');
 
-        $perPage = (int) $request->query('per_page', 20);
-        $perPage = max(1, min($perPage, 100));
+        $data = $query->get()->map(function ($j) {
+            return [
+                'id' => $j->id,
+                'hari' => optional($j->waktu)->hari,
+                'jam_mulai' => optional($j->waktu)->jam_mulai,
+                'jam_selesai' => optional($j->waktu)->jam_selesai,
+                'kode_ruangan' => optional($j->ruangan)->kode_ruangan,
+                'nama_ruangan' => optional($j->ruangan)->nama_ruangan,
+                'kode_mk' => optional(optional($j->pengampu)->mataKuliah)->kode_mk,
+                'nama_mk' => optional(optional($j->pengampu)->mataKuliah)->nama_mk,
+                'sks' => optional(optional($j->pengampu)->mataKuliah)->sks,
+                'semester' => optional($j->pengampu)->semester,
+                'tahun_ajaran' => optional($j->pengampu)->tahun_ajaran,
+                'program_studi' => $j->program_studi,
+                'kelas' => $j->kelas,
+                'kode_dosen' => $this->kodeDosenPengampu($j),
+            ];
+        });
 
-        if ($request->has('page') || $request->has('per_page')) {
-            $p = $query->paginate($perPage);
-
-            return response()->json([
-                'success' => true,
-                'message' => ($p->total() == 0) ? 'Data kosong' : 'OK',
-                'data'    => $p->items(),
-                'meta'    => [
-                    'current_page' => $p->currentPage(),
-                    'per_page'     => $p->perPage(),
-                    'total'        => $p->total(),
-                    'last_page'    => $p->lastPage(),
-                ],
-            ], 200);
-        }
-
-        return $this->ok($query->get(), 'OK');
+        return $this->ok($data, 'OK');
     }
 
   public function batalkan(Request $request, $id)
@@ -449,10 +453,10 @@ class JadwalController extends Controller
     ])
     ->whereHas('pengampu', function ($q) use ($dosen, $mataKuliahId) {
         $q->where('mata_kuliah_id', $mataKuliahId)
-    ->where(function ($qq) use ($dosen) {
-        $qq->where('dosen_id', $dosen->id)
-            ->orWhere('dosen2_id', $dosen->id);
-    });
+        ->where(function ($qq) use ($dosen) {
+            $qq->where('dosen_id', $dosen->id)
+                ->orWhere('dosen2_id', $dosen->id);
+        });
     })
     ->get();
 
@@ -1060,7 +1064,8 @@ foreach ($dosens as $d) {
             'waktu',
             'ruangan',
             'pengampu.mataKuliah',
-            'pengampu.dosen'
+            'pengampu.dosen',
+            'pengampu.dosen2',  
         ])
 
         ->get();
