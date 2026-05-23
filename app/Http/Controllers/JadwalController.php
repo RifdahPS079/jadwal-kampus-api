@@ -365,7 +365,7 @@ class JadwalController extends Controller
         JadwalPertemuan::updateOrCreate(
         [
             'jadwal_id' => $jadwal->id,
-            'pertemuan_ke' => $r->pertemuan_ke,
+            'pertemuan_ke' => $request->pertemuan_ke,
         ],
         [
             'waktu_id' => null,
@@ -387,7 +387,7 @@ class JadwalController extends Controller
         $ruanganLamaObj = \App\Models\Ruangan::find($jadwal->ruangan_id);
 
         $hariLama = $waktuLama->hari;
-        $tanggalLama = $this->tanggalPertemuan($hariLama, $r->pertemuan_ke);
+        $tanggalLama = $this->tanggalPertemuan($hariLama, $request->pertemuan_ke);
 
         $jamLama =
             Carbon::parse($waktuLama->jam_mulai)->format('H:i')
@@ -857,7 +857,7 @@ $waktuLamaObj = Waktu::find($jadwal->waktu_id);
 $ruanganLamaObj = \App\Models\Ruangan::find($jadwal->ruangan_id);
 
 $hariLama = $waktuLamaObj->hari;
-$tanggalLama = $this->tanggalPertemuan($hariLama, $r->pertemuan_ke);
+$tanggalLama = $this->tanggalPertemuan($hariLama, $request->pertemuan_ke);
 
 $jamLama =
     Carbon::parse($waktuLamaObj->jam_mulai)->format('H:i')
@@ -875,7 +875,7 @@ $r->validate([
 JadwalPertemuan::updateOrCreate(
     [
         'jadwal_id' => $jadwal->id,
-        'pertemuan_ke' => $r->pertemuan_ke,
+        'pertemuan_ke' => $request->pertemuan_ke,
     ],
     [
         'waktu_id' => $r->waktu_id,
