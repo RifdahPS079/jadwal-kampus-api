@@ -71,10 +71,7 @@ Route::prefix('dosen')
 
     ->group(function () {
 
-        Route::get(
-            '/matakuliah-saya',
-            [\App\Http\Controllers\Api\DosenKelasController::class, 'mataKuliahSaya']
-        );
+       Route::get( '/matakuliah-saya', [DosenController::class, 'mataKuliahSaya']);
 
         Route::post('/logout', [AuthController::class, 'logoutDosen']);
 
