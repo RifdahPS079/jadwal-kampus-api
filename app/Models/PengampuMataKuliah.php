@@ -10,6 +10,7 @@ class PengampuMataKuliah extends Model
 
     protected $fillable = [
         'dosen_id',
+        'dosen2_id',
         'mata_kuliah_id',
         'semester',
         'tahun_ajaran',

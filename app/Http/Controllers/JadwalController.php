@@ -97,6 +97,18 @@ class JadwalController extends Controller
         return max(1, min($pertemuan, $periode->jumlah_pertemuan ?? 16));
     }
 
+    private function kodeDosenPengampu($jadwal)
+    {
+        $kode1 = optional(optional($jadwal->pengampu)->dosen)->kode_dosen;
+        $kode2 = optional(optional($jadwal->pengampu)->dosen2)->kode_dosen;
+
+        if ($kode1 && $kode2) {
+            return $kode1 . '/' . $kode2;
+        }
+
+        return $kode1 ?? $kode2 ?? '-';
+    }
+
     // =========================
     // ADMIN: list jadwal (detail lengkap) + filter + pagination optional
     // =========================
@@ -430,6 +442,7 @@ class JadwalController extends Controller
         'ruangan',
         'pengampu.mataKuliah',
         'pengampu.dosen',
+        'pengampu.dosen2',
     ])
     ->whereHas('pengampu', function ($q) use ($dosen, $mataKuliahId) {
         $q->where('dosen_id', $dosen->id)
@@ -480,7 +493,7 @@ class JadwalController extends Controller
 
     return [
     'id' => $j->id,
-
+    
     // data yang tampil
     'hari' => $status === 'batal' ? $waktuAsli?->hari : $waktu?->hari,
     'jam_mulai' => $status === 'batal' ? $waktuAsli?->jam_mulai : $waktu?->jam_mulai,
@@ -496,6 +509,7 @@ class JadwalController extends Controller
 
     'program_studi' => $j->program_studi,
     'kelas' => $j->kelas,
+    'kode_dosen' => $this->kodeDosenPengampu($j),
     'status' => $status,
     'alasan_batal' => $jp?->alasan_batal,
 ];
@@ -541,7 +555,8 @@ class JadwalController extends Controller
         'waktu',
         'ruangan',
         'pengampu.mataKuliah',
-        'pengampu.dosen'
+        'pengampu.dosen',
+        'pengampu.dosen2',
     ])
     ->get()
     ->map(function ($j) use ($pertemuanKe) {
@@ -605,7 +620,7 @@ class JadwalController extends Controller
             'id' => $j->id,
             'kelas' => $j->kelas,
             'nama_mk' => optional(optional($j->pengampu)->mataKuliah)->nama_mk,
-            'kode_dosen' => optional(optional($j->pengampu)->dosen)->kode_dosen,
+            'kode_dosen' => $this->kodeDosenPengampu($j),
             'status' => $status,
         ];
     }
@@ -1097,7 +1112,7 @@ foreach ($dosens as $d) {
             'id' => $j->id,
             'kelas' => $j->kelas,
             'nama_mk' => optional(optional($j->pengampu)->mataKuliah)->nama_mk,
-            'kode_dosen' => optional(optional($j->pengampu)->dosen)->kode_dosen,
+            'kode_dosen' => $this->kodeDosenPengampu($j),
             'status' => $jp->status ?? 'aktif',
         ];
     }

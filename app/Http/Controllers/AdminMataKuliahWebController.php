@@ -56,7 +56,7 @@ class AdminMataKuliahWebController extends Controller
             ->with(['pengampus' => function ($q) use ($tahunAjaran, $semester) {
                 $q->where('tahun_ajaran', $tahunAjaran)
                 ->where('semester', $semester)
-                ->with('dosen');
+                ->with(['dosen', 'dosen2']);
             }])
             ->orderBy('nama_mk')
             ->get();
@@ -88,6 +88,7 @@ class AdminMataKuliahWebController extends Controller
             'semester'      => ['required','integer','min:1','max:14'],
             'tahun_ajaran'  => ['required','string','max:20'],
             'dosen_id'      => ['required','exists:dosens,id'],
+            'dosen2_id'     => ['nullable','exists:dosens,id'],
 
         ]);
 
@@ -143,6 +144,7 @@ class AdminMataKuliahWebController extends Controller
             'semester'       => $data['semester'],
             'tahun_ajaran'   => $data['tahun_ajaran'],
             'dosen_id'       => $data['dosen_id'],
+            'dosen2_id' => $data['dosen2_id'] ?? null,
 
         ]);
 
@@ -200,6 +202,7 @@ class AdminMataKuliahWebController extends Controller
             'semester'      => ['required','integer','min:1','max:14'],
             'tahun_ajaran'  => ['required','string','max:20'],
             'dosen_id'      => ['required','exists:dosens,id'],
+            'dosen2_id'     => ['nullable','exists:dosens,id'],
         ]);
 
         // cek kode mk duplikat
@@ -232,6 +235,7 @@ class AdminMataKuliahWebController extends Controller
             ],
             [
                 'dosen_id' => $data['dosen_id'],
+                'dosen2_id' => $data['dosen2_id'] ?? null,
             ]
         );
 

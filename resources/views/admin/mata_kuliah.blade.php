@@ -505,9 +505,9 @@
 
             <div class="row" style="margin-top:10px;">
               <div class="col">
-                <label>Dosen Pengampu (periode ini)</label>
+                <label>Dosen Pengampu 1</label>
                 <select name="dosen_id" required>
-                  <option value="">-- Pilih Dosen --</option>
+                  <option value="">-- Pilih Dosen 1 --</option>
                   @foreach($dosens as $d)
                     <option value="{{ $d->id }}" {{ old('dosen_id') == $d->id ? 'selected' : '' }}>
                       {{ $d->kode_dosen }} - {{ $d->nama }}
@@ -516,6 +516,19 @@
                 </select>
                 @error('dosen_id') <div class="small-err">{{ $message }}</div> @enderror
               </div>
+
+              <div class="col">
+              <label>Dosen Pengampu 2</label>
+              <select name="dosen2_id">
+                <option value="">-- Pilih Dosen 2 --</option>
+                @foreach($dosens as $d)
+                  <option value="{{ $d->id }}" {{ old('dosen2_id') == $d->id ? 'selected' : '' }}>
+                    {{ $d->kode_dosen }} - {{ $d->nama }}
+                  </option>
+                @endforeach
+              </select>
+              @error('dosen2_id') <div class="small-err">{{ $message }}</div> @enderror
+            </div>
 
               <div class="col">
                 <label>Semester (periode ini)</label>
@@ -611,13 +624,21 @@
 
                   <td>
                     @if($pengampu && $pengampu->dosen)
-                      <b>{{ $pengampu->dosen->nama }}</b><br>
+                    <b>{{ $pengampu->dosen->nama }}</b><br>
+                    <span style="color:var(--muted); font-size:12px;">
+                      {{ $pengampu->dosen->kode_dosen }}
+                    </span>
+
+                    @if($pengampu->dosen2)
+                      <br><br>
+                      <b>{{ $pengampu->dosen2->nama }}</b><br>
                       <span style="color:var(--muted); font-size:12px;">
-                        {{ $pengampu->dosen->kode_dosen }}
+                        {{ $pengampu->dosen2->kode_dosen }}
                       </span>
-                    @else
-                      <span style="color:var(--muted);">Belum di-set</span>
                     @endif
+                  @else
+                    <span style="color:var(--muted);">Belum di-set</span>
+                  @endif
                   </td>
 
                   <td class="td-center">

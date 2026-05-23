@@ -378,7 +378,7 @@ input:focus, select:focus{
         <!-- ROW 3 -->
         <div class="row">
           <div>
-            <label>Dosen Pengampu</label>
+            <label>Dosen Pengampu 1</label>
             <select name="dosen_id">
               @foreach($dosens as $d)
                 <option value="{{ $d->id }}"
@@ -388,6 +388,19 @@ input:focus, select:focus{
               @endforeach
             </select>
           </div>
+
+          <div>
+          <label>Dosen Pengampu 2</label>
+          <select name="dosen2_id">
+            <option value="">-- Pilih Dosen 2 --</option>
+            @foreach($dosens as $d)
+              <option value="{{ $d->id }}"
+                {{ old('dosen2_id', optional($pengampu)->dosen2_id) == $d->id ? 'selected' : '' }}>
+                {{ $d->nama }}
+              </option>
+            @endforeach
+          </select>
+        </div>
 
           <div>
 

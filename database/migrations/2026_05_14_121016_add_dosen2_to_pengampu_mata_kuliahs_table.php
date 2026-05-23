@@ -25,10 +25,11 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
+   public function down(): void
     {
         Schema::table('pengampu_mata_kuliahs', function (Blueprint $table) {
-            //
+            $table->dropForeign(['dosen2_id']);
+            $table->dropColumn('dosen2_id');
         });
     }
 };
