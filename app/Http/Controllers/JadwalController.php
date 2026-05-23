@@ -97,6 +97,40 @@ class JadwalController extends Controller
         return max(1, min($pertemuan, $periode->jumlah_pertemuan ?? 16));
     }
 
+    private function tanggalPertemuan($pertemuanKe, $hari)
+    {
+        $periode = PeriodeKuliah::where('aktif', 1)->latest()->first();
+
+        if (!$periode || !$hari) {
+            return null;
+        }
+
+        $urutanHari = [
+            'Senin' => 0,
+            'Selasa' => 1,
+            'Rabu' => 2,
+            'Kamis' => 3,
+            'Jumat' => 4,
+            'Sabtu' => 5,
+            'Minggu' => 6,
+        ];
+
+        if (!isset($urutanHari[$hari])) {
+            return null;
+        }
+
+        Carbon::setLocale('id');
+
+        $awalMinggu = Carbon::parse($periode->tanggal_mulai)
+            ->startOfWeek(Carbon::MONDAY)
+            ->addWeeks($pertemuanKe - 1);
+
+        return $awalMinggu
+            ->copy()
+            ->addDays($urutanHari[$hari])
+            ->translatedFormat('d F Y');
+    }
+
     private function kodeDosenPengampu($jadwal)
     {
         $kode1 = optional(optional($jadwal->pengampu)->dosen)->kode_dosen;
@@ -377,7 +411,7 @@ class JadwalController extends Controller
                     'hari_lama' => $hari,
                     'jam_lama' => $jam,
                     'ruangan_lama' => $ruangan,
-
+                    'tanggal_lama' => $this->tanggalPertemuan($request->pertemuan_ke, $hari),
                     // ✅ INI PENTING
                     'alasan_batal' => $alasan,
                 ]),
@@ -404,7 +438,7 @@ class JadwalController extends Controller
                     'hari_lama' => $hari,
                     'jam_lama' => $jam,
                     'ruangan_lama' => $ruangan,
-
+                    'tanggal_lama' => $this->tanggalPertemuan($request->pertemuan_ke, $hari),
                     // ✅ INI PENTING
                     'alasan_batal' => $alasan,
                 ]),
@@ -501,9 +535,16 @@ class JadwalController extends Controller
         $ruangan = $jp->ruangan;
     }
 
+    $hariTampil = $status === 'batal'
+        ? $waktuAsli?->hari
+        : $waktu?->hari;
+
+    $tanggalTampil = $this->tanggalPertemuan($pertemuanKe, $hariTampil);
+
     return [
     'id' => $j->id,
-    
+    'tanggal' => $tanggalTampil,
+    'tanggal_asli' => $this->tanggalPertemuan($pertemuanKe, $waktuAsli?->hari),
     // data yang tampil
     'hari' => $status === 'batal' ? $waktuAsli?->hari : $waktu?->hari,
     'jam_mulai' => $status === 'batal' ? $waktuAsli?->jam_mulai : $waktu?->jam_mulai,
@@ -893,6 +934,8 @@ foreach ($mahasiswas as $m) {
             'hari_baru' => $hariBaru,
             'jam_baru' => $jamBaru,
             'ruangan_baru' => $ruanganBaru->kode_ruangan,
+            'tanggal_lama' => $this->tanggalPertemuan($r->pertemuan_ke, $hariLama),
+            'tanggal_baru' => $this->tanggalPertemuan($r->pertemuan_ke, $hariBaru),
         ]),
     ]);
 }
@@ -926,6 +969,8 @@ foreach ($dosens as $d) {
             'hari_baru' => $hariBaru,
             'jam_baru' => $jamBaru,
             'ruangan_baru' => $ruanganBaru->kode_ruangan,
+            'tanggal_lama' => $this->tanggalPertemuan($r->pertemuan_ke, $hariLama),
+            'tanggal_baru' => $this->tanggalPertemuan($r->pertemuan_ke, $hariBaru),
         ]),
     ]);
 }
@@ -981,7 +1026,7 @@ foreach ($dosens as $d) {
             ->join('waktus', 'waktus.id', '=', 'jadwals.waktu_id')
             ->join('ruangans', 'ruangans.id', '=', 'jadwals.ruangan_id')
             ->join('pengampu_mata_kuliahs as pmk', 'pmk.id', '=', 'jadwals.pengampu_id')
-            
+
             ->join('mata_kuliahs as mk', 'mk.id', '=', 'pmk.mata_kuliah_id')
             ->join('dosens', 'dosens.id', '=', 'pmk.dosen_id')
 
