@@ -1096,10 +1096,20 @@ function filterDropdowns()
         option.textContent =
             p.mata_kuliah.nama_mk +
             ' - ' +
-            p.dosen.nama;
+            p.nama_pengampu;
 
         matkulSelect.appendChild(option);
     });
+}
+
+function namaPengampu(p) {
+    let nama = p.dosen?.nama ?? '-';
+
+    if (p.dosen2 && p.dosen2.nama) {
+        nama += ' / ' + p.dosen2.nama;
+    }
+
+    return nama;
 }
 
 function loadEditMatkul(prodi, selectedPengampu = null)
@@ -1260,7 +1270,7 @@ function filterEditDropdowns(
         option.textContent =
             p.mata_kuliah.nama_mk +
             ' - ' +
-            p.dosen.nama;
+            p.nama_pengampu;
 
         if (selectedPengampu == p.id) {
             option.selected = true;

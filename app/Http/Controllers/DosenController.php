@@ -99,36 +99,39 @@ class DosenController extends Controller
         ]);
     }
 
-   public function mataKuliahSaya()
-{
-    $user = auth('dosen')->user();
+    public function mataKuliahSaya()
+    {
+        $dosen = auth('dosen')->user();
 
-    // 🔥 AMBIL DOSEN BERDASARKAN EMAIL
-    $dosen = \App\Models\Dosen::where('email', $user->email)->first();
-
-    if (!$dosen) {
-        return response()->json([
-            'data' => [],
-            'message' => 'Dosen tidak ditemukan'
-        ]);
-    }
-
-    $data = \App\Models\PengampuMataKuliah::with('mataKuliah')
-        ->where('dosen_id', $dosen->id)
+        $data = \App\Models\PengampuMataKuliah::with([
+            'mataKuliah',
+            'dosen',
+            'dosen2'
+        ])
+        ->where(function ($q) use ($dosen) {
+            $q->where('dosen_id', $dosen->id)
+            ->orWhere('dosen2_id', $dosen->id);
+        })
         ->get()
-        ->map(function ($item) {
+        ->map(function ($p) {
             return [
-                'id' => $item->mataKuliah->id ?? null,
-                'nama_mk' => $item->mataKuliah->nama_mk ?? '-',
-                'sks' => $item->mataKuliah->sks ?? 0,
-                'program_studi' => $item->mataKuliah->program_studi ?? '-',
+                'id' => optional($p->mataKuliah)->id,
+                'nama_mk' => optional($p->mataKuliah)->nama_mk,
+                'kode_mk' => optional($p->mataKuliah)->kode_mk,
+                'sks' => optional($p->mataKuliah)->sks,
+                'semester' => $p->semester,
+                'tahun_ajaran' => $p->tahun_ajaran,
+                'dosen_1' => optional($p->dosen)->nama,
+                'dosen_2' => optional($p->dosen2)->nama,
             ];
         });
 
-    return response()->json([
-        'data' => $data
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'data' => $data
+        ]);
+    }
+    
 public function monitoring(Request $request)
 {
     $hari = $request->hari;

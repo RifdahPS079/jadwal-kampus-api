@@ -981,6 +981,10 @@ foreach ($dosens as $d) {
             ->join('waktus', 'waktus.id', '=', 'jadwals.waktu_id')
             ->join('ruangans', 'ruangans.id', '=', 'jadwals.ruangan_id')
             ->join('pengampu_mata_kuliahs as pmk', 'pmk.id', '=', 'jadwals.pengampu_id')
+            ->where(function ($q) use ($dosen) {
+                $q->where('pmk.dosen_id', $dosen->id)
+                ->orWhere('pmk.dosen2_id', $dosen->id);
+            })
             ->join('mata_kuliahs as mk', 'mk.id', '=', 'pmk.mata_kuliah_id')
             ->join('dosens', 'dosens.id', '=', 'pmk.dosen_id')
 

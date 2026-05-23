@@ -129,26 +129,23 @@ class AdminMonitoringController extends Controller
         // 🔥 DATA UNTUK DROPDOWN EDIT
         $dosens = Dosen::all();
         $matakuliahs = MataKuliah::all();
-      $pengampus = PengampuMataKuliah::with([
+        $pengampus = PengampuMataKuliah::with([
             'dosen',
             'dosen2',
             'mataKuliah'
         ])->get()->map(function ($p) {
+
+            $namaDosen1 = optional($p->dosen)->nama;
+            $namaDosen2 = optional($p->dosen2)->nama;
 
             return [
                 'id' => $p->id,
 
                 'semester' => $p->semester,
 
-                'dosen' => [
-                    'nama' => optional($p->dosen)->nama,
-
-                ],
-
-                'dosen2' => [
-                    'nama' => optional($p->dosen2)->nama,
-                    
-                ],
+                'nama_pengampu' => $namaDosen2
+                    ? $namaDosen1 . ' / ' . $namaDosen2
+                    : $namaDosen1,
 
                 'mata_kuliah' => [
                     'nama_mk' => optional($p->mataKuliah)->nama_mk,
