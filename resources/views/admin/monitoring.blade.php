@@ -975,48 +975,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 
-document.getElementById('program_studi').addEventListener('change', function () {
 
-    const prodi = this.value;
-    const matkulSelect = document.getElementById('matkul');
-
-    matkulSelect.innerHTML = '<option value="">-- Pilih Matkul --</option>';
-
-    const filtered = pengampus.filter(p => {
-        return p.mata_kuliah.program_studi === prodi;
-    });
-
-    filtered.forEach(p => {
-
-        const option = document.createElement('option');
-
-        option.value = p.id;
-
-        let namaDosen = p.dosen?.nama ?? '-';
-
-        if (p.dosen2 && p.dosen2.nama) {
-            namaDosen += ' / ' + p.dosen2.nama;
-        }
-
-        let namaDosen = p.dosen?.nama ?? '-';
-
-        if (p.dosen2 && p.dosen2.nama) {
-            namaDosen += ' / ' + p.dosen2.nama;
-        }
-
-        let namaDosen = p.dosen?.nama ?? '-';
-
-        if (p.dosen2 && p.dosen2.nama) {
-            namaDosen += ' / ' + p.dosen2.nama;
-        }
-
-        option.textContent =
-            p.mata_kuliah.nama_mk + ' - ' + namaDosen;
-
-                matkulSelect.appendChild(option);
-            });
-
-});
 
   const pengampus = @json($pengampus);
   const jadwalTerpakai = @json($jadwalTerpakai);
@@ -1031,7 +990,7 @@ const kelasSelect = document.getElementById('kelas_select');
 function filterDropdowns()
 {
     const waktuId = waktuSelect.value;
-    const prodi = document.getElementById('program_studi').value;
+    const prodi = document.getElementById('program_studi').value.trim().toLowerCase();
 
     // =========================
     // FILTER RUANGAN
@@ -1094,8 +1053,9 @@ function filterDropdowns()
         .map(j => j.pengampu_id);
 
     const filtered = pengampus.filter(p => {
+        const prodiMatkul = (p.mata_kuliah?.program_studi ?? '').trim().toLowerCase();
 
-        return p.mata_kuliah.program_studi === prodi
+        return prodiMatkul === prodi
             && !pengampuTerpakai.includes(p.id);
     });
 

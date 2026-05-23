@@ -149,14 +149,14 @@ class AdminMonitoringController extends Controller
 
                 'mata_kuliah' => [
                     'nama_mk' => optional($p->mataKuliah)->nama_mk,
-                    'program_studi' => optional($p->mataKuliah)->program_studi,
+                    'program_studi' => trim(optional($p->mataKuliah)->program_studi ?? ''),
                 ]
             ];
         });
                 
-        $programStudis = MataKuliah::select('program_studi')
-            ->whereNotNull('program_studi')
-            ->where('program_studi', '!=', '')
+        $programStudis = MataKuliah::whereNotNull('program_studi')
+            ->whereRaw("TRIM(program_studi) != ''")
+            ->selectRaw("TRIM(program_studi) as program_studi")
             ->distinct()
             ->orderBy('program_studi')
             ->pluck('program_studi');
