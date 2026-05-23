@@ -252,7 +252,10 @@ class JadwalController extends Controller
             ->join('ruangans', 'ruangans.id', '=', 'jadwals.ruangan_id')
             ->join('pengampu_mata_kuliahs as pmk', 'pmk.id', '=', 'jadwals.pengampu_id')
             ->join('mata_kuliahs as mk', 'mk.id', '=', 'pmk.mata_kuliah_id')
-            ->where('pmk.dosen_id', $dosen->id)
+            ->where(function ($q) use ($dosen) {
+                $q->where('pmk.dosen_id', $dosen->id)
+                ->orWhere('pmk.dosen2_id', $dosen->id);
+            })
             ->select([
                 'jadwals.id',
                 'waktus.hari',
@@ -445,8 +448,11 @@ class JadwalController extends Controller
         'pengampu.dosen2',
     ])
     ->whereHas('pengampu', function ($q) use ($dosen, $mataKuliahId) {
-        $q->where('dosen_id', $dosen->id)
-          ->where('mata_kuliah_id', $mataKuliahId);
+        $q->where('mata_kuliah_id', $mataKuliahId)
+    ->where(function ($qq) use ($dosen) {
+        $qq->where('dosen_id', $dosen->id)
+            ->orWhere('dosen2_id', $dosen->id);
+    });
     })
     ->get();
 

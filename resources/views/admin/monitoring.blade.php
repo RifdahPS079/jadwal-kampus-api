@@ -1113,8 +1113,14 @@ function loadEditMatkul(prodi, selectedPengampu = null)
 
         option.value = p.id;
 
+        let namaDosen = p.dosen?.nama ?? '-';
+
+        if (p.dosen2 && p.dosen2.nama) {
+            namaDosen += ' / ' + p.dosen2.nama;
+        }
+
         option.textContent =
-            p.mata_kuliah.nama_mk + ' - ' + p.dosen.nama;
+            p.mata_kuliah.nama_mk + ' - ' + namaDosen;
 
         if (selectedPengampu == p.id) {
             option.selected = true;
