@@ -365,7 +365,7 @@ class JadwalController extends Controller
         JadwalPertemuan::updateOrCreate(
         [
             'jadwal_id' => $jadwal->id,
-            'pertemuan_ke' => $request->pertemuan_ke,
+            'pertemuan_ke' => $r->pertemuan_ke,
         ],
         [
             'waktu_id' => null,
@@ -387,7 +387,8 @@ class JadwalController extends Controller
         $ruanganLamaObj = \App\Models\Ruangan::find($jadwal->ruangan_id);
 
         $hariLama = $waktuLama->hari;
-        $tanggalLama = $this->tanggalPertemuan($hariLama, $request->pertemuan_ke);
+        $tanggalLama = $this->tanggalPertemuan($hariLama, $r->pertemuan_ke);
+
         $jamLama =
             Carbon::parse($waktuLama->jam_mulai)->format('H:i')
             . '-' .
@@ -449,7 +450,7 @@ class JadwalController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Jadwal dibatalkan',
-            'alasan' => $request->alasan_batal,
+            'alasan' => $jadwal->alasan_batal,
         ]);
 
     } catch (\Exception $e) {
@@ -851,16 +852,19 @@ foreach ($semuaJadwal as $j) {
 }
 
 // SIMPAN DATA LAMA
+// DATA LAMA ASLI
 $waktuLamaObj = Waktu::find($jadwal->waktu_id);
+$ruanganLamaObj = \App\Models\Ruangan::find($jadwal->ruangan_id);
 
 $hariLama = $waktuLamaObj->hari;
 $tanggalLama = $this->tanggalPertemuan($hariLama, $r->pertemuan_ke);
+
 $jamLama =
     Carbon::parse($waktuLamaObj->jam_mulai)->format('H:i')
     . '-' .
     Carbon::parse($waktuLamaObj->jam_selesai)->format('H:i');
 
-$ruanganLama = $jadwal->ruangan->kode_ruangan;
+$ruanganLama = $ruanganLamaObj->kode_ruangan;
 
 $r->validate([
     'waktu_id' => 'required|exists:waktus,id',
