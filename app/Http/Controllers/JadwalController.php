@@ -365,7 +365,7 @@ class JadwalController extends Controller
         JadwalPertemuan::updateOrCreate(
         [
             'jadwal_id' => $jadwal->id,
-            'pertemuan_ke' => $request->pertemuan_ke,
+            'pertemuan_ke' => $r->pertemuan_ke,
         ],
         [
             'waktu_id' => null,
@@ -407,13 +407,13 @@ class JadwalController extends Controller
                 'user_id' => $m->id,
                 'tipe' => 'batal',
                 'is_read' => 0,
-                'pesan' => json_encode([
+               'pesan' => json_encode([
                     'nama_mk' => $mk,
                     'kelas' => $kelas,
                     'nama_dosen' => $dosen,
-                    'hari_lama' => $hari,
-                    'jam_lama' => $jam,
-                    'ruangan_lama' => $ruangan,
+                    'hari_lama' => $hariLama,
+                    'jam_lama' => $jamLama,
+                    'ruangan_lama' => $ruanganLama,
                     'tanggal_lama' => $tanggalLama,
 
                     'alasan_batal' => $alasan,
@@ -438,9 +438,9 @@ class JadwalController extends Controller
                     'nama_mk' => $mk,
                     'kelas' => $kelas,
                     'nama_dosen' => $dosen,
-                    'hari_lama' => $hari,
-                    'jam_lama' => $jam,
-                    'ruangan_lama' => $ruangan,
+                    'hari_lama' => $hariLama,
+                    'jam_lama' => $jamLama,
+                    'ruangan_lama' => $ruanganLama,
                     'tanggal_lama' => $tanggalLama,
                     'alasan_batal' => $alasan,
                 ]),
@@ -886,16 +886,7 @@ JadwalPertemuan::updateOrCreate(
 // BUAT NOTIFIKASI PINDAH
 // =====================================
 
-// DATA LAMA
-$hariLama = $jadwal->waktu->hari;
-$tanggalLama = $this->tanggalPertemuan($hariLama, $r->pertemuan_ke);
 
-$jamLama =
-    Carbon::parse($jadwal->waktu->jam_mulai)->format('H:i')
-    . '-' .
-    Carbon::parse($jadwal->waktu->jam_selesai)->format('H:i');
-
-$ruanganLama = $jadwal->ruangan->kode_ruangan;
 
 // DATA BARU
 $waktuBaru = Waktu::find($r->waktu_id);
