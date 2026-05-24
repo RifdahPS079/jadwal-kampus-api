@@ -9,7 +9,7 @@ class ForceJwtGuard
 {
    public function handle($request, Closure $next)
 {
-    // ✅ IZINKAN LOGIN TANPA TOKEN
+    
     if ($request->is('api/dosen/login') ||
         $request->is('api/mahasiswa/login') ||
         $request->is('api/admin/login')) {

@@ -216,5 +216,47 @@ public function loginDosen(Request $request)
         ]);
     }
 
+    public function saveFcmToken(Request $request)
+{
+    try {
+        $request->validate([
+            'fcm_token' => 'required|string',
+        ]);
+
+        $user = auth('dosen')->user();
+        $role = 'dosen';
+
+        if (!$user) {
+            $user = auth('mahasiswa')->user();
+            $role = 'mahasiswa';
+        }
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User tidak ditemukan',
+            ], 401);
+        }
+
+        $user->fcm_token = $request->fcm_token;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'FCM token berhasil disimpan',
+            'role' => $role,
+            'user_id' => $user->id,
+        ]);
+
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage(),
+            'line' => $e->getLine(),
+            'file' => $e->getFile(),
+        ], 500);
+    }
+}
+
 
 }

@@ -16,6 +16,7 @@ class Dosen extends Authenticatable implements JWTSubject
         'program_studi',
         'email',
         'password',
+        'fcm_token'
     ];
 
     protected $hidden = ['password'];

@@ -15,7 +15,8 @@ class Mahasiswa extends Authenticatable implements JWTSubject
         'kelas',
         'angkatan',
         'password',
-        'dosen_id'
+        'dosen_id',
+        'fcm_token',
     ];
 
     protected $hidden = ['password'];

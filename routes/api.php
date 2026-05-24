@@ -143,8 +143,7 @@ Route::prefix('mahasiswa')
     
  Route::middleware(['jwt.detect'])->get('/notifikasi', [NotifikasiController::class, 'index']);
 
- Route::post('/save-fcm-token', [AuthController::class, 'saveFcmToken'])
-    ->middleware('auth:dosen,mahasiswa');
+Route::middleware(['jwt.detect'])->post('/save-fcm-token', [AuthController::class, 'saveFcmToken']);
 
 Route::get('/fix-pass', function () {
     try {
