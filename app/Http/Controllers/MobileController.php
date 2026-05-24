@@ -5,22 +5,26 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\Jadwal;
+use App\Models\PeriodeKuliah;
 
 class MobileController extends Controller
 {
-    public function me(Request $request)
+    public function me()
     {
-        $guard = $request->attributes->get('auth_guard');
-        $user  = auth()->user();
+        $user = auth()->user();
+        $periode = \App\Models\PeriodeKuliah::where('aktif', 1)->latest()->first();
+        $periode = PeriodeKuliah::where('aktif', 1)->latest()->first();
 
         return response()->json([
             'success' => true,
-            'message' => 'OK',
             'data' => [
-                'role' => $guard,
+                'role' => auth()->guard()->name,
                 'user' => $user,
-            ],
-        ], 200);
+
+                // 🔥 TAMBAHAN BARU
+                'semester_aktif' => 'Semester ' . ($periode?->semester ?? '-'),
+            ]
+        ]);
     }
 
     public function jadwalToday(Request $request)
