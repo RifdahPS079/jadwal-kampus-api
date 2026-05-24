@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use App\Models\Waktu;
 use App\Models\PeriodeKuliah;
 use App\Models\JadwalPertemuan;
+use App\Services\FcmService;
 
 class JadwalController extends Controller
 {
@@ -411,6 +412,19 @@ class JadwalController extends Controller
                 'alasan_batal' => $alasan,
             ]),
             ]);
+
+            if ($m->fcm_token) {
+            app(FcmService::class)->sendToToken(
+                $m->fcm_token,
+                'Kelas Dibatalkan',
+                $mk . ' kelas ' . $kelas . ' dibatalkan.',
+                [
+                    'tipe' => 'batal',
+                    'jadwal_id' => $jadwal->id,
+                    'pertemuan_ke' => $pertemuanKe,
+                ]
+            );
+        }
         }
 
         $dosens = Dosen::where(
@@ -941,6 +955,20 @@ foreach ($mahasiswas as $m) {
             'tanggal_baru' => $tanggalBaru,
         ]),
     ]);
+
+    if ($m->fcm_token) {
+        app(FcmService::class)->sendToToken(
+            $m->fcm_token,
+            'Kelas Dipindahkan',
+            $mk . ' kelas ' . $kelas . ' pindah ke ' . $hariBaru . ', ruang ' . $ruanganBaru->kode_ruangan . '.',
+            [
+                'tipe' => 'pindah',
+                'jadwal_id' => $jadwal->id,
+                'hari_baru' => $hariBaru,
+                'ruangan_baru' => $ruanganBaru->kode_ruangan,
+            ]
+        );
+    }
 }
 
 // =====================================
