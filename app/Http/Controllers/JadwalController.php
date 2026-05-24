@@ -387,8 +387,8 @@ class JadwalController extends Controller
         $hariLama = $request->input('hari_lama');
         $tanggalLama = $request->input('tanggal_lama');
         $jamLama = $request->input('jam_lama');
+        $ruanganLama = $request->input('ruangan_lama');
         $alasan = $request->alasan_batal;
-
         $mahasiswas = Mahasiswa::all();
 
         foreach ($mahasiswas as $m) {
@@ -753,10 +753,12 @@ if (!$jadwalPertemuan) {
 
         $pLama = $notifBatal ? json_decode($notifBatal->pesan, true) : [];
 
-        $hariLama = $pLama['hari_lama'];
-        $tanggalLama = $pLama['tanggal_lama'];
-        $jamLama = $pLama['jam_lama'];
-        $ruanganLama = $pLama['ruangan_lama'];
+        $hariLama = $pLama['hari_lama'] ?? optional($jadwal->waktu)->hari;
+        $tanggalLama = $pLama['tanggal_lama'] ?? $this->tanggalPertemuan($hariLama, $r->pertemuan_ke);
+        $jamLama = $pLama['jam_lama'] ??
+            Carbon::parse($jadwal->waktu->jam_mulai)->format('H:i') . '-' .
+            Carbon::parse($jadwal->waktu->jam_selesai)->format('H:i');
+        $ruanganLama = $pLama['ruangan_lama'] ?? optional($jadwal->ruangan)->kode_ruangan;
 
         // AMBIL WAKTU BARU
         $waktuBaru = Waktu::find($r->waktu_id);
@@ -865,20 +867,7 @@ foreach ($semuaJadwal as $j) {
     }
 }
 
-// SIMPAN DATA LAMA
-// DATA LAMA ASLI
-$waktuLamaObj = Waktu::find($jadwal->waktu_id);
-$ruanganLamaObj = \App\Models\Ruangan::find($jadwal->ruangan_id);
 
-$hariLama = $waktuLamaObj->hari;
-$tanggalLama = $this->tanggalPertemuan($hariLama, $r->pertemuan_ke);
-
-$jamLama =
-    Carbon::parse($waktuLamaObj->jam_mulai)->format('H:i')
-    . '-' .
-    Carbon::parse($waktuLamaObj->jam_selesai)->format('H:i');
-
-$ruanganLama = $ruanganLamaObj->kode_ruangan;
 
 $r->validate([
     'waktu_id' => 'required|exists:waktus,id',
