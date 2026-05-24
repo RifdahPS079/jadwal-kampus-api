@@ -9,23 +9,35 @@ use App\Models\PeriodeKuliah;
 
 class MobileController extends Controller
 {
-    public function me()
-    {
-        $user = auth()->user();
-        $periode = \App\Models\PeriodeKuliah::where('aktif', 1)->latest()->first();
-        $periode = PeriodeKuliah::where('aktif', 1)->latest()->first();
+    public function me(Request $request)
+{
+    $guard = $request->attributes->get('auth_guard');
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'role' => auth()->guard()->name,
-                'user' => $user,
-
-                // 🔥 TAMBAHAN BARU
-                'semester_aktif' => 'Semester ' . ($periode?->semester ?? '-'),
-            ]
-        ]);
+    if (!$guard) {
+        if (auth('dosen')->check()) {
+            $guard = 'dosen';
+        } elseif (auth('mahasiswa')->check()) {
+            $guard = 'mahasiswa';
+        } else {
+            $guard = 'api';
+        }
     }
+
+    $user = auth($guard)->user();
+
+    $periode = PeriodeKuliah::where('aktif', 1)->latest()->first();
+
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'role' => $guard,
+            'user' => $user,
+            'semester_aktif' => $periode
+                ? 'Semester ' . $periode->semester
+                : 'Semester Belum Aktif',
+        ]
+    ]);
+}
 
     public function jadwalToday(Request $request)
     {
