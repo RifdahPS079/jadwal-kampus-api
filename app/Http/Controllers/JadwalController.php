@@ -413,24 +413,17 @@ class JadwalController extends Controller
             ]),
             ]);
 
-            if ($d->fcm_token) {
-    try {
-        app(\App\Services\FcmService::class)->sendToToken(
-            $d->fcm_token,
-            'Kelas Dibatalkan',
-            $mk . ' kelas ' . $kelas . ' dibatalkan oleh ' . $dosen . '.',
-            [
-                'tipe' => 'batal',
-                'jadwal_id' => (string) $jadwal->id,
-                'pertemuan_ke' => (string) $pertemuanKe,
-            ]
-        );
-    } catch (\Throwable $e) {
-        \Log::error('Gagal kirim FCM dosen', [
-            'dosen_id' => $d->id,
-            'error' => $e->getMessage(),
-        ]);
-    }
+            if ($m->fcm_token) {
+    app(\App\Services\FcmService::class)->sendToToken(
+        $m->fcm_token,
+        'Kelas Dibatalkan',
+        $mk . ' kelas ' . $kelas . ' dibatalkan oleh ' . $dosen . '.',
+        [
+            'tipe' => 'batal',
+            'jadwal_id' => (string) $jadwal->id,
+            'pertemuan_ke' => (string) $pertemuanKe,
+        ]
+    );
 }
         }
 
@@ -465,14 +458,12 @@ class JadwalController extends Controller
 if ($d->fcm_token) {
     app(\App\Services\FcmService::class)->sendToToken(
         $d->fcm_token,
-        'Kelas Dipindahkan',
-        $mk . ' kelas ' . $kelas . ' dipindahkan oleh ' . $namaDosen . '.',
+        'Kelas Dibatalkan',
+        $mk . ' kelas ' . $kelas . ' dibatalkan oleh ' . $dosen . '.',
         [
-            'tipe' => 'pindah',
+            'tipe' => 'batal',
             'jadwal_id' => (string) $jadwal->id,
             'pertemuan_ke' => (string) $pertemuanKe,
-            'hari_baru' => (string) $hariBaru,
-            'ruangan_baru' => (string) $ruanganBaru->kode_ruangan,
         ]
     );
 }
@@ -1033,10 +1024,10 @@ foreach ($dosens as $d) {
     try {
         app(\App\Services\FcmService::class)->sendToToken(
             $d->fcm_token,
-            'Kelas Dibatalkan',
+            'Kelas Dipindahkan',
             $mk . ' kelas ' . $kelas . ' dipindahkan oleh ' . $namaDosen . '.',
             [
-                'tipe' => 'batal',
+                'tipe' => 'pindah',
                 'jadwal_id' => (string) $jadwal->id,
                 'pertemuan_ke' => (string) $pertemuanKe,
             ]
