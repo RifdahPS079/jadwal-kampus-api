@@ -455,20 +455,21 @@ class JadwalController extends Controller
             ]);
 
             // PUSH NOTIF DOSEN
-    if ($d->fcm_token) {
-
-        app(\App\Services\FcmService::class)->sendToToken(
-            $d->fcm_token,
-            'Kelas Dibatalkan',
-            $mk . ' kelas ' . $kelas . ' dibatalkan oleh ' . $dosen . '.',
-            [
-                'tipe' => 'batal',
-                'jadwal_id' => (string) $jadwal->id,
-                'pertemuan_ke' => (string) $pertemuanKe,
-            ]
-        );
-
-    }
+    // PUSH NOTIF DOSEN
+if ($d->fcm_token) {
+    app(\App\Services\FcmService::class)->sendToToken(
+        $d->fcm_token,
+        'Kelas Dipindahkan',
+        $mk . ' kelas ' . $kelas . ' dipindahkan oleh ' . $namaDosen . '.',
+        [
+            'tipe' => 'pindah',
+            'jadwal_id' => (string) $jadwal->id,
+            'pertemuan_ke' => (string) $pertemuanKe,
+            'hari_baru' => (string) $hariBaru,
+            'ruangan_baru' => (string) $ruanganBaru->kode_ruangan,
+        ]
+    );
+}
         }
 
         return response()->json([

@@ -43,10 +43,6 @@ class FcmService
                     'data' => array_map('strval', $data),
                     'android' => [
                         'priority' => 'HIGH',
-                        'notification' => [
-                            'channel_id' => 'jadwal_channel',
-                            'sound' => 'default',
-                        ],
                     ],
                 ],
             ];
