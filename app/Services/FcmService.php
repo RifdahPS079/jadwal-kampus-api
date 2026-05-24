@@ -54,6 +54,10 @@ class FcmService
             $response = Http::withToken($accessToken)
                 ->acceptJson()
                 ->post($url, $payload);
+            Log::info('FCM SUCCESS', [
+                'token' => substr($fcmToken, 0, 25),
+                'response' => $response->body(),
+            ]);
 
             if (!$response->successful()) {
                 Log::error('FCM ERROR', [
