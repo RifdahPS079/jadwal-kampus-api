@@ -383,19 +383,10 @@ class JadwalController extends Controller
         $mk = $jadwal->pengampu->mataKuliah->nama_mk;
         $kelas = $jadwal->kelas;
         $dosen = $jadwal->pengampu->dosen->nama;
-        $waktuLama = Waktu::find($jadwal->waktu_id);
-        $ruanganLamaObj = \App\Models\Ruangan::find($jadwal->ruangan_id);
-
-        $hariLama = $waktuLama->hari;
-        $tanggalLama = $this->tanggalPertemuan($hariLama, $request->pertemuan_ke);
-
-        $jamLama =
-            Carbon::parse($waktuLama->jam_mulai)->format('H:i')
-            . '-' .
-            Carbon::parse($waktuLama->jam_selesai)->format('H:i');
-
-        $ruanganLama = $ruanganLamaObj->kode_ruangan;
-
+        $pertemuanKe = (int) $request->pertemuan_ke;
+        $hariLama = $request->input('hari_lama');
+        $tanggalLama = $request->input('tanggal_lama');
+        $jamLama = $request->input('jam_lama');
         $alasan = $request->alasan_batal;
 
         $mahasiswas = Mahasiswa::all();
@@ -407,17 +398,18 @@ class JadwalController extends Controller
                 'user_id' => $m->id,
                 'tipe' => 'batal',
                 'is_read' => 0,
-               'pesan' => json_encode([
-                    'nama_mk' => $mk,
-                    'kelas' => $kelas,
-                    'nama_dosen' => $dosen,
-                    'hari_lama' => $hariLama,
-                    'jam_lama' => $jamLama,
-                    'ruangan_lama' => $ruanganLama,
-                    'tanggal_lama' => $tanggalLama,
-
-                    'alasan_batal' => $alasan,
-                ]),
+                'pesan' => json_encode([
+                'jadwal_id' => $jadwal->id,
+                'pertemuan_ke' => $pertemuanKe,
+                'nama_mk' => $mk,
+                'kelas' => $kelas,
+                'nama_dosen' => $dosen,
+                'hari_lama' => $hariLama,
+                'tanggal_lama' => $tanggalLama,
+                'jam_lama' => $jamLama,
+                'ruangan_lama' => $ruanganLama,
+                'alasan_batal' => $alasan,
+            ]),
             ]);
         }
 
@@ -435,15 +427,17 @@ class JadwalController extends Controller
                 'tipe' => 'batal',
                 'is_read' => 0,
                 'pesan' => json_encode([
-                    'nama_mk' => $mk,
-                    'kelas' => $kelas,
-                    'nama_dosen' => $dosen,
-                    'hari_lama' => $hariLama,
-                    'jam_lama' => $jamLama,
-                    'ruangan_lama' => $ruanganLama,
-                    'tanggal_lama' => $tanggalLama,
-                    'alasan_batal' => $alasan,
-                ]),
+                'jadwal_id' => $jadwal->id,
+                'pertemuan_ke' => $pertemuanKe,
+                'nama_mk' => $mk,
+                'kelas' => $kelas,
+                'nama_dosen' => $dosen,
+                'hari_lama' => $hariLama,
+                'tanggal_lama' => $tanggalLama,
+                'jam_lama' => $jamLama,
+                'ruangan_lama' => $ruanganLama,
+                'alasan_batal' => $alasan,
+            ]),
             ]);
         }
 
@@ -743,6 +737,26 @@ if (!$jadwalPertemuan) {
                 'message' => 'Pertemuan ini belum dibatalkan'
             ], 400);
         }
+
+        $pertemuanKe = (int) $r->pertemuan_ke;
+
+        $notifBatal = Notifikasi::where('tipe', 'batal')
+            ->latest()
+            ->get()
+            ->first(function ($n) use ($jadwal, $pertemuanKe) {
+                $p = json_decode($n->pesan, true);
+
+                return isset($p['jadwal_id'], $p['pertemuan_ke'])
+                    && $p['jadwal_id'] == $jadwal->id
+                    && $p['pertemuan_ke'] == $pertemuanKe;
+            });
+
+        $pLama = $notifBatal ? json_decode($notifBatal->pesan, true) : [];
+
+        $hariLama = $pLama['hari_lama'];
+        $tanggalLama = $pLama['tanggal_lama'];
+        $jamLama = $pLama['jam_lama'];
+        $ruanganLama = $pLama['ruangan_lama'];
 
         // AMBIL WAKTU BARU
         $waktuBaru = Waktu::find($r->waktu_id);
