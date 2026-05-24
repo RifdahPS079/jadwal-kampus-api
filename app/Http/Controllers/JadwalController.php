@@ -413,18 +413,25 @@ class JadwalController extends Controller
             ]),
             ]);
 
-            if ($m->fcm_token) {
-            app(FcmService::class)->sendToToken(
-                $m->fcm_token,
-                'Kelas Dibatalkan',
-                $mk . ' kelas ' . $kelas . ' dibatalkan.',
-                [
-                    'tipe' => 'batal',
-                    'jadwal_id' => $jadwal->id,
-                    'pertemuan_ke' => $pertemuanKe,
-                ]
-            );
-        }
+            if ($d->fcm_token) {
+    try {
+        app(\App\Services\FcmService::class)->sendToToken(
+            $d->fcm_token,
+            'Kelas Dibatalkan',
+            $mk . ' kelas ' . $kelas . ' dibatalkan oleh ' . $dosen . '.',
+            [
+                'tipe' => 'batal',
+                'jadwal_id' => (string) $jadwal->id,
+                'pertemuan_ke' => (string) $pertemuanKe,
+            ]
+        );
+    } catch (\Throwable $e) {
+        \Log::error('Gagal kirim FCM dosen', [
+            'dosen_id' => $d->id,
+            'error' => $e->getMessage(),
+        ]);
+    }
+}
         }
 
         $dosens = Dosen::where(
@@ -454,7 +461,6 @@ class JadwalController extends Controller
             ]),
             ]);
 
-            // PUSH NOTIF DOSEN
     // PUSH NOTIF DOSEN
 if ($d->fcm_token) {
     app(\App\Services\FcmService::class)->sendToToken(
@@ -1024,19 +1030,24 @@ foreach ($dosens as $d) {
 
     // PUSH NOTIF DOSEN
     if ($d->fcm_token) {
-
+    try {
         app(\App\Services\FcmService::class)->sendToToken(
             $d->fcm_token,
             'Kelas Dibatalkan',
-            $mk . ' kelas ' . $kelas . ' dibatalkan oleh ' . $dosen . '.',
+            $mk . ' kelas ' . $kelas . ' dipindahkan oleh ' . $namaDosen . '.',
             [
                 'tipe' => 'batal',
                 'jadwal_id' => (string) $jadwal->id,
                 'pertemuan_ke' => (string) $pertemuanKe,
             ]
         );
-
+    } catch (\Throwable $e) {
+        \Log::error('Gagal kirim FCM dosen', [
+            'dosen_id' => $d->id,
+            'error' => $e->getMessage(),
+        ]);
     }
+}
 }
 
         return response()->json([
