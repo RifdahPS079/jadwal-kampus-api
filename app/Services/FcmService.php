@@ -57,18 +57,14 @@ class FcmService
                 ->acceptJson()
                 ->post($url, $payload);
             Log::info('FCM RESPONSE', [
-                'token' => substr($fcmToken, 0, 25),
-                'response' => $response->body(),
-            ]);
+    'token' => substr($fcmToken, 0, 25),
+    'status' => $response->status(),
+    'response' => $response->body(),
+]);
 
-            if (!$response->successful()) {
-                Log::error('FCM ERROR', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                ]);
-
-                return false;
-            }
+if (!$response->successful()) {
+    return false;
+}
 
             return true;
 
