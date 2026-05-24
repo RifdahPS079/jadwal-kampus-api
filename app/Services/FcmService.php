@@ -9,17 +9,23 @@ use Illuminate\Support\Facades\Log;
 class FcmService
 {
     private function getAccessToken(): string
-    {
+{
+    $scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+
+    if (env('FIREBASE_CREDENTIALS_JSON')) {
+        $credentialsArray = json_decode(env('FIREBASE_CREDENTIALS_JSON'), true);
+
+        $credentials = new ServiceAccountCredentials($scopes, $credentialsArray);
+    } else {
         $credentialsPath = base_path(env('FIREBASE_CREDENTIALS'));
 
-        $scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
-
         $credentials = new ServiceAccountCredentials($scopes, $credentialsPath);
-
-        $token = $credentials->fetchAuthToken();
-
-        return $token['access_token'];
     }
+
+    $token = $credentials->fetchAuthToken();
+
+    return $token['access_token'];
+}
 
     public function sendToToken(string $fcmToken, string $title, string $body, array $data = []): bool
     {
