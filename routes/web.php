@@ -36,6 +36,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Monitoring jadwal (halaman utama admin)
         Route::get('/monitoring', [AdminMonitoringController::class, 'index'])->name('monitoring');
+        Route::get('/riwayat-pertemuan', [AdminMonitoringController::class, 'riwayatPertemuan'])->name('riwayat.pertemuan');
         Route::post('/monitoring/jadwal/import', [AdminMonitoringController::class, 'importJadwal'])
             ->name('jadwal.import');
 

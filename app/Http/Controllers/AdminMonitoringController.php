@@ -204,6 +204,54 @@ class AdminMonitoringController extends Controller
         ));
     }
 
+    public function riwayatPertemuan(Request $request)
+    {
+        $periodeAktif = PeriodeKuliah::where('aktif', true)->latest()->first();
+
+        $query = JadwalPertemuan::with([
+            'jadwal.pengampu.dosen',
+            'jadwal.pengampu.dosen2',
+            'jadwal.pengampu.mataKuliah',
+            'jadwal.waktu',
+            'jadwal.ruangan',
+            'waktu',
+            'ruangan',
+        ])
+        ->orderByDesc('created_at');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('pertemuan_ke')) {
+            $query->where('pertemuan_ke', $request->pertemuan_ke);
+        }
+
+        $riwayats = $query->get();
+
+        $totalPindah = JadwalPertemuan::where('status', 'pindah')->count();
+        $totalBatal = JadwalPertemuan::where('status', 'batal')->count();
+        $totalRiwayat = JadwalPertemuan::count();
+
+        $rekapDosen = JadwalPertemuan::with([
+            'jadwal.pengampu.dosen',
+            'jadwal.pengampu.mataKuliah'
+        ])
+        ->get()
+        ->groupBy(function ($item) {
+            return optional(optional(optional($item->jadwal)->pengampu)->dosen)->nama ?? 'Dosen Tidak Diketahui';
+        });
+
+        return view('admin.riwayat-pertemuan', compact(
+            'periodeAktif',
+            'riwayats',
+            'totalPindah',
+            'totalBatal',
+            'totalRiwayat',
+            'rekapDosen'
+        ));
+    }
+
     public function simpanPeriode(Request $request)
     {
         $data = $request->validate([

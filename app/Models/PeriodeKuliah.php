@@ -10,6 +10,7 @@ class PeriodeKuliah extends Model
         'tahun_ajaran',
         'semester',
         'tanggal_mulai',
+        'jumlah_pertemuan',
         'aktif',
     ];
 }
