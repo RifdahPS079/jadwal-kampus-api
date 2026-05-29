@@ -178,7 +178,8 @@ input:focus, select:focus{
     <a href="{{ route('admin.dosen.index') }}">Data Dosen</a>
     <a href="{{ route('admin.mahasiswa.index') }}">Data Mahasiswa</a>
     <a class="active" href="{{ route('admin.matakuliah.index') }}">Mata Kuliah</a>
-    <a href="{{ route('admin.ruangan_waktu.index') }}">Ruangan & Waktu</a>
+    <a href="{{ route('admin.ruangan_waktu.index') }}">Ruangan &amp; Waktu</a>
+    <a href="{{ route('admin.riwayat.pertemuan') }}">Riwayat Pertemuan</a>
   </div>
 
   <!-- CONTENT -->

@@ -373,6 +373,10 @@ class JadwalController extends Controller
             'ruangan_id' => null,
             'status' => 'batal',
             'alasan_batal' => $request->alasan_batal,
+            'hari_lama' => $hariLama,
+            'tanggal_lama' => $tanggalLama,
+            'jam_lama' => $jamLama,
+            'ruangan_lama' => $ruanganLama,
         ]
     );
 
@@ -913,6 +917,10 @@ JadwalPertemuan::updateOrCreate(
         'ruangan_id' => $r->ruangan_id,
         'status' => 'pindah',
         'alasan_batal' => $jadwalPertemuan->alasan_batal,
+        'hari_lama' => $jadwalPertemuan->hari_lama,
+        'tanggal_lama' => $jadwalPertemuan->tanggal_lama,
+        'jam_lama' => $jadwalPertemuan->jam_lama,
+        'ruangan_lama' => $jadwalPertemuan->ruangan_lama,
     ]
 );
 

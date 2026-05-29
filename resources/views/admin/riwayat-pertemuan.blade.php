@@ -189,6 +189,8 @@
       overflow-x:auto;
     }
 
+    .topbar-right{ display:flex; gap:12px; align-items:center; }
+
     @media(max-width:900px){
       .stats{ grid-template-columns:repeat(2, 1fr); }
       :root{ --sidebarW:190px; }
@@ -198,22 +200,26 @@
 
 <body>
 
-<div class="topbar">
-  <div><b>Web Admin Penjadwalan Perkuliahan</b></div>
+<<div class="topbar">
+    <div><b>Web Admin Penjadwalan Perkuliahan</b></div>
 
-  <form method="POST" action="{{ route('admin.logout') }}">
-    @csrf
-    <button class="logout-btn" type="submit">Logout</button>
-  </form>
-</div>
+    <div class="topbar-right">
+      <span>Admin</span>
+      <!-- <div class="badge">A</div> -->
+      <form method="POST" action="{{ route('admin.logout') }}">
+        @csrf
+        <button class="logout-btn" type="submit">Logout</button>
+      </form>
+    </div>
+  </div>
 
 <div class="sidebar">
   <a href="{{ route('admin.monitoring') }}">Monitoring Jadwal</a>
-  <a class="active" href="{{ route('admin.riwayat.pertemuan') }}">Riwayat Pertemuan</a>
   <a href="{{ route('admin.dosen.index') }}">Data Dosen</a>
   <a href="{{ route('admin.mahasiswa.index') }}">Data Mahasiswa</a>
   <a href="{{ route('admin.matakuliah.index') }}">Mata Kuliah</a>
   <a href="{{ route('admin.ruangan_waktu.index') }}">Ruangan &amp; Waktu</a>
+  <a class="active" href="{{ route('admin.riwayat.pertemuan') }}">Riwayat Pertemuan</a>
 </div>
 
 <div class="content">
@@ -328,14 +334,11 @@
 
               <td>{{ $jadwal->kelas ?? '-' }}</td>
 
-              <td>
-                {{ $waktuLama->hari ?? '-' }}<br>
-                {{ $waktuLama ? \Carbon\Carbon::parse($waktuLama->jam_mulai)->format('H:i') : '-' }}
-                -
-                {{ $waktuLama ? \Carbon\Carbon::parse($waktuLama->jam_selesai)->format('H:i') : '-' }}
-                <br>
-                Ruangan: {{ $ruangLama->kode_ruangan ?? '-' }}
-              </td>
+             <td>
+                {{ $r->hari_lama ?? '-' }}<br>
+                {{ $r->jam_lama ?? '-' }}<br>
+                Ruangan: {{ $r->ruangan_lama ?? '-' }}
+            </td>
 
               <td>
                 @if($r->status == 'pindah')

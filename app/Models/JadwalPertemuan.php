@@ -15,6 +15,10 @@ class JadwalPertemuan extends Model
         'ruangan_id',
         'status',
         'alasan_batal',
+        'hari_lama',
+        'tanggal_lama',
+        'jam_lama',
+        'ruangan_lama',
     ];
 
     public function jadwal()
