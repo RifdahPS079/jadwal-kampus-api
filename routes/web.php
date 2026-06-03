@@ -39,7 +39,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/riwayat-pertemuan', [AdminMonitoringController::class, 'riwayatPertemuan'])->name('riwayat.pertemuan');
         Route::post('/monitoring/jadwal/import', [AdminMonitoringController::class, 'importJadwal'])
             ->name('jadwal.import');
-
+        Route::post('/monitoring/jadwal/bulk-delete', [AdminMonitoringController::class, 'hapusJadwalMassal'])
+            ->name('jadwal.bulkDelete');
+        Route::post('/jadwal/bulk-delete', [JadwalController::class, 'bulkDelete'])
+             ->name('jadwal.bulkDelete');
         Route::resource('jadwal', JadwalController::class);
 
         Route::post('/periode-kuliah', [AdminMonitoringController::class, 'simpanPeriode'])

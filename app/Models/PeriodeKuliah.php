@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PeriodeKuliah extends Model
 {
-    protected $fillable = [
+        protected $fillable = [
         'tahun_ajaran',
         'semester',
         'tanggal_mulai',

@@ -422,6 +422,69 @@ input, select{
   background: #cce5ff !important;
 }
 
+.bulk-actions{
+  margin:14px 0;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.btn-danger{
+  background:#ef4444;
+  color:#fff;
+}
+
+.btn-warning{
+  background:#fff4e6;
+  color:#b45309;
+  border:1px solid #f0b36a;
+}
+
+.jadwal-check{
+  width:16px;
+  height:16px;
+  margin-bottom:6px;
+  cursor:pointer;
+}
+
+.bulk-bar{
+  margin:14px 0;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.select-mode-info{
+  font-size:13px;
+  color:#777;
+  font-weight:600;
+}
+
+.jadwal-check{
+  display:none;
+  width:18px;
+  height:18px;
+  margin-bottom:6px;
+  cursor:pointer;
+}
+
+body.mode-pilih .jadwal-check{
+  display:block;
+}
+
+.btn-danger{
+  background:#ef4444;
+  color:#fff;
+}
+
+.btn-grey{
+  background:#eee;
+  color:#555;
+}
+
 @keyframes highlightFade {
   0%   { background: #66b3ff; }
   50%  { background: #99ccff; }
@@ -686,6 +749,40 @@ input, select{
           {{-- <a class="btn btn-soft" href="#">Download Template</a> --}}
         </div>
 
+       <div class="bulk-bar">
+  <div id="selectInfo" class="select-mode-info" style="display:none;">
+  Pilih beberapa jadwal yang ingin dihapus
+</div>
+
+<div id="selectedCount"
+     style="
+     display:none;
+     padding:6px 10px;
+     border-radius:8px;
+     background:#fff4e6;
+     color:#b45309;
+     font-size:13px;
+     font-weight:700;">
+  Belum ada jadwal dipilih
+</div>
+
+  <button type="button" id="btnModePilih" class="btn btn-soft" onclick="aktifkanModePilih()">
+    ✅ Pilih Beberapa Jadwal
+  </button>
+
+  <button type="button" id="btnPilihSemua" class="btn btn-warning" onclick="togglePilihSemua()" style="display:none;">
+    Pilih Semua
+  </button>
+
+  <button type="button" id="btnHapusTerpilih" class="btn btn-danger" onclick="hapusJadwalTerpilih()" style="display:none;">
+    Hapus Terpilih
+  </button>
+
+  <button type="button" id="btnBatalPilih" class="btn btn-grey" onclick="batalModePilih()" style="display:none;">
+    Batal
+  </button>
+</div>
+
       @if($waktus->count() === 0 || $ruangans->count() === 0)
           <div class="notice">
             Data waktu/ruangan belum ada untuk hari <b>{{ $hari }}</b>. Silakan isi master data dulu.
@@ -724,7 +821,17 @@ input, select{
                       @if($j)
                           <div class="cell filled">
 
-                              <div class="kelas">{{ $j->kelas ?? '-' }}</div>
+                          <input
+                            type="checkbox"
+                            class="jadwal-check"
+                            value="{{ $j->id }}"
+                            onclick="
+                              event.stopPropagation();
+                              updateSelectedCount();
+                            "
+                          >
+
+                          <div class="kelas">{{ $j->kelas ?? '-' }}</div>
                               <div class="mk">{{ $j->nama_mk ?? '-' }}</div>
                               <div class="kode">{{ $j->kode_dosen ?? '-' }}</div>
 
@@ -1281,6 +1388,112 @@ document.getElementById('edit_waktu')
 
 });
 
+let modePilihAktif = false;
+let semuaDipilih = false;
+
+function aktifkanModePilih() {
+document.getElementById('selectedCount').style.display = 'inline-block';
+
+updateSelectedCount();
+    modePilihAktif = true;
+
+    document.body.classList.add('mode-pilih');
+
+    document.getElementById('selectInfo').style.display = 'inline';
+    document.getElementById('btnPilihSemua').style.display = 'inline-block';
+    document.getElementById('btnHapusTerpilih').style.display = 'inline-block';
+    document.getElementById('btnBatalPilih').style.display = 'inline-block';
+
+    document.getElementById('btnModePilih').style.display = 'none';
+}
+
+function batalModePilih() {
+document.getElementById('selectedCount').style.display = 'none';
+    modePilihAktif = false;
+    semuaDipilih = false;
+
+    document.body.classList.remove('mode-pilih');
+
+    document.querySelectorAll('.jadwal-check').forEach(cb => {
+        cb.checked = false;
+    });
+
+    document.getElementById('selectInfo').style.display = 'none';
+    document.getElementById('btnPilihSemua').style.display = 'none';
+    document.getElementById('btnHapusTerpilih').style.display = 'none';
+    document.getElementById('btnBatalPilih').style.display = 'none';
+
+    document.getElementById('btnModePilih').style.display = 'inline-block';
+    document.getElementById('btnPilihSemua').innerText = 'Pilih Semua';
+}
+
+function togglePilihSemua() {
+updateSelectedCount();
+    const checks = document.querySelectorAll('.jadwal-check');
+
+    semuaDipilih = !semuaDipilih;
+
+    checks.forEach(cb => {
+        cb.checked = semuaDipilih;
+    });
+
+    document.getElementById('btnPilihSemua').innerText =
+        semuaDipilih ? 'Batalkan Semua' : 'Pilih Semua';
+}
+
+function updateSelectedCount() {
+
+    const total =
+        document.querySelectorAll('.jadwal-check:checked').length;
+
+    const counter =
+        document.getElementById('selectedCount');
+
+    if(total === 0){
+        counter.innerHTML =
+            '⚠️ Belum ada jadwal dipilih';
+    }else{
+        counter.innerHTML =
+            '✅ ' + total + ' jadwal dipilih untuk dihapus';
+    }
+}
+
+function hapusJadwalTerpilih() {
+    const ids = Array.from(document.querySelectorAll('.jadwal-check:checked'))
+        .map(cb => cb.value);
+
+    if (ids.length === 0) {
+        alert('Pilih dulu jadwal yang ingin dihapus.');
+        return;
+    }
+
+    if (!confirm(`Yakin ingin menghapus ${ids.length} jadwal terpilih?`)) {
+        return;
+    }
+
+    fetch(`/admin/jadwal/bulk-delete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            ids: ids
+        })
+    })
+    .then(res => res.json())
+    .then(res => {
+        if (res.success) {
+            localStorage.setItem('success', res.message);
+            location.reload();
+        } else {
+            alert(res.message || 'Gagal menghapus jadwal');
+        }
+    })
+    .catch(err => {
+        alert('Error: ' + err.message);
+    });
+}
   </script>
 
   

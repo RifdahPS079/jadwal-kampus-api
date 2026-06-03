@@ -334,11 +334,14 @@
 
               <td>{{ $jadwal->kelas ?? '-' }}</td>
 
-             <td>
-                {{ $r->hari_lama ?? '-' }}<br>
-                {{ $r->jam_lama ?? '-' }}<br>
-                Ruangan: {{ $r->ruangan_lama ?? '-' }}
-            </td>
+              <td>
+                {{ $waktuLama->hari ?? '-' }}<br>
+                {{ $waktuLama ? \Carbon\Carbon::parse($waktuLama->jam_mulai)->format('H:i') : '-' }}
+                -
+                {{ $waktuLama ? \Carbon\Carbon::parse($waktuLama->jam_selesai)->format('H:i') : '-' }}
+                <br>
+                Ruangan: {{ $ruangLama->kode_ruangan ?? '-' }}
+              </td>
 
               <td>
                 @if($r->status == 'pindah')

@@ -11,6 +11,7 @@ use App\Models\Ruangan;
 use App\Models\Jadwal;
 use App\Models\PeriodeKuliah;
 use App\Models\JadwalPertemuan;
+use Illuminate\Support\Facades\DB;
 
 // 🔥 TAMBAHAN WAJIB (INI YANG BIKIN ERROR TADI)
 use App\Models\Dosen;
@@ -34,6 +35,41 @@ class AdminMonitoringController extends Controller
             ->with('new_jadwal_id', optional($last)->id);
     }
 
+    public function hapusJadwalMassal(Request $request)
+    {
+        $request->validate([
+            'type' => ['required', 'in:selected,all'],
+            'ids' => ['nullable', 'array'],
+            'ids.*' => ['integer', 'exists:jadwals,id'],
+        ]);
+
+        DB::transaction(function () use ($request) {
+
+            if ($request->type === 'all') {
+                $jadwalIds = Jadwal::pluck('id')->toArray();
+            } else {
+                $jadwalIds = $request->ids ?? [];
+            }
+
+            if (count($jadwalIds) === 0) {
+                return;
+            }
+
+            // hapus riwayat pertemuan yang terkait jadwal tersebut
+            JadwalPertemuan::whereIn('jadwal_id', $jadwalIds)->delete();
+
+            // hapus jadwal
+            Jadwal::whereIn('id', $jadwalIds)->delete();
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => $request->type === 'all'
+                ? 'Semua jadwal berhasil dihapus'
+                : 'Jadwal terpilih berhasil dihapus',
+        ]);
+    }
+    
     private function pertemuanSaatIni()
     {
         $periode = PeriodeKuliah::where('aktif', 1)->latest()->first();

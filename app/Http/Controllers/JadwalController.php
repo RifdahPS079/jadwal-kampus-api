@@ -274,6 +274,21 @@ class JadwalController extends Controller
         return $this->okDeleted('Jadwal berhasil dihapus');
     }
 
+    public function bulkDelete(Request $request)
+{
+    $data = $request->validate([
+        'ids' => 'required|array',
+        'ids.*' => 'exists:jadwals,id',
+    ]);
+
+    Jadwal::whereIn('id', $data['ids'])->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => count($data['ids']) . ' jadwal berhasil dihapus',
+    ]);
+}
+
     // =========================
     // DOSEN (mobile): ringkas + filter + sorting + pagination
     // =========================
@@ -363,36 +378,18 @@ class JadwalController extends Controller
         )->findOrFail($id);
 
         // ✅ UPDATE STATUS
-        $pertemuanKe = (int) $request->pertemuan_ke;
-
-$hariLama = $request->input('hari_lama') ?? optional($jadwal->waktu)->hari;
-
-$tanggalLama = $request->input('tanggal_lama')
-    ?? $this->tanggalPertemuan($hariLama, $pertemuanKe);
-
-$jamLama = $request->input('jam_lama') ??
-    Carbon::parse($jadwal->waktu->jam_mulai)->format('H:i') . '-' .
-    Carbon::parse($jadwal->waktu->jam_selesai)->format('H:i');
-
-$ruanganLama = $request->input('ruangan_lama')
-    ?? optional($jadwal->ruangan)->kode_ruangan;
-
-JadwalPertemuan::updateOrCreate(
-    [
-        'jadwal_id' => $jadwal->id,
-        'pertemuan_ke' => $pertemuanKe,
-    ],
-    [
-        'waktu_id' => null,
-        'ruangan_id' => null,
-        'status' => 'batal',
-        'alasan_batal' => $request->alasan_batal,
-        'hari_lama' => $hariLama,
-        'tanggal_lama' => $tanggalLama,
-        'jam_lama' => $jamLama,
-        'ruangan_lama' => $ruanganLama,
-    ]
-);
+        JadwalPertemuan::updateOrCreate(
+        [
+            'jadwal_id' => $jadwal->id,
+            'pertemuan_ke' => $request->pertemuan_ke,
+        ],
+        [
+            'waktu_id' => null,
+            'ruangan_id' => null,
+            'status' => 'batal',
+            'alasan_batal' => $request->alasan_batal,
+        ]
+    );
 
         // DEBUG
         \Log::info('SETELAH SAVE', [
@@ -402,6 +399,11 @@ JadwalPertemuan::updateOrCreate(
         $mk = $jadwal->pengampu->mataKuliah->nama_mk;
         $kelas = $jadwal->kelas;
         $dosen = $jadwal->pengampu->dosen->nama;
+        $pertemuanKe = (int) $request->pertemuan_ke;
+        $hariLama = $request->input('hari_lama');
+        $tanggalLama = $request->input('tanggal_lama');
+        $jamLama = $request->input('jam_lama');
+        $ruanganLama = $request->input('ruangan_lama');
         $alasan = $request->alasan_batal;
         $mahasiswas = Mahasiswa::all();
 
@@ -926,10 +928,6 @@ JadwalPertemuan::updateOrCreate(
         'ruangan_id' => $r->ruangan_id,
         'status' => 'pindah',
         'alasan_batal' => $jadwalPertemuan->alasan_batal,
-        'hari_lama' => $hariLama,
-        'tanggal_lama' => $tanggalLama,
-        'jam_lama' => $jamLama,
-        'ruangan_lama' => $ruanganLama,
     ]
 );
 
