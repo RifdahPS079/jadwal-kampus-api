@@ -8,7 +8,7 @@ use App\Models\PengampuMataKuliah;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\MataKuliahImport;
-
+use App\Models\JadwalPertemuan;
 class AdminMataKuliahWebController extends Controller
 {
     public function index(Request $request)
@@ -66,6 +66,9 @@ class AdminMataKuliahWebController extends Controller
             ->distinct()
             ->pluck('program_studi');
 
+        $jumlahPermohonanMenunggu = JadwalPertemuan::where('status', 'menunggu')
+        ->whereNull('dibaca_admin_pada')
+        ->count();
       return view('admin.mata_kuliah', compact(
             'mataKuliahs',
             'dosens',

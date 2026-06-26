@@ -8,7 +8,7 @@ use App\Models\Waktu;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\RuanganImport;
 use App\Imports\WaktuImport;
-
+use App\Models\JadwalPertemuan;
 
 class AdminRuanganWaktuWebController extends Controller
 {
@@ -19,7 +19,9 @@ class AdminRuanganWaktuWebController extends Controller
         $waktus = Waktu::orderByRaw("FIELD(hari,'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
             ->orderBy('jam_mulai')
             ->get();
-
+        $jumlahPermohonanMenunggu = JadwalPertemuan::where('status', 'menunggu')
+        ->whereNull('dibaca_admin_pada')
+        ->count();
         return view('admin.ruangan_waktu', compact('ruangans', 'waktus'));
     }
 

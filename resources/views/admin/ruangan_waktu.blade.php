@@ -258,6 +258,39 @@ select:focus{
 
 }
 
+.notif-icon{
+  position:relative;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  text-decoration:none;
+  color:#e5861f;
+  box-shadow:0 4px 10px rgba(0,0,0,.12);
+}
+
+.notif-count{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  min-width:20px;
+  height:20px;
+  padding:0 6px;
+  border-radius:999px;
+  background:#ef4444;
+  color:#fff;
+  font-size:11px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:2px solid #fff;
+}
+
   </style>
 </head>
 
@@ -266,7 +299,15 @@ select:focus{
     <div><b>Web Admin Penjadwalan Perkuliahan</b></div>
 
     <div class="topbar-right">
-      <span>Admin</span>
+
+  <a class="notif-icon" href="{{ route('admin.notifikasi') }}" title="Permohonan perubahan jadwal">
+  🔔
+  @if(($jumlahPermohonanMenunggu ?? 0) > 0)
+    <span class="notif-count">{{ $jumlahPermohonanMenunggu }}</span>
+  @endif
+</a>
+
+  <span>Admin</span>
       <!-- <div class="badge">A</div> -->
       <form method="POST" action="{{ route('admin.logout') }}">
         @csrf

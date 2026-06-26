@@ -18,6 +18,7 @@ class JadwalPertemuan extends Model
         'alasan_tolak',
         'disetujui_pada',
         'ditolak_pada',
+        'dibaca_admin_pada',
     ];
 
     public function jadwal()

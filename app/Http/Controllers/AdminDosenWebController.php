@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-
+use App\Models\JadwalPertemuan;
+use App\Models\MataKuliah;
 use App\Models\Dosen;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\DosenImport;
@@ -50,8 +51,16 @@ class AdminDosenWebController extends Controller
         }
 
         $dosens = $query->get();
+        $matakuliahs = MataKuliah::orderBy('nama_mk')->get();
+        $jumlahPermohonanMenunggu = JadwalPertemuan::where('status', 'menunggu')
+        ->whereNull('dibaca_admin_pada')
+        ->count();
 
-        return view('admin.dosen', compact('dosens', 'q', 'prodi', 'nidn', 'urut', 'matakuliahs'));
+        return view('admin.dosen', compact(
+            'dosens',
+            'matakuliahs',
+            'jumlahPermohonanMenunggu'
+        ));
     }
 
    public function store(Request $request)

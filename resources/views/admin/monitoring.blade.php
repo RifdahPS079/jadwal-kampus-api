@@ -496,21 +496,23 @@ body.mode-pilih .jadwal-check{
   width:36px;
   height:36px;
   border-radius:50%;
-  background:rgba(255,255,255,.22);
+  background:#fff;
   display:flex;
   align-items:center;
   justify-content:center;
   font-size:18px;
-  cursor:pointer;
+  text-decoration:none;
+  color:#e5861f;
+  box-shadow:0 4px 10px rgba(0,0,0,.12);
 }
 
 .notif-count{
   position:absolute;
-  top:-5px;
-  right:-5px;
-  min-width:18px;
-  height:18px;
-  padding:0 5px;
+  top:-6px;
+  right:-6px;
+  min-width:20px;
+  height:20px;
+  padding:0 6px;
   border-radius:999px;
   background:#ef4444;
   color:#fff;
@@ -519,6 +521,7 @@ body.mode-pilih .jadwal-check{
   display:flex;
   align-items:center;
   justify-content:center;
+  border:2px solid #fff;
 }
 
 .request-panel{
@@ -611,12 +614,12 @@ body.mode-pilih .jadwal-check{
     <div><b>Web Admin Penjadwalan Perkuliahan</b></div>
 
     <div class="topbar-right">
-    <div class="notif-icon" onclick="scrollToPermohonan()" title="Permohonan perubahan jadwal">
-      🔔
-      @if($jumlahPermohonanMenunggu > 0)
-        <span class="notif-count">{{ $jumlahPermohonanMenunggu }}</span>
-      @endif
-    </div>
+   <a class="notif-icon" href="{{ route('admin.notifikasi') }}" title="Permohonan perubahan jadwal">
+  🔔
+  @if(($jumlahPermohonanMenunggu ?? 0) > 0)
+    <span class="notif-count">{{ $jumlahPermohonanMenunggu }}</span>
+  @endif
+</a>
 
     <span>Admin</span>
 
@@ -639,74 +642,6 @@ body.mode-pilih .jadwal-check{
   <div class="content">
     <div id="notif-success" style="display:none;" class="success-box"></div>
 
-  <div id="permohonanPanel" class="request-panel">
-  <div class="request-header">
-    <div>
-      <div class="request-title">Permohonan Perubahan Jadwal</div>
-      <div style="font-size:12px; color:#777; margin-top:4px;">
-        Daftar permohonan dosen yang menunggu persetujuan admin.
-      </div>
-    </div>
-
-    <div class="request-badge">
-      {{ $jumlahPermohonanMenunggu }} Menunggu
-    </div>
-  </div>
-
-  @if($permohonanMenunggu->isEmpty())
-    <div class="notice">
-      Belum ada permohonan perubahan jadwal dari dosen.
-    </div>
-  @else
-    <div class="request-list">
-      @foreach($permohonanMenunggu as $p)
-        @php
-          $jadwal = $p->jadwal;
-          $pengampu = optional($jadwal)->pengampu;
-          $mk = optional(optional($pengampu)->mataKuliah)->nama_mk ?? '-';
-          $dosen1 = optional($pengampu->dosen)->nama;
-          $dosen2 = optional($pengampu->dosen2)->nama;
-          $namaDosen = $dosen2 ? $dosen1 . ' / ' . $dosen2 : ($dosen1 ?? '-');
-          $waktu = optional($jadwal)->waktu;
-          $ruangan = optional($jadwal)->ruangan;
-        @endphp
-
-        <div class="request-card">
-          <div class="request-mk">{{ $mk }}</div>
-
-          <div class="request-info">
-            <div><b>Dosen:</b> {{ $namaDosen }}</div>
-            <div><b>Kelas:</b> {{ optional($jadwal)->kelas ?? '-' }}</div>
-            <div><b>Pertemuan:</b> {{ $p->pertemuan_ke }}</div>
-            <div>
-              <b>Jadwal Lama:</b>
-              {{ optional($waktu)->hari ?? '-' }},
-              {{ $waktu ? \Carbon\Carbon::parse($waktu->jam_mulai)->format('H:i') : '-' }}
-              -
-              {{ $waktu ? \Carbon\Carbon::parse($waktu->jam_selesai)->format('H:i') : '-' }}
-            </div>
-            <div><b>Ruangan:</b> {{ optional($ruangan)->kode_ruangan ?? '-' }}</div>
-          </div>
-
-          <div class="request-reason">
-            <b>Alasan Dosen:</b><br>
-            {{ $p->alasan_batal ?? '-' }}
-          </div>
-
-          <div class="request-actions">
-            <button class="btn btn-approve" type="button">
-              Setujui
-            </button>
-
-            <button class="btn btn-reject" type="button">
-              Tolak
-            </button>
-          </div>
-        </div>
-      @endforeach
-    </div>
-  @endif
-</div>
 
   @if(session('success'))
     <div class="success-box">

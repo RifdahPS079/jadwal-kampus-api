@@ -304,6 +304,33 @@ class AdminMonitoringController extends Controller
         ));
     }
 
+  public function notifikasi()
+    {
+        $permohonanMenunggu = JadwalPertemuan::with([
+            'jadwal.pengampu.dosen',
+            'jadwal.pengampu.dosen2',
+            'jadwal.pengampu.mataKuliah',
+            'jadwal.waktu',
+            'jadwal.ruangan',
+        ])
+        ->where('status', 'menunggu')
+        ->latest()
+        ->get();
+
+        JadwalPertemuan::where('status', 'menunggu')
+            ->whereNull('dibaca_admin_pada')
+            ->update([
+                'dibaca_admin_pada' => now(),
+            ]);
+
+        $jumlahPermohonanMenunggu = 0;
+
+        return view('admin.notifikasi', compact(
+            'permohonanMenunggu',
+            'jumlahPermohonanMenunggu'
+        ));
+    }
+
     public function simpanPeriode(Request $request)
     {
         $data = $request->validate([

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-
+use App\Models\JadwalPertemuan;
 use App\Models\Mahasiswa;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\MahasiswaImport;
@@ -44,14 +44,14 @@ class AdminMahasiswaWebController extends Controller
         }
 
         $mahasiswas = $query->orderBy('nama')->get();
+        $jumlahPermohonanMenunggu = JadwalPertemuan::where('status', 'menunggu')
+        ->whereNull('dibaca_admin_pada')
+        ->count();
 
         return view('admin.mahasiswa', compact(
-            'mahasiswas',
-            'q',
-            'prodi',
-            'kelas',
-            'angk'
-        ));
+    'mahasiswas',
+    'jumlahPermohonanMenunggu'
+));
     }
 
     public function store(Request $request)
