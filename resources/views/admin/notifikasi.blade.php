@@ -309,6 +309,53 @@
   margin-top:14px;
   justify-content:flex-end;
 }
+
+.riwayat-card.disetujui{
+  background:rgba(34,197,94,.08);
+  border:1.5px solid #22c55e;
+}
+
+.riwayat-card.ditolak{
+  background:rgba(239,68,68,.08);
+  border:1.5px solid #ef4444;
+}
+
+.filter-riwayat{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+
+.filter-btn{
+  border:1px solid #f0b36a;
+  background:#fff4e6;
+  color:#b45309;
+  padding:8px 12px;
+  border-radius:10px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.filter-btn.active{
+  background:#e5861f;
+  color:#fff;
+}
+
+.load-more-wrap{
+  margin-top:16px;
+  text-align:center;
+}
+
+.btn-load-more{
+  background:#fff4e6;
+  color:#b45309;
+  border:1px solid #f0b36a;
+  padding:10px 16px;
+  border-radius:12px;
+  font-weight:800;
+  cursor:pointer;
+}
   </style>
 </head>
 
@@ -444,6 +491,18 @@
         </div>
       </div>
 
+            <div class="filter-riwayat">
+        <button type="button" class="filter-btn active" onclick="filterRiwayat('semua', this)">
+          Semua
+        </button>
+        <button type="button" class="filter-btn" onclick="filterRiwayat('disetujui', this)">
+          Disetujui
+        </button>
+        <button type="button" class="filter-btn" onclick="filterRiwayat('ditolak', this)">
+          Ditolak
+        </button>
+      </div>
+
       @if($riwayatPermohonan->isEmpty())
         <div class="empty-box">
           Belum ada riwayat permohonan jadwal.
@@ -467,7 +526,7 @@
               $ruanganBaru = $r->ruangan;
             @endphp
 
-            <div class="notif-card">
+            <div class="notif-card riwayat-card {{ $r->status === 'ditolak' ? 'ditolak' : 'disetujui' }}">
               <div class="notif-top">
                 <div class="mk-title">{{ $mk }}</div>
 
@@ -519,12 +578,21 @@
                 @endif
               </div>
             </div>
-          @endforeach
+                   @endforeach
         </div>
-    @endif
+
+        <div class="load-more-wrap">
+          <button
+              type="button"
+              class="btn-load-more"
+              id="btnLoadMoreRiwayat"
+              onclick="loadMoreRiwayat()">
+              Tampilkan lainnya
+          </button>
         </div>
+
+      @endif
     </div>
-  </div>
 <div id="modalTolak" class="modal">
   <div class="modal-content">
     <h3>Tolak Permohonan</h3>
@@ -572,6 +640,59 @@ window.onclick = function(event) {
     closeTolakModal();
   }
 }
+
+let riwayatVisible = 8;
+let riwayatFilter = 'semua';
+
+function applyRiwayatView() {
+  const cards = document.querySelectorAll('.riwayat-card');
+  let shown = 0;
+  let totalMatch = 0;
+
+  cards.forEach(card => {
+    const cocokFilter =
+      riwayatFilter === 'semua' ||
+      card.classList.contains(riwayatFilter);
+
+    if (!cocokFilter) {
+      card.style.display = 'none';
+      return;
+    }
+
+    totalMatch++;
+
+    if (shown < riwayatVisible) {
+      card.style.display = 'block';
+      shown++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  const btn = document.getElementById('btnLoadMoreRiwayat');
+  if (btn) {
+    btn.style.display = totalMatch > riwayatVisible ? 'inline-block' : 'none';
+  }
+}
+
+function filterRiwayat(filter, btn) {
+  riwayatFilter = filter;
+  riwayatVisible = 8;
+
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.remove('active');
+  });
+
+  btn.classList.add('active');
+  applyRiwayatView();
+}
+
+function loadMoreRiwayat() {
+  riwayatVisible += 8;
+  applyRiwayatView();
+}
+
+document.addEventListener('DOMContentLoaded', applyRiwayatView);
 </script>
 </body>
 </html>
