@@ -1098,10 +1098,26 @@ body.mode-pilih .jadwal-check{
       console.log("CLICK:", e.target);
   });
 
-  function pilihSlotPengganti(waktuId, ruanganId) {
+ let sedangProsesSlot = false;
+
+function pilihSlotPengganti(waktuId, ruanganId) {
     if (!permohonanDipilihId) return;
 
+    if (sedangProsesSlot) {
+        alert('Permohonan sedang diproses, mohon tunggu sebentar.');
+        return;
+    }
+
     if (!confirm('Gunakan slot ini sebagai jadwal pengganti?')) return;
+
+    sedangProsesSlot = true;
+
+    document.querySelectorAll('.cell.empty').forEach(el => {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.6';
+    });
+
+    localStorage.setItem('success', 'Permohonan sedang diproses. Jadwal akan dipindahkan dan notifikasi akan dikirim.');
 
     fetch(`/admin/notifikasi/${permohonanDipilihId}/pilih-slot`, {
         method: 'POST',
@@ -1123,12 +1139,18 @@ body.mode-pilih .jadwal-check{
         try {
             data = JSON.parse(text);
         } catch (e) {
-            console.error(text);
             window.location.href = "{{ route('admin.notifikasi') }}";
             return;
         }
 
         if (!res.ok || data.success === false) {
+            sedangProsesSlot = false;
+
+            document.querySelectorAll('.cell.empty').forEach(el => {
+                el.style.pointerEvents = 'auto';
+                el.style.opacity = '1';
+            });
+
             alert(data.message || 'Jadwal bentrok');
             return;
         }
@@ -1137,6 +1159,7 @@ body.mode-pilih .jadwal-check{
         window.location.href = "{{ route('admin.notifikasi') }}";
     })
     .catch(err => {
+        sedangProsesSlot = false;
         alert('Error: ' + err.message);
     });
 }
