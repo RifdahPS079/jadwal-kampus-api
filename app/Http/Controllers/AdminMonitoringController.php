@@ -304,32 +304,117 @@ class AdminMonitoringController extends Controller
         ));
     }
 
-  public function notifikasi()
-    {
-        $permohonanMenunggu = JadwalPertemuan::with([
-            'jadwal.pengampu.dosen',
-            'jadwal.pengampu.dosen2',
-            'jadwal.pengampu.mataKuliah',
-            'jadwal.waktu',
-            'jadwal.ruangan',
-        ])
-        ->where('status', 'menunggu')
-        ->latest()
-        ->get();
+public function notifikasi()
+{
+    $permohonanMenunggu = JadwalPertemuan::with([
+        'jadwal.pengampu.dosen',
+        'jadwal.pengampu.dosen2',
+        'jadwal.pengampu.mataKuliah',
+        'jadwal.waktu',
+        'jadwal.ruangan',
+        'waktu',
+        'ruangan',
+    ])
+    ->where('status', 'menunggu')
+    ->latest()
+    ->get();
 
-        JadwalPertemuan::where('status', 'menunggu')
-            ->whereNull('dibaca_admin_pada')
-            ->update([
-                'dibaca_admin_pada' => now(),
-            ]);
+    JadwalPertemuan::where('status', 'menunggu')
+        ->whereNull('dibaca_admin_pada')
+        ->update([
+            'dibaca_admin_pada' => now(),
+        ]);
 
-        $jumlahPermohonanMenunggu = 0;
+    $riwayatPermohonan = JadwalPertemuan::with([
+        'jadwal.pengampu.dosen',
+        'jadwal.pengampu.dosen2',
+        'jadwal.pengampu.mataKuliah',
+        'jadwal.waktu',
+        'jadwal.ruangan',
+        'waktu',
+        'ruangan',
+    ])
+    ->whereIn('status', ['ditolak', 'pindah'])
+    ->latest()
+    ->get();
 
-        return view('admin.notifikasi', compact(
-            'permohonanMenunggu',
-            'jumlahPermohonanMenunggu'
-        ));
+    $jumlahPermohonanMenunggu = 0;
+
+    return view('admin.notifikasi', compact(
+        'permohonanMenunggu',
+        'riwayatPermohonan',
+        'jumlahPermohonanMenunggu'
+    ));
+}
+
+public function tolakPermohonan(Request $request, $id)
+{
+    $request->validate([
+        'alasan_tolak' => ['required', 'string', 'max:1000'],
+    ]);
+
+    $permohonan = JadwalPertemuan::with([
+        'jadwal.pengampu.dosen',
+        'jadwal.pengampu.dosen2',
+        'jadwal.pengampu.mataKuliah',
+        'jadwal.waktu',
+        'jadwal.ruangan',
+    ])->findOrFail($id);
+
+    $permohonan->update([
+        'status' => 'ditolak',
+        'alasan_tolak' => $request->alasan_tolak,
+        'ditolak_pada' => now(),
+    ]);
+
+    $jadwal = $permohonan->jadwal;
+    $pengampu = optional($jadwal)->pengampu;
+
+    $mk = optional(optional($pengampu)->mataKuliah)->nama_mk ?? '-';
+    $kelas = optional($jadwal)->kelas ?? '-';
+
+    $waktu = optional($jadwal)->waktu;
+    $ruangan = optional($jadwal)->ruangan;
+
+    $jamLama = $waktu
+        ? \Carbon\Carbon::parse($waktu->jam_mulai)->format('H:i') . '-' .
+          \Carbon\Carbon::parse($waktu->jam_selesai)->format('H:i')
+        : '-';
+
+    $dosenIds = [];
+
+    if ($pengampu && $pengampu->dosen_id) {
+        $dosenIds[] = $pengampu->dosen_id;
     }
+
+    if ($pengampu && $pengampu->dosen2_id) {
+        $dosenIds[] = $pengampu->dosen2_id;
+    }
+
+    foreach ($dosenIds as $dosenId) {
+        Notifikasi::create([
+            'role' => 'dosen',
+            'user_id' => $dosenId,
+            'tipe' => 'ditolak',
+            'is_read' => 0,
+            'pesan' => json_encode([
+                'jadwal_id' => optional($jadwal)->id,
+                'pertemuan_ke' => $permohonan->pertemuan_ke,
+                'nama_mk' => $mk,
+                'kelas' => $kelas,
+                'hari_lama' => optional($waktu)->hari ?? '-',
+                'jam_lama' => $jamLama,
+                'ruangan_lama' => optional($ruangan)->kode_ruangan ?? '-',
+                'alasan_batal' => $permohonan->alasan_batal,
+                'alasan_tolak' => $request->alasan_tolak,
+            ]),
+        ]);
+    }
+
+    return redirect()
+        ->route('admin.notifikasi')
+        ->with('success', 'Permohonan berhasil ditolak dan notifikasi dikirim ke dosen.');
+}
 
     public function simpanPeriode(Request $request)
     {

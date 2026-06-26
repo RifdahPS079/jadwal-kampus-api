@@ -264,6 +264,51 @@
       color:var(--orange);
       border:1px solid rgba(229,134,31,.35);
     }
+
+    .modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  z-index:10000;
+}
+
+.modal-content{
+  background:#fff;
+  width:420px;
+  max-width:90%;
+  margin:90px auto;
+  padding:20px;
+  border-radius:16px;
+}
+
+.modal-content h3{
+  margin-top:0;
+  margin-bottom:14px;
+}
+
+.modal-content label{
+  display:block;
+  font-size:13px;
+  font-weight:700;
+  margin-bottom:8px;
+}
+
+.modal-content textarea{
+  width:100%;
+  padding:12px;
+  border:1px solid #ddd;
+  border-radius:12px;
+  resize:vertical;
+  font-family:Arial, sans-serif;
+}
+
+.modal-actions{
+  display:flex;
+  gap:8px;
+  margin-top:14px;
+  justify-content:flex-end;
+}
   </style>
 </head>
 
@@ -299,6 +344,19 @@
   </div>
 
   <div class="content">
+    @if(session('success'))
+  <div style="
+    margin-bottom:14px;
+    background:#d4edda;
+    color:#155724;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #c3e6cb;
+    font-size:14px;
+  ">
+    {{ session('success') }}
+  </div>
+@endif
     <div class="card">
       <div class="page-head">
         <div>
@@ -363,13 +421,103 @@
                   Setujui
                 </button>
 
-                <button class="btn btn-reject" type="button">
-                  Tolak
+               <button class="btn btn-reject" type="button" onclick="openTolakModal({{ $p->id }})">
+                Tolak
                 </button>
 
-                <a class="btn btn-back" href="{{ route('admin.monitoring') }}">
-                  Lihat Monitoring
-                </a>
+              </div>
+            </div>
+          @endforeach
+        </div>
+      @endif
+    </div>
+      @endif
+    </div>
+
+    {{-- RIWAYAT PERMOHONAN --}}
+    <div class="card" style="margin-top:16px;">
+      <div class="page-head">
+        <div>
+          <h3 class="page-title">Riwayat Permohonan Jadwal</h3>
+          <div class="page-subtitle">
+            Rekap permohonan perubahan jadwal yang sudah ditolak atau disetujui admin.
+          </div>
+        </div>
+      </div>
+
+      @if($riwayatPermohonan->isEmpty())
+        <div class="empty-box">
+          Belum ada riwayat permohonan jadwal.
+        </div>
+      @else
+        <div class="notif-list">
+          @foreach($riwayatPermohonan as $r)
+            @php
+              $jadwal = $r->jadwal;
+              $pengampu = optional($jadwal)->pengampu;
+              $mk = optional(optional($pengampu)->mataKuliah)->nama_mk ?? '-';
+
+              $dosen1 = optional(optional($pengampu)->dosen)->nama;
+              $dosen2 = optional(optional($pengampu)->dosen2)->nama;
+              $namaDosen = $dosen2 ? $dosen1 . ' / ' . $dosen2 : ($dosen1 ?? '-');
+
+              $waktuLama = optional($jadwal)->waktu;
+              $ruanganLama = optional($jadwal)->ruangan;
+
+              $waktuBaru = $r->waktu;
+              $ruanganBaru = $r->ruangan;
+            @endphp
+
+            <div class="notif-card">
+              <div class="notif-top">
+                <div class="mk-title">{{ $mk }}</div>
+
+                @if($r->status === 'ditolak')
+                  <div class="status-pill" style="color:#ef4444; border-color:#ef4444;">
+                    DITOLAK
+                  </div>
+                @else
+                  <div class="status-pill" style="color:#22c55e; border-color:#22c55e;">
+                    DISETUJUI
+                  </div>
+                @endif
+              </div>
+
+              <div class="info">
+                <div><b>Dosen:</b> {{ $namaDosen }}</div>
+                <div><b>Kelas:</b> {{ optional($jadwal)->kelas ?? '-' }}</div>
+                <div><b>Pertemuan:</b> {{ $r->pertemuan_ke }}</div>
+
+                <div>
+                  <b>Jadwal Lama:</b>
+                  {{ optional($waktuLama)->hari ?? '-' }},
+                  {{ $waktuLama ? \Carbon\Carbon::parse($waktuLama->jam_mulai)->format('H:i') : '-' }}
+                  -
+                  {{ $waktuLama ? \Carbon\Carbon::parse($waktuLama->jam_selesai)->format('H:i') : '-' }},
+                  Ruang {{ optional($ruanganLama)->kode_ruangan ?? '-' }}
+                </div>
+
+                @if($r->status === 'pindah')
+                  <div>
+                    <b>Jadwal Baru:</b>
+                    {{ optional($waktuBaru)->hari ?? '-' }},
+                    {{ $waktuBaru ? \Carbon\Carbon::parse($waktuBaru->jam_mulai)->format('H:i') : '-' }}
+                    -
+                    {{ $waktuBaru ? \Carbon\Carbon::parse($waktuBaru->jam_selesai)->format('H:i') : '-' }},
+                    Ruang {{ optional($ruanganBaru)->kode_ruangan ?? '-' }}
+                  </div>
+                @endif
+              </div>
+
+              <div class="reason">
+                <b>Alasan Dosen:</b><br>
+                {{ $r->alasan_batal ?? '-' }}
+
+                @if($r->status === 'ditolak')
+                  <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
+                  <b>Alasan Penolakan Admin:</b><br>
+                  {{ $r->alasan_tolak ?? '-' }}
+                @endif
               </div>
             </div>
           @endforeach
@@ -377,5 +525,52 @@
       @endif
     </div>
   </div>
+  <div class="modal-content">
+    <h3>Tolak Permohonan</h3>
+
+    <form id="formTolak" method="POST">
+      @csrf
+
+      <label>Alasan Penolakan</label>
+      <textarea
+        name="alasan_tolak"
+        required
+        rows="4"
+        placeholder="Masukkan alasan penolakan..."
+      ></textarea>
+
+      <div class="modal-actions">
+        <button type="submit" class="btn btn-reject">
+          Kirim Penolakan
+        </button>
+
+        <button type="button" class="btn btn-back" onclick="closeTolakModal()">
+          Batal
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function openTolakModal(id) {
+  const modal = document.getElementById('modalTolak');
+  const form = document.getElementById('formTolak');
+
+  form.action = `/admin/notifikasi/${id}/tolak`;
+  modal.style.display = 'block';
+}
+
+function closeTolakModal() {
+  document.getElementById('modalTolak').style.display = 'none';
+}
+
+window.onclick = function(event) {
+  const modal = document.getElementById('modalTolak');
+
+  if (event.target === modal) {
+    closeTolakModal();
+  }
+}
+</script>
 </body>
 </html>
