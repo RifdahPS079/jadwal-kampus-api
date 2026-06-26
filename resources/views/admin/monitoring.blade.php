@@ -1107,25 +1107,34 @@ body.mode-pilih .jadwal-check{
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
         },
+        credentials: 'same-origin',
         body: JSON.stringify({
             waktu_id: waktuId,
             ruangan_id: ruanganId
         })
     })
     .then(async res => {
-        const data = await res.json();
+        const text = await res.text();
 
-        if (!res.ok) {
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error(text);
+            window.location.href = "{{ route('admin.notifikasi') }}";
+            return;
+        }
+
+        if (!res.ok || data.success === false) {
             alert(data.message || 'Jadwal bentrok');
             return;
         }
 
-        if (data.success) {
-            localStorage.setItem('success', data.message);
-            window.location.href = "{{ route('admin.notifikasi') }}";
-        }
+        localStorage.setItem('success', data.message);
+        window.location.href = "{{ route('admin.notifikasi') }}";
     })
     .catch(err => {
         alert('Error: ' + err.message);

@@ -347,7 +347,7 @@ public function notifikasi()
         'ruangan',
     ])
     ->whereIn('status', ['ditolak', 'pindah'])
-    ->latest()
+    ->orderByDesc('updated_at')
     ->get();
 
     $jumlahPermohonanMenunggu = 0;
