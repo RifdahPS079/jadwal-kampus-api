@@ -357,142 +357,49 @@ class JadwalController extends Controller
         return $this->ok($data, 'OK');
     }
 
-  public function batalkan(Request $request, $id)
+public function batalkan(Request $request, $id)
 {
     try {
-
-        \Log::info('REQUEST BATAL', [
-            'all' => $request->all()
-        ]);
-
         $request->validate([
             'alasan_batal' => 'required|string',
             'pertemuan_ke' => 'required|integer|min:1',
         ]);
 
-        $jadwal = Jadwal::with(
+        $dosenLogin = auth('dosen')->user();
+
+        $jadwal = Jadwal::with([
             'pengampu.mataKuliah',
             'pengampu.dosen',
+            'pengampu.dosen2',
             'ruangan',
             'waktu'
-        )->findOrFail($id);
+        ])->findOrFail($id);
 
-        // ✅ UPDATE STATUS
         JadwalPertemuan::updateOrCreate(
-        [
-            'jadwal_id' => $jadwal->id,
-            'pertemuan_ke' => $request->pertemuan_ke,
-        ],
-        [
-            'waktu_id' => null,
-            'ruangan_id' => null,
-            'status' => 'batal',
-            'alasan_batal' => $request->alasan_batal,
-        ]
-    );
-
-        // DEBUG
-        \Log::info('SETELAH SAVE', [
-            'alasan' => $jadwal->alasan_batal
-        ]);
-
-        $mk = $jadwal->pengampu->mataKuliah->nama_mk;
-        $kelas = $jadwal->kelas;
-        $dosen = $jadwal->pengampu->dosen->nama;
-        $pertemuanKe = (int) $request->pertemuan_ke;
-        $hariLama = $request->input('hari_lama');
-        $tanggalLama = $request->input('tanggal_lama');
-        $jamLama = $request->input('jam_lama');
-        $ruanganLama = $request->input('ruangan_lama');
-        $alasan = $request->alasan_batal;
-        $mahasiswas = Mahasiswa::all();
-
-        foreach ($mahasiswas as $m) {
-
-            Notifikasi::create([
-                'role' => 'mahasiswa',
-                'user_id' => $m->id,
-                'tipe' => 'batal',
-                'is_read' => 0,
-                'pesan' => json_encode([
+            [
                 'jadwal_id' => $jadwal->id,
-                'pertemuan_ke' => $pertemuanKe,
-                'nama_mk' => $mk,
-                'kelas' => $kelas,
-                'nama_dosen' => $dosen,
-                'hari_lama' => $hariLama,
-                'tanggal_lama' => $tanggalLama,
-                'jam_lama' => $jamLama,
-                'ruangan_lama' => $ruanganLama,
-                'alasan_batal' => $alasan,
-            ]),
-            ]);
-
-            if ($m->fcm_token) {
-    app(\App\Services\FcmService::class)->sendToToken(
-        $m->fcm_token,
-        'Kelas Dibatalkan',
-        $mk . ' kelas ' . $kelas . ' dibatalkan oleh ' . $dosen . '.',
-        [
-            'tipe' => 'batal',
-            'jadwal_id' => (string) $jadwal->id,
-            'pertemuan_ke' => (string) $pertemuanKe,
-        ]
-    );
-}
-        }
-
-        $dosens = Dosen::where(
-            'id',
-            '!=',
-            $jadwal->pengampu->dosen->id
-        )->get();
-
-        foreach ($dosens as $d) {
-
-            Notifikasi::create([
-                'role' => 'dosen',
-                'user_id' => $d->id,
-                'tipe' => 'batal',
-                'is_read' => 0,
-                'pesan' => json_encode([
-                'jadwal_id' => $jadwal->id,
-                'pertemuan_ke' => $pertemuanKe,
-                'nama_mk' => $mk,
-                'kelas' => $kelas,
-                'nama_dosen' => $dosen,
-                'hari_lama' => $hariLama,
-                'tanggal_lama' => $tanggalLama,
-                'jam_lama' => $jamLama,
-                'ruangan_lama' => $ruanganLama,
-                'alasan_batal' => $alasan,
-            ]),
-            ]);
-
-    // PUSH NOTIF DOSEN
-if ($d->fcm_token) {
-    app(\App\Services\FcmService::class)->sendToToken(
-        $d->fcm_token,
-        'Kelas Dibatalkan',
-        $mk . ' kelas ' . $kelas . ' dibatalkan oleh ' . $dosen . '.',
-        [
-            'tipe' => 'batal',
-            'jadwal_id' => (string) $jadwal->id,
-            'pertemuan_ke' => (string) $pertemuanKe,
-        ]
-    );
-}
-        }
+                'pertemuan_ke' => $request->pertemuan_ke,
+            ],
+            [
+                'waktu_id' => null,
+                'ruangan_id' => null,
+                'status' => 'menunggu',
+                'alasan_batal' => $request->alasan_batal,
+                'alasan_tolak' => null,
+                'disetujui_pada' => null,
+                'ditolak_pada' => null,
+            ]
+        );
 
         return response()->json([
             'success' => true,
-            'message' => 'Jadwal dibatalkan',
-            'alasan' => $jadwal->alasan_batal,
+            'message' => 'Permohonan perubahan jadwal berhasil dikirim ke admin',
         ]);
 
     } catch (\Exception $e) {
 
         return response()->json([
+            'success' => false,
             'message' => $e->getMessage()
         ], 500);
     }
@@ -549,6 +456,18 @@ if ($d->fcm_token) {
 
     $status = 'aktif';
 
+    if ($jp && $jp->status === 'menunggu') {
+        $status = 'menunggu';
+        $waktu = $waktuAsli;
+        $ruangan = $ruanganAsli;
+    }
+
+    if ($jp && $jp->status === 'ditolak') {
+        $status = 'ditolak';
+        $waktu = $waktuAsli;
+        $ruangan = $ruanganAsli;
+    }
+
     // =====================
     // JIKA BATAL
     // =====================
@@ -584,6 +503,7 @@ if ($d->fcm_token) {
     'id' => $j->id,
     'tanggal' => $tanggalTampil,
     'tanggal_asli' => $this->tanggalPertemuan($waktuAsli?->hari, $pertemuanKe),
+    'alasan_tolak' => $jp?->alasan_tolak,
     // data yang tampil
     'hari' => $status === 'batal' ? $waktuAsli?->hari : $waktu?->hari,
     'jam_mulai' => $status === 'batal' ? $waktuAsli?->jam_mulai : $waktu?->jam_mulai,
