@@ -38,6 +38,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/monitoring', [AdminMonitoringController::class, 'index'])->name('monitoring');
         Route::get('/notifikasi', [AdminMonitoringController::class, 'notifikasi'])->name('notifikasi');
         Route::post('/notifikasi/{id}/tolak', [AdminMonitoringController::class, 'tolakPermohonan'])->name('notifikasi.tolak');
+        Route::get('/notifikasi/{id}/setujui', [AdminMonitoringController::class, 'mulaiSetujuiPermohonan'])->name('notifikasi.setujui');
+        Route::post('/notifikasi/{id}/pilih-slot', [AdminMonitoringController::class, 'pilihSlotPengganti'])->name('notifikasi.pilihSlot');
         Route::get('/riwayat-pertemuan', [AdminMonitoringController::class, 'riwayatPertemuan'])->name('riwayat.pertemuan');
         Route::post('/monitoring/jadwal/import', [AdminMonitoringController::class, 'importJadwal'])
             ->name('jadwal.import');

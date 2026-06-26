@@ -641,6 +641,23 @@ body.mode-pilih .jadwal-check{
 
   <div class="content">
     <div id="notif-success" style="display:none;" class="success-box"></div>
+    @if($permohonanDipilih)
+  @php
+    $jadwalPilih = $permohonanDipilih->jadwal;
+    $mkPilih = optional(optional($jadwalPilih)->pengampu->mataKuliah)->nama_mk ?? '-';
+    $dosenPilih = optional(optional($jadwalPilih)->pengampu->dosen)->nama ?? '-';
+  @endphp
+
+  <div class="success-box" style="background:#fff4e6; color:#7a4b10; border-color:#f0b36a;">
+    <b>Mode Pilih Jadwal Pengganti</b><br>
+    Mata Kuliah: {{ $mkPilih }} |
+    Dosen: {{ $dosenPilih }} |
+    Kelas: {{ optional($jadwalPilih)->kelas ?? '-' }} |
+    Pertemuan: {{ $permohonanDipilih->pertemuan_ke }}
+    <br>
+    Klik slot kosong pada tabel monitoring untuk memindahkan jadwal.
+  </div>
+@endif
 
 
   @if(session('success'))
@@ -973,9 +990,18 @@ body.mode-pilih .jadwal-check{
                               </div>
 
                           </div>
-                      @else
-                          <div class="cell empty">Kosong</div>
-                      @endif
+                     @else
+                      <div
+                        class="cell empty"
+                        @if($permohonanDipilih)
+                          onclick="pilihSlotPengganti({{ $w->id }}, {{ $r->id }})"
+                          style="cursor:pointer; outline:2px dashed #e5861f;"
+                          title="Klik untuk memilih jadwal pengganti"
+                        @endif
+                      >
+                        Kosong
+                      </div>
+                    @endif
                       </td>
                     @endforeach
                   </tr>
@@ -1061,12 +1087,50 @@ body.mode-pilih .jadwal-check{
     const newJadwalId = "{{ session('new_jadwal_id') }}";
   </script>
 
+  <script>
+    const permohonanDipilihId = "{{ $permohonanDipilih->id ?? '' }}";
+  </script>
+
   <!-- SCRIPT TETAP -->
   <script>
 
   document.addEventListener("click", function(e){
       console.log("CLICK:", e.target);
   });
+
+  function pilihSlotPengganti(waktuId, ruanganId) {
+    if (!permohonanDipilihId) return;
+
+    if (!confirm('Gunakan slot ini sebagai jadwal pengganti?')) return;
+
+    fetch(`/admin/notifikasi/${permohonanDipilihId}/pilih-slot`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            waktu_id: waktuId,
+            ruangan_id: ruanganId
+        })
+    })
+    .then(async res => {
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(data.message || 'Jadwal bentrok');
+            return;
+        }
+
+        if (data.success) {
+            localStorage.setItem('success', data.message);
+            window.location.href = "{{ route('admin.notifikasi') }}";
+        }
+    })
+    .catch(err => {
+        alert('Error: ' + err.message);
+    });
+}
 
   function scrollToPermohonan() {
       const el = document.getElementById('permohonanPanel');

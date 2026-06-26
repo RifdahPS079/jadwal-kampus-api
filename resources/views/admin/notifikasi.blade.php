@@ -417,9 +417,9 @@
               </div>
 
               <div class="actions">
-                <button class="btn btn-approve" type="button">
-                  Setujui
-                </button>
+                <a class="btn btn-approve" href="{{ route('admin.notifikasi.setujui', $p->id) }}">
+                     Setujui
+                </a>
 
                <button class="btn btn-reject" type="button" onclick="openTolakModal({{ $p->id }})">
                 Tolak

@@ -11,11 +11,10 @@ use App\Models\Ruangan;
 use App\Models\Jadwal;
 use App\Models\PeriodeKuliah;
 use App\Models\Notifikasi;
+use App\Models\Mahasiswa;
 use App\Models\JadwalPertemuan;
 use App\Services\FcmService;
 use Illuminate\Support\Facades\DB;
-
-// 🔥 TAMBAHAN WAJIB (INI YANG BIKIN ERROR TADI)
 use App\Models\Dosen;
 use App\Models\MataKuliah;
 use App\Models\PengampuMataKuliah;
@@ -235,7 +234,18 @@ class AdminMonitoringController extends Controller
         ->get();
 
         $jumlahPermohonanMenunggu = $permohonanMenunggu->count();
-
+        $permohonanDipilih = null;
+        if ($request->filled('permohonan_id')) {
+            $permohonanDipilih = JadwalPertemuan::with([
+                'jadwal.pengampu.dosen',
+                'jadwal.pengampu.dosen2',
+                'jadwal.pengampu.mataKuliah',
+                'jadwal.waktu',
+                'jadwal.ruangan',
+            ])
+            ->where('status', 'menunggu')
+            ->find($request->permohonan_id);
+        }
         return view('admin.monitoring', compact(
             'daftarHari',
             'hari',
@@ -253,7 +263,8 @@ class AdminMonitoringController extends Controller
             'allWaktus',
             'periodeAktif',
             'permohonanMenunggu',
-            'jumlahPermohonanMenunggu'
+            'jumlahPermohonanMenunggu',
+            'permohonanDipilih'
         ));
     }
 
@@ -346,6 +357,198 @@ public function notifikasi()
         'riwayatPermohonan',
         'jumlahPermohonanMenunggu'
     ));
+}
+
+public function mulaiSetujuiPermohonan($id)
+{
+    $permohonan = JadwalPertemuan::where('status', 'menunggu')->findOrFail($id);
+
+    return redirect()
+        ->route('admin.monitoring', [
+            'permohonan_id' => $permohonan->id,
+        ])
+        ->with('info', 'Silakan pilih slot kosong pada tabel monitoring sebagai jadwal pengganti.');
+}
+
+public function pilihSlotPengganti(Request $request, $id)
+{
+    $request->validate([
+        'waktu_id' => ['required', 'exists:waktus,id'],
+        'ruangan_id' => ['required', 'exists:ruangans,id'],
+    ]);
+
+    $permohonan = JadwalPertemuan::with([
+        'jadwal.pengampu.dosen',
+        'jadwal.pengampu.dosen2',
+        'jadwal.pengampu.mataKuliah',
+        'jadwal.waktu',
+        'jadwal.ruangan',
+    ])->where('status', 'menunggu')->findOrFail($id);
+
+    $jadwal = $permohonan->jadwal;
+    $waktuBaru = Waktu::findOrFail($request->waktu_id);
+    $ruanganBaru = Ruangan::findOrFail($request->ruangan_id);
+
+    $baruMulai = strtotime($waktuBaru->jam_mulai);
+    $baruSelesai = strtotime($waktuBaru->jam_selesai);
+
+    $dosenId1 = optional($jadwal->pengampu)->dosen_id;
+    $dosenId2 = optional($jadwal->pengampu)->dosen2_id;
+    $kelasYangDipindah = $jadwal->kelas;
+    $pengampuId = $jadwal->pengampu_id;
+
+    $semuaJadwal = Jadwal::with([
+        'waktu',
+        'ruangan',
+        'pengampu.dosen',
+        'pengampu.dosen2',
+        'pengampu.mataKuliah',
+    ])
+    ->where('id', '!=', $jadwal->id)
+    ->get();
+
+    foreach ($semuaJadwal as $j) {
+        $jp = JadwalPertemuan::with(['waktu', 'ruangan'])
+            ->where('jadwal_id', $j->id)
+            ->where('pertemuan_ke', $permohonan->pertemuan_ke)
+            ->first();
+
+        if ($jp && in_array($jp->status, ['batal', 'ditolak'])) {
+            continue;
+        }
+
+        $waktuCek = ($jp && $jp->status === 'pindah') ? $jp->waktu : $j->waktu;
+        $ruanganCek = ($jp && $jp->status === 'pindah') ? $jp->ruangan : $j->ruangan;
+
+        if (!$waktuCek) continue;
+        if ($waktuCek->hari !== $waktuBaru->hari) continue;
+
+        $lamaMulai = strtotime($waktuCek->jam_mulai);
+        $lamaSelesai = strtotime($waktuCek->jam_selesai);
+
+        $jamBentrok = ($baruMulai < $lamaSelesai) && ($baruSelesai > $lamaMulai);
+
+        if (!$jamBentrok) continue;
+
+        if ($j->pengampu && (
+            $j->pengampu->dosen_id == $dosenId1 ||
+            $j->pengampu->dosen2_id == $dosenId1 ||
+            ($dosenId2 && $j->pengampu->dosen_id == $dosenId2) ||
+            ($dosenId2 && $j->pengampu->dosen2_id == $dosenId2)
+        )) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bentrok! Dosen sudah memiliki jadwal mengajar pada hari dan jam tersebut.'
+            ], 422);
+        }
+
+        if ($j->kelas === $kelasYangDipindah) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bentrok! Kelas sudah memiliki jadwal pada hari dan jam tersebut.'
+            ], 422);
+        }
+
+        if ($j->pengampu_id == $pengampuId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bentrok! Mata kuliah ini sudah memiliki jadwal pada hari dan jam tersebut.'
+            ], 422);
+        }
+
+        if ($ruanganCek && $ruanganCek->id == $request->ruangan_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bentrok! Ruangan sudah digunakan pada hari dan jam tersebut.'
+            ], 422);
+        }
+    }
+
+    $permohonan->update([
+        'waktu_id' => $request->waktu_id,
+        'ruangan_id' => $request->ruangan_id,
+        'status' => 'pindah',
+        'disetujui_pada' => now(),
+    ]);
+
+    $mk = optional(optional($jadwal->pengampu)->mataKuliah)->nama_mk ?? '-';
+    $kelas = $jadwal->kelas ?? '-';
+    $namaDosen = optional(optional($jadwal->pengampu)->dosen)->nama ?? '-';
+
+    $waktuLama = $jadwal->waktu;
+    $ruanganLama = $jadwal->ruangan;
+
+    $jamLama = $waktuLama
+        ? Carbon::parse($waktuLama->jam_mulai)->format('H:i') . '-' . Carbon::parse($waktuLama->jam_selesai)->format('H:i')
+        : '-';
+
+    $jamBaru = Carbon::parse($waktuBaru->jam_mulai)->format('H:i') . '-' . Carbon::parse($waktuBaru->jam_selesai)->format('H:i');
+
+    $pesan = [
+        'nama_mk' => $mk,
+        'kelas' => $kelas,
+        'nama_dosen' => $namaDosen,
+        'pertemuan_ke' => $permohonan->pertemuan_ke,
+
+        'hari_lama' => optional($waktuLama)->hari ?? '-',
+        'jam_lama' => $jamLama,
+        'ruangan_lama' => optional($ruanganLama)->kode_ruangan ?? '-',
+
+        'hari_baru' => $waktuBaru->hari,
+        'jam_baru' => $jamBaru,
+        'ruangan_baru' => $ruanganBaru->kode_ruangan,
+    ];
+
+    foreach (Dosen::all() as $dosen) {
+        Notifikasi::create([
+            'role' => 'dosen',
+            'user_id' => $dosen->id,
+            'tipe' => 'pindah',
+            'is_read' => 0,
+            'pesan' => json_encode($pesan),
+        ]);
+
+        if ($dosen->fcm_token) {
+            app(FcmService::class)->sendToToken(
+                $dosen->fcm_token,
+                'Jadwal Perkuliahan Berubah',
+                $mk . ' kelas ' . $kelas . ' dipindahkan ke ' . $waktuBaru->hari . ', ruang ' . $ruanganBaru->kode_ruangan . '.',
+                [
+                    'tipe' => 'pindah',
+                    'jadwal_id' => (string) $jadwal->id,
+                    'pertemuan_ke' => (string) $permohonan->pertemuan_ke,
+                ]
+            );
+        }
+    }
+
+    foreach (Mahasiswa::all() as $mhs) {
+        Notifikasi::create([
+            'role' => 'mahasiswa',
+            'user_id' => $mhs->id,
+            'tipe' => 'pindah',
+            'is_read' => 0,
+            'pesan' => json_encode($pesan),
+        ]);
+
+        if ($mhs->fcm_token) {
+            app(FcmService::class)->sendToToken(
+                $mhs->fcm_token,
+                'Jadwal Perkuliahan Berubah',
+                $mk . ' kelas ' . $kelas . ' dipindahkan ke ' . $waktuBaru->hari . ', ruang ' . $ruanganBaru->kode_ruangan . '.',
+                [
+                    'tipe' => 'pindah',
+                    'jadwal_id' => (string) $jadwal->id,
+                    'pertemuan_ke' => (string) $permohonan->pertemuan_ke,
+                ]
+            );
+        }
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Permohonan disetujui dan jadwal berhasil dipindahkan.'
+    ]);
 }
 
 public function tolakPermohonan(Request $request, $id)
