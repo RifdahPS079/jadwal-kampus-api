@@ -431,8 +431,7 @@
         </div>
       @endif
     </div>
-      @endif
-    </div>
+
 
     {{-- RIWAYAT PERMOHONAN --}}
     <div class="card" style="margin-top:16px;">
@@ -522,9 +521,11 @@
             </div>
           @endforeach
         </div>
-      @endif
+    @endif
+        </div>
     </div>
   </div>
+<div id="modalTolak" class="modal">
   <div class="modal-content">
     <h3>Tolak Permohonan</h3>
 

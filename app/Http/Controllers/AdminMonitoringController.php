@@ -12,6 +12,7 @@ use App\Models\Jadwal;
 use App\Models\PeriodeKuliah;
 use App\Models\Notifikasi;
 use App\Models\JadwalPertemuan;
+use App\Services\FcmService;
 use Illuminate\Support\Facades\DB;
 
 // 🔥 TAMBAHAN WAJIB (INI YANG BIKIN ERROR TADI)
@@ -392,24 +393,48 @@ public function tolakPermohonan(Request $request, $id)
     }
 
     foreach ($dosenIds as $dosenId) {
-        Notifikasi::create([
-            'role' => 'dosen',
-            'user_id' => $dosenId,
-            'tipe' => 'ditolak',
-            'is_read' => 0,
-            'pesan' => json_encode([
-                'jadwal_id' => optional($jadwal)->id,
-                'pertemuan_ke' => $permohonan->pertemuan_ke,
-                'nama_mk' => $mk,
-                'kelas' => $kelas,
-                'hari_lama' => optional($waktu)->hari ?? '-',
-                'jam_lama' => $jamLama,
-                'ruangan_lama' => optional($ruangan)->kode_ruangan ?? '-',
-                'alasan_batal' => $permohonan->alasan_batal,
-                'alasan_tolak' => $request->alasan_tolak,
-            ]),
-        ]);
+
+    Notifikasi::create([
+        'role' => 'dosen',
+        'user_id' => $dosenId,
+        'tipe' => 'ditolak',
+        'is_read' => 0,
+        'pesan' => json_encode([
+            'judul' => 'Permohonan Perubahan Jadwal Ditolak',
+            'jadwal_id' => optional($jadwal)->id,
+            'pertemuan_ke' => $permohonan->pertemuan_ke,
+            'nama_mk' => $mk,
+            'kelas' => $kelas,
+            'hari_lama' => optional($waktu)->hari ?? '-',
+            'jam_lama' => $jamLama,
+            'ruangan_lama' => optional($ruangan)->kode_ruangan ?? '-',
+            'alasan_batal' => $permohonan->alasan_batal,
+            'alasan_tolak' => $request->alasan_tolak,
+        ]),
+    ]);
+
+    $dosen = Dosen::find($dosenId);
+
+    if ($dosen && $dosen->fcm_token) {
+        try {
+            app(FcmService::class)->sendToToken(
+                $dosen->fcm_token,
+                'Permohonan Jadwal Ditolak',
+                'Permohonan perubahan jadwal ' . $mk . ' kelas ' . $kelas . ' ditolak oleh admin.',
+                [
+                    'tipe' => 'ditolak',
+                    'jadwal_id' => (string) optional($jadwal)->id,
+                    'pertemuan_ke' => (string) $permohonan->pertemuan_ke,
+                ]
+            );
+        } catch (\Throwable $e) {
+            \Log::error('Gagal kirim FCM penolakan jadwal', [
+                'dosen_id' => $dosenId,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
+}
 
     return redirect()
         ->route('admin.notifikasi')
