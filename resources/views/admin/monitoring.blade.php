@@ -490,6 +490,119 @@ body.mode-pilih .jadwal-check{
   50%  { background: #99ccff; }
   100% { background: transparent; }
 }
+
+.notif-icon{
+  position:relative;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:rgba(255,255,255,.22);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  cursor:pointer;
+}
+
+.notif-count{
+  position:absolute;
+  top:-5px;
+  right:-5px;
+  min-width:18px;
+  height:18px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#ef4444;
+  color:#fff;
+  font-size:11px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.request-panel{
+  margin-bottom:14px;
+  border:1px solid rgba(229,134,31,.25);
+  background:#fff;
+  border-radius:14px;
+  padding:14px;
+}
+
+.request-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.request-title{
+  font-size:15px;
+  font-weight:800;
+  color:#222;
+}
+
+.request-badge{
+  background:#fff4e6;
+  color:#b45309;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+}
+
+.request-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+  gap:12px;
+}
+
+.request-card{
+  border:1px solid #f0b36a;
+  border-radius:14px;
+  padding:12px;
+  background:#fffaf3;
+}
+
+.request-mk{
+  font-size:14px;
+  font-weight:800;
+  margin-bottom:6px;
+}
+
+.request-info{
+  font-size:12px;
+  color:#555;
+  line-height:1.6;
+}
+
+.request-reason{
+  margin-top:10px;
+  padding:10px;
+  background:#fff;
+  border-radius:10px;
+  border:1px solid #f5d4ad;
+  font-size:12px;
+  color:#444;
+}
+
+.request-actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+
+.btn-approve{
+  background:#22c55e;
+  color:white;
+}
+
+.btn-reject{
+  background:#ef4444;
+  color:white;
+}
+
   </style>
 </head>
 
@@ -498,10 +611,16 @@ body.mode-pilih .jadwal-check{
     <div><b>Web Admin Penjadwalan Perkuliahan</b></div>
 
     <div class="topbar-right">
-      <span>Admin</span>
-      <!-- <div class="badge">A</div> -->
+    <div class="notif-icon" onclick="scrollToPermohonan()" title="Permohonan perubahan jadwal">
+      🔔
+      @if($jumlahPermohonanMenunggu > 0)
+        <span class="notif-count">{{ $jumlahPermohonanMenunggu }}</span>
+      @endif
+    </div>
 
-      <form method="POST" action="{{ route('admin.logout') }}">
+    <span>Admin</span>
+
+    <form method="POST" action="{{ route('admin.logout') }}">
         @csrf
         <button class="logout-btn" type="submit">Logout</button>
       </form>
@@ -519,6 +638,75 @@ body.mode-pilih .jadwal-check{
 
   <div class="content">
     <div id="notif-success" style="display:none;" class="success-box"></div>
+
+  <div id="permohonanPanel" class="request-panel">
+  <div class="request-header">
+    <div>
+      <div class="request-title">Permohonan Perubahan Jadwal</div>
+      <div style="font-size:12px; color:#777; margin-top:4px;">
+        Daftar permohonan dosen yang menunggu persetujuan admin.
+      </div>
+    </div>
+
+    <div class="request-badge">
+      {{ $jumlahPermohonanMenunggu }} Menunggu
+    </div>
+  </div>
+
+  @if($permohonanMenunggu->isEmpty())
+    <div class="notice">
+      Belum ada permohonan perubahan jadwal dari dosen.
+    </div>
+  @else
+    <div class="request-list">
+      @foreach($permohonanMenunggu as $p)
+        @php
+          $jadwal = $p->jadwal;
+          $pengampu = optional($jadwal)->pengampu;
+          $mk = optional(optional($pengampu)->mataKuliah)->nama_mk ?? '-';
+          $dosen1 = optional($pengampu->dosen)->nama;
+          $dosen2 = optional($pengampu->dosen2)->nama;
+          $namaDosen = $dosen2 ? $dosen1 . ' / ' . $dosen2 : ($dosen1 ?? '-');
+          $waktu = optional($jadwal)->waktu;
+          $ruangan = optional($jadwal)->ruangan;
+        @endphp
+
+        <div class="request-card">
+          <div class="request-mk">{{ $mk }}</div>
+
+          <div class="request-info">
+            <div><b>Dosen:</b> {{ $namaDosen }}</div>
+            <div><b>Kelas:</b> {{ optional($jadwal)->kelas ?? '-' }}</div>
+            <div><b>Pertemuan:</b> {{ $p->pertemuan_ke }}</div>
+            <div>
+              <b>Jadwal Lama:</b>
+              {{ optional($waktu)->hari ?? '-' }},
+              {{ $waktu ? \Carbon\Carbon::parse($waktu->jam_mulai)->format('H:i') : '-' }}
+              -
+              {{ $waktu ? \Carbon\Carbon::parse($waktu->jam_selesai)->format('H:i') : '-' }}
+            </div>
+            <div><b>Ruangan:</b> {{ optional($ruangan)->kode_ruangan ?? '-' }}</div>
+          </div>
+
+          <div class="request-reason">
+            <b>Alasan Dosen:</b><br>
+            {{ $p->alasan_batal ?? '-' }}
+          </div>
+
+          <div class="request-actions">
+            <button class="btn btn-approve" type="button">
+              Setujui
+            </button>
+
+            <button class="btn btn-reject" type="button">
+              Tolak
+            </button>
+          </div>
+        </div>
+      @endforeach
+    </div>
+  @endif
+</div>
 
   @if(session('success'))
     <div class="success-box">
@@ -933,6 +1121,7 @@ body.mode-pilih .jadwal-check{
   </div>
   </div>
 
+
   <script>
     const newJadwalId = "{{ session('new_jadwal_id') }}";
   </script>
@@ -940,9 +1129,20 @@ body.mode-pilih .jadwal-check{
   <!-- SCRIPT TETAP -->
   <script>
 
-    document.addEventListener("click", function(e){
-    console.log("CLICK:", e.target);
-});
+  document.addEventListener("click", function(e){
+      console.log("CLICK:", e.target);
+  });
+
+  function scrollToPermohonan() {
+      const el = document.getElementById('permohonanPanel');
+
+      if (el) {
+          el.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+          });
+      }
+  }
 
   function editJadwal(id) {
 
@@ -1493,6 +1693,17 @@ function hapusJadwalTerpilih() {
     .catch(err => {
         alert('Error: ' + err.message);
     });
+}
+
+function scrollToPermohonan() {
+    const el = document.getElementById('permohonanPanel');
+
+    if (el) {
+        el.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
 }
   </script>
 

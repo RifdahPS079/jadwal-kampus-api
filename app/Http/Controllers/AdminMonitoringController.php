@@ -10,6 +10,7 @@ use App\Models\Waktu;
 use App\Models\Ruangan;
 use App\Models\Jadwal;
 use App\Models\PeriodeKuliah;
+use App\Models\Notifikasi;
 use App\Models\JadwalPertemuan;
 use Illuminate\Support\Facades\DB;
 
@@ -221,6 +222,19 @@ class AdminMonitoringController extends Controller
         
         $periodeAktif = PeriodeKuliah::where('aktif', true)->latest()->first();
 
+        $permohonanMenunggu = JadwalPertemuan::with([
+            'jadwal.pengampu.dosen',
+            'jadwal.pengampu.dosen2',
+            'jadwal.pengampu.mataKuliah',
+            'jadwal.waktu',
+            'jadwal.ruangan',
+        ])
+        ->where('status', 'menunggu')
+        ->latest()
+        ->get();
+
+        $jumlahPermohonanMenunggu = $permohonanMenunggu->count();
+
         return view('admin.monitoring', compact(
             'daftarHari',
             'hari',
@@ -236,7 +250,9 @@ class AdminMonitoringController extends Controller
             'waktusKosong',
             'jadwalTerpakai',
             'allWaktus',
-            'periodeAktif'
+            'periodeAktif',
+            'permohonanMenunggu',
+            'jumlahPermohonanMenunggu'
         ));
     }
 
