@@ -391,8 +391,7 @@ public function tolakPermohonan(Request $request, $id)
     if ($pengampu && $pengampu->dosen2_id) {
         $dosenIds[] = $pengampu->dosen2_id;
     }
-
-    foreach ($dosenIds as $dosenId) {
+foreach ($dosenIds as $dosenId) {
 
     Notifikasi::create([
         'role' => 'dosen',
@@ -415,25 +414,28 @@ public function tolakPermohonan(Request $request, $id)
 
     $dosen = Dosen::find($dosenId);
 
-    if ($dosen && $dosen->fcm_token) {
-        try {
-            app(FcmService::class)->sendToToken(
-                $dosen->fcm_token,
-                'Permohonan Jadwal Ditolak',
-                'Permohonan perubahan jadwal ' . $mk . ' kelas ' . $kelas . ' ditolak oleh admin.',
-                [
-                    'tipe' => 'ditolak',
-                    'jadwal_id' => (string) optional($jadwal)->id,
-                    'pertemuan_ke' => (string) $permohonan->pertemuan_ke,
-                ]
-            );
-        } catch (\Throwable $e) {
-            \Log::error('Gagal kirim FCM penolakan jadwal', [
-                'dosen_id' => $dosenId,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
+if ($dosen && $dosen->fcm_token) {
+    $sent = app(FcmService::class)->sendToToken(
+        $dosen->fcm_token,
+        'Permohonan Jadwal Ditolak',
+        'Permohonan perubahan jadwal ' . $mk . ' kelas ' . $kelas . ' ditolak oleh admin.',
+        [
+            'tipe' => 'ditolak',
+            'jadwal_id' => (string) optional($jadwal)->id,
+            'pertemuan_ke' => (string) $permohonan->pertemuan_ke,
+        ]
+    );
+
+    \Log::info('FCM TOLAK PERMOHONAN', [
+        'dosen_id' => $dosenId,
+        'has_token' => true,
+        'sent' => $sent,
+    ]);
+} else {
+    \Log::warning('FCM TOLAK PERMOHONAN TOKEN KOSONG', [
+        'dosen_id' => $dosenId,
+    ]);
+}
 }
 
     return redirect()
