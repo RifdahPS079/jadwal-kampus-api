@@ -432,11 +432,7 @@ select:focus{
                 </select>
                 @error('hari') <div class="small-err">{{ $message }}</div> @enderror
               </div>
-
-              <div class="col">
-                <label>Tanggal (Opsional)</label>
-                <input type="date" name="tanggal" value="{{ old('tanggal') }}">
-              </div>
+              
             </div>
 
             <div class="row" style="margin-top:10px;">
@@ -609,7 +605,7 @@ select:focus{
                     </td>
                     <td class="td-center">{{ $w->hari ?? '-' }}</td>
                     <td class="td-center">
-                      {{ $w->tanggal ? \Carbon\Carbon::parse($w->tanggal)->format('Y-m-d') : '-' }}
+                      {{ $w->tanggal_otomatis ?? '-' }}
                     </td>
 
                 <td class="td-center">

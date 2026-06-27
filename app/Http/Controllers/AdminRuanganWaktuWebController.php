@@ -24,7 +24,11 @@ class AdminRuanganWaktuWebController extends Controller
         $jumlahPermohonanMenunggu = JadwalPertemuan::where('status', 'menunggu')
         ->whereNull('dibaca_admin_pada')
         ->count();
-        return view('admin.ruangan_waktu', compact('ruangans', 'waktus'));
+        return view('admin.ruangan_waktu', compact(
+            'ruangans',
+            'waktus',
+            'jumlahPermohonanMenunggu'
+        ));
     }
 
     // =========================
@@ -139,7 +143,7 @@ class AdminRuanganWaktuWebController extends Controller
             'jam_mulai'   => ['required'],
             'jam_selesai' => ['required'],
             'hari'        => ['required','string','max:15'],
-            'tanggal'     => ['nullable','date'],
+
         ]);
 
         // =========================
@@ -172,7 +176,7 @@ class AdminRuanganWaktuWebController extends Controller
             'hari'        => $data['hari'],
             'jam_mulai'   => $data['jam_mulai'],
             'jam_selesai' => $data['jam_selesai'],
-            'tanggal'     => $data['tanggal'] ?? null,
+            
         ]);
 
         return redirect()
