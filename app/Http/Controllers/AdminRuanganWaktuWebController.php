@@ -16,9 +16,11 @@ class AdminRuanganWaktuWebController extends Controller
     {
         $ruangans = Ruangan::orderBy('nama_ruangan')->get();
 
-        $waktus = Waktu::orderByRaw("FIELD(hari,'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu')")
-            ->orderBy('jam_mulai')
-            ->get();
+        $waktus = Waktu::orderBy('hari')->orderBy('jam_mulai')->get();
+        $waktus = $waktus->map(function ($w) {
+            $w->tanggal_otomatis = $this->tanggalPertemuan($w->hari, 1);
+            return $w;
+        });
         $jumlahPermohonanMenunggu = JadwalPertemuan::where('status', 'menunggu')
         ->whereNull('dibaca_admin_pada')
         ->count();
@@ -229,6 +231,44 @@ class AdminRuanganWaktuWebController extends Controller
             ->with('ok', 'Waktu berhasil diupdate.')
             ->with('highlight_waktu_id', $waktu->id);
     }
+
+    private function tanggalPertemuan($hari, $pertemuanKe = 1)
+{
+    $periode = \App\Models\PeriodeKuliah::where('aktif', 1)->latest()->first();
+
+    if (!$periode || !$hari) {
+        return '-';
+    }
+
+    $urutanHari = [
+        'Senin' => 1,
+        'Selasa' => 2,
+        'Rabu' => 3,
+        'Kamis' => 4,
+        'Jumat' => 5,
+        'Sabtu' => 6,
+        'Minggu' => 7,
+    ];
+
+    $tanggalAwal = \Carbon\Carbon::parse($periode->tanggal_mulai)
+        ->timezone('Asia/Makassar')
+        ->startOfDay();
+
+    $targetHari = $urutanHari[$hari] ?? 1;
+    $hariAwal = $tanggalAwal->dayOfWeekIso;
+
+    $selisihHari = $targetHari - $hariAwal;
+
+    if ($selisihHari < 0) {
+        $selisihHari += 7;
+    }
+
+    return $tanggalAwal
+        ->copy()
+        ->addDays($selisihHari)
+        ->addWeeks($pertemuanKe - 1)
+        ->translatedFormat('d F Y');
+}
 
     public function destroyWaktu(Waktu $waktu)
     {

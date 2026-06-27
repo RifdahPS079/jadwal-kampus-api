@@ -305,7 +305,7 @@ select:focus{
   @if(($jumlahPermohonanMenunggu ?? 0) > 0)
     <span class="notif-count">{{ $jumlahPermohonanMenunggu }}</span>
   @endif
-</a>
+</a>  
 
   <span>Admin</span>
       <!-- <div class="badge">A</div> -->
