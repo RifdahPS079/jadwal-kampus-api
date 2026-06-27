@@ -4,7 +4,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Monitoring Jadwal</title>
+  <title>Penyusunan & Monitoring Jadwal</title>
 
 
   <style>
@@ -26,7 +26,7 @@
 
       /* ✅ Samakan dengan dosen.blade.php */
       --topbarH: 60px;
-      --sidebarW: 220px;
+      --sidebarW: 270px;
     }
 
     *{ box-sizing:border-box; }
@@ -99,8 +99,8 @@
       font-size:14px;
 
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      /* overflow: hidden;
+      text-overflow: ellipsis; */
     }
     .sidebar a.active{
       background:var(--orangeSoft);
@@ -286,7 +286,7 @@
     }
 
     @media (max-width: 900px){
-      :root{ --sidebarW: 190px; }
+      :root{ --sidebarW: 270px; }
       .minw{ min-width: 900px; }
       select{ width: 100%; }
       input[type="file"]{ width: 100%; max-width: none; }
@@ -631,7 +631,7 @@ body.mode-pilih .jadwal-check{
   </div>
 
   <div class="sidebar">
-    <a class="active" href="{{ route('admin.monitoring') }}">Monitoring Jadwal</a>
+    <a class="active" href="{{ route('admin.monitoring') }}">Penyusunan & Monitoring Jadwal</a>
     <a href="{{ route('admin.dosen.index') }}">Data Dosen</a>
     <a href="{{ route('admin.mahasiswa.index') }}">Data Mahasiswa</a>
     <a href="{{ route('admin.matakuliah.index') }}">Mata Kuliah</a>
@@ -669,7 +669,7 @@ body.mode-pilih .jadwal-check{
       <div class="success">{{ session('success') }}</div>
     @endif -->
     <div class="card">
-      <h3 class="page-title">Monitoring Jadwal Kuliah</h3>
+      <h3 class="page-title">Penyusunan & Monitoring Jadwal Perkuliahan</h3>
 
       <div class="panel">
         <div class="legend">
@@ -765,7 +765,11 @@ body.mode-pilih .jadwal-check{
         <div class="toolbar">
           {{-- Filter hari --}}
           <form method="GET" action="{{ route('admin.monitoring') }}">
-            <select name="hari" onchange="this.form.submit()">
+          @if($permohonanDipilih)
+            <input type="hidden" name="permohonan_id" value="{{ $permohonanDipilih->id }}">
+          @endif
+
+          <select name="hari" onchange="this.form.submit()">
               @foreach($daftarHari as $h)
                 <option value="{{ $h }}" {{ $hari === $h ? 'selected' : '' }}>{{ $h }}</option>
               @endforeach

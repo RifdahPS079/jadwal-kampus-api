@@ -18,7 +18,7 @@
       --dangerSoft:#ffe6e6;
 
       --topbarH: 60px;
-      --sidebarW: 220px;
+      --sidebarW: 270px;
     }
 
     *{ box-sizing:border-box; }
@@ -131,7 +131,7 @@
     }
 
     @media (max-width: 900px){
-      :root{ --sidebarW: 190px; }
+      :root{ --sidebarW: 270px; }
       .grid{ grid-template-columns: 1fr; }
     }
 
@@ -356,7 +356,7 @@
   </div>
 
   <div class="sidebar">
-   <a href="{{ route('admin.monitoring') }}">Monitoring Jadwal</a>
+   <a href="{{ route('admin.monitoring') }}">Penyusunan & Monitoring Jadwal</a>
     <a href="{{ route('admin.dosen.index') }}">Data Dosen</a>
     <a class="active" href="{{ route('admin.mahasiswa.index') }}">Data Mahasiswa</a>
     <a href="{{ route('admin.matakuliah.index') }}">Mata Kuliah</a>

@@ -71,6 +71,42 @@ class AdminMonitoringController extends Controller
         ]);
     }
     
+    private function tanggalPertemuan($hari, $pertemuanKe)
+{
+    $periode = PeriodeKuliah::where('aktif', 1)->latest()->first();
+
+    if (!$periode || !$hari) return '-';
+
+    $urutanHari = [
+        'Senin' => 1,
+        'Selasa' => 2,
+        'Rabu' => 3,
+        'Kamis' => 4,
+        'Jumat' => 5,
+        'Sabtu' => 6,
+        'Minggu' => 7,
+    ];
+
+    $tanggalAwal = Carbon::parse($periode->tanggal_mulai)
+        ->timezone('Asia/Makassar')
+        ->startOfDay();
+
+    $targetHari = $urutanHari[$hari] ?? 1;
+    $hariAwal = $tanggalAwal->dayOfWeekIso;
+
+    $selisihHari = $targetHari - $hariAwal;
+
+    if ($selisihHari < 0) {
+        $selisihHari += 7;
+    }
+
+    return $tanggalAwal
+        ->copy()
+        ->addDays($selisihHari)
+        ->addWeeks($pertemuanKe - 1)
+        ->translatedFormat('d F Y');
+}
+
     private function pertemuanSaatIni()
     {
         $periode = PeriodeKuliah::where('aktif', 1)->latest()->first();
@@ -484,20 +520,32 @@ public function pilihSlotPengganti(Request $request, $id)
 
     $jamBaru = Carbon::parse($waktuBaru->jam_mulai)->format('H:i') . '-' . Carbon::parse($waktuBaru->jam_selesai)->format('H:i');
 
-    $pesan = [
-        'nama_mk' => $mk,
-        'kelas' => $kelas,
-        'nama_dosen' => $namaDosen,
-        'pertemuan_ke' => $permohonan->pertemuan_ke,
+    $tanggalLama = $this->tanggalPertemuan(
+    optional($waktuLama)->hari,
+    $permohonan->pertemuan_ke
+);
 
-        'hari_lama' => optional($waktuLama)->hari ?? '-',
-        'jam_lama' => $jamLama,
-        'ruangan_lama' => optional($ruanganLama)->kode_ruangan ?? '-',
+$tanggalBaru = $this->tanggalPertemuan(
+    $waktuBaru->hari,
+    $permohonan->pertemuan_ke
+);
 
-        'hari_baru' => $waktuBaru->hari,
-        'jam_baru' => $jamBaru,
-        'ruangan_baru' => $ruanganBaru->kode_ruangan,
-    ];
+$pesan = [
+    'nama_mk' => $mk,
+    'kelas' => $kelas,
+    'nama_dosen' => $namaDosen,
+    'pertemuan_ke' => $permohonan->pertemuan_ke,
+
+    'hari_lama' => optional($waktuLama)->hari ?? '-',
+    'tanggal_lama' => $tanggalLama,
+    'jam_lama' => $jamLama,
+    'ruangan_lama' => optional($ruanganLama)->kode_ruangan ?? '-',
+
+    'hari_baru' => $waktuBaru->hari,
+    'tanggal_baru' => $tanggalBaru,
+    'jam_baru' => $jamBaru,
+    'ruangan_baru' => $ruanganBaru->kode_ruangan,
+];
 
     foreach (Dosen::all() as $dosen) {
         Notifikasi::create([

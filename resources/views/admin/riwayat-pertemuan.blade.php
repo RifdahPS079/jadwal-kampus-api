@@ -16,7 +16,7 @@
       --red:#eb5757;
       --green:#27ae60;
       --topbarH:60px;
-      --sidebarW:220px;
+      --sidebarW:270px;
     }
 
     *{ box-sizing:border-box; }
@@ -193,7 +193,7 @@
 
     @media(max-width:900px){
       .stats{ grid-template-columns:repeat(2, 1fr); }
-      :root{ --sidebarW:190px; }
+      :root{ --sidebarW:270px; }
     }
   </style>
 </head>
@@ -214,7 +214,7 @@
   </div>
 
 <div class="sidebar">
-  <a href="{{ route('admin.monitoring') }}">Monitoring Jadwal</a>
+  <a href="{{ route('admin.monitoring') }}">Penyusunan & Monitoring Jadwal</a>
   <a href="{{ route('admin.dosen.index') }}">Data Dosen</a>
   <a href="{{ route('admin.mahasiswa.index') }}">Data Mahasiswa</a>
   <a href="{{ route('admin.matakuliah.index') }}">Mata Kuliah</a>

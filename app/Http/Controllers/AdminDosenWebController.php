@@ -179,7 +179,12 @@ return back()
 
     public function edit(Dosen $dosen)
     {
-        return view('admin.dosen.edit', compact('dosen'));
+        $jumlahPermohonanMenunggu = \App\Models\JadwalPertemuan::where('status', 'menunggu')->count();
+
+        return view('admin.dosen.edit', compact(
+            'dosen',
+            'jumlahPermohonanMenunggu'
+        ));
     }
 
     public function update(Request $request, Dosen $dosen)

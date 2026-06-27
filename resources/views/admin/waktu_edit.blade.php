@@ -32,7 +32,7 @@ body{
 
 /* ===== SIDEBAR ===== */
 .sidebar{
-  width:220px;
+  width:270px;
   background:#fff;
   border-right:1px solid #eee;
   padding:14px;
@@ -45,6 +45,7 @@ body{
   text-decoration:none;
   border-radius:8px;
   margin-bottom:6px;
+  font-size:14px;
 }
 
 .sidebar a.active{
@@ -143,6 +144,39 @@ input:focus{
     grid-template-columns:1fr;
   }
 }
+
+.notif-icon{
+  position:relative;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  text-decoration:none;
+  color:#e5861f;
+  box-shadow:0 4px 10px rgba(0,0,0,.12);
+}
+
+.notif-count{
+  position:absolute;
+  top:-6px;
+  right:-6px;
+  min-width:20px;
+  height:20px;
+  padding:0 6px;
+  border-radius:999px;
+  background:#ef4444;
+  color:#fff;
+  font-size:11px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:2px solid #fff;
+}
 </style>
 </head>
 
@@ -152,6 +186,12 @@ input:focus{
 <div class="topbar">
   <div><b>Web Admin Penjadwalan Perkuliahan</b></div>
   <div style="display:flex; gap:12px; align-items:center;">
+     <a class="notif-icon" href="{{ route('admin.notifikasi') }}" title="Permohonan perubahan jadwal">
+    🔔
+    @if(($jumlahPermohonanMenunggu ?? 0) > 0)
+      <span class="notif-count">{{ $jumlahPermohonanMenunggu }}</span>
+    @endif
+  </a>
     <span>Admin</span>
     <form method="POST" action="{{ route('admin.logout') }}">
       @csrf
@@ -164,7 +204,7 @@ input:focus{
 
   <!-- SIDEBAR -->
   <div class="sidebar">
-<a href="{{ route('admin.monitoring') }}">Monitoring Jadwal</a>
+<a href="{{ route('admin.monitoring') }}">Penyusunan & Monitoring Jadwal</a>
     <a href="{{ route('admin.dosen.index') }}">Data Dosen</a>
     <a href="{{ route('admin.mahasiswa.index') }}">Data Mahasiswa</a>
     <a href="{{ route('admin.matakuliah.index') }}">Mata Kuliah</a>

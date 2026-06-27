@@ -18,7 +18,7 @@
       --green:#22c55e;
       --red:#ef4444;
       --topbarH:60px;
-      --sidebarW:220px;
+      --sidebarW:270px;
     }
 
     *{ box-sizing:border-box; }
@@ -381,7 +381,7 @@
   </div>
 
   <div class="sidebar">
-    <a href="{{ route('admin.monitoring') }}">Monitoring Jadwal</a>
+    <a href="{{ route('admin.monitoring') }}">Penyusunan & Monitoring Jadwal</a>
     <a href="{{ route('admin.dosen.index') }}">Data Dosen</a>
     <a href="{{ route('admin.mahasiswa.index') }}">Data Mahasiswa</a>
     <a href="{{ route('admin.matakuliah.index') }}">Mata Kuliah</a>

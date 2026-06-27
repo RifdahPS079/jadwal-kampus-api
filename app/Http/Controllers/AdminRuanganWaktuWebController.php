@@ -93,6 +93,7 @@ class AdminRuanganWaktuWebController extends Controller
     public function editRuangan(Ruangan $ruangan)
     {
         // tampilkan form edit khusus
+         $jumlahPermohonanMenunggu = \App\Models\JadwalPertemuan::where('status', 'menunggu')->count();
         return view('admin.ruangan_edit', compact('ruangan'));
     }
 
@@ -180,6 +181,7 @@ class AdminRuanganWaktuWebController extends Controller
 
     public function editWaktu(Waktu $waktu)
     {
+         $jumlahPermohonanMenunggu = \App\Models\JadwalPertemuan::where('status', 'menunggu')->count();
         return view('admin.waktu_edit', compact('waktu'));
     }
 

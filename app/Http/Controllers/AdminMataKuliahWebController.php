@@ -170,7 +170,8 @@ class AdminMataKuliahWebController extends Controller
 
     public function edit(Request $request, MataKuliah $mataKuliah)
     {
-        $tahunAjaran = $request->get('tahun_ajaran')
+     $jumlahPermohonanMenunggu = \App\Models\JadwalPertemuan::where('status', 'menunggu')->count();    
+    $tahunAjaran = $request->get('tahun_ajaran')
             ?? PengampuMataKuliah::max('tahun_ajaran')
             ?? (date('Y') . '/' . (date('Y') + 1));
 

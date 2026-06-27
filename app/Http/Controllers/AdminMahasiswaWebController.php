@@ -117,6 +117,7 @@ class AdminMahasiswaWebController extends Controller
 
     public function edit(Mahasiswa $mahasiswa)
     {
+        $jumlahPermohonanMenunggu = \App\Models\JadwalPertemuan::where('status', 'menunggu')->count();
         return view('admin.mahasiswa_edit', compact('mahasiswa'));
     }
 
