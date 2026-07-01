@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use App\Models\Admin;
 use App\Models\Dosen;
 use App\Models\Mahasiswa;
@@ -126,7 +125,19 @@ public function loginDosen(Request $request)
         $request->validate([
             'email' => 'required|email',
             'role' => 'required|in:dosen,mahasiswa',
-            'identitas' => 'required' // NIM / NIDN
+            'identitas' => 'required',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[^A-Za-z0-9]/',
+            ],
+        ], [
+            'password.required' => 'Password baru wajib diisi.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.regex' => 'Password harus memiliki huruf besar, angka, dan simbol seperti #, _, atau @.',
         ]);
 
         if ($request->role === 'dosen') {
@@ -191,7 +202,14 @@ public function loginDosen(Request $request)
             'email' => 'required|email',
             'role' => 'required|in:dosen,mahasiswa',
             'identitas' => 'required',
-            'password' => 'required|min:6'
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[^A-Za-z0-9]/',
+            ]
         ]);
 
         if ($request->role === 'dosen') {
