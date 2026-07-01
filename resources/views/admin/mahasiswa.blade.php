@@ -312,7 +312,64 @@
   color:#e5861f;
   box-shadow:0 4px 10px rgba(0,0,0,.12);
 }
+.bulk-bar{
+  margin:14px 0;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
 
+.select-mode-info{
+  font-size:13px;
+  color:#777;
+  font-weight:600;
+}
+
+.selected-count{
+  display:none;
+  padding:6px 10px;
+  border-radius:8px;
+  background:#fff4e6;
+  color:#b45309;
+  font-size:13px;
+  font-weight:700;
+}
+
+.mahasiswa-check{
+    display:none;
+    width:18px;
+    height:18px;
+    cursor:pointer;
+}
+
+body.mode-pilih-mahasiswa .mahasiswa-check{
+    display:inline-block;
+}
+
+.btn-warning{
+  background:#fff4e6;
+  color:#b45309;
+  border:1px solid #f0b36a;
+}
+
+.btn-grey{
+  background:#eee;
+  color:#555;
+}
+
+.aksi-wrap{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  flex-wrap:nowrap;
+}
+
+.aksi-wrap form{
+  margin:0;
+}
 .notif-count{
   position:absolute;
   top:-6px;
@@ -724,64 +781,94 @@
       </div>
 
       {{-- DAFTAR MAHASISWA --}}
-      <div class="panel" style="margin-top:14px;">
-        <h4>Daftar Mahasiswa</h4>
+<div class="panel" style="margin-top:14px;">
+  <h4>Daftar Mahasiswa</h4>
 
-        <div class="table-wrap">
-          <table class="minw">
-            <thead>
-              <tr>
-                <th style="width:200px;">Nama Mahasiswa</th>
-                <th style="width:150px;">Program Studi</th>
-                <th style="width:100px;">NIM</th>
-                <th style="width:80px;">Kelas</th>
-                <th style="width:100px;">Angkatan</th>
-                <th style="width:180px;">Email</th>
-                <th style="width:170px;">Aksi</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              @forelse($mahasiswas as $m)
-                <tr
-                    id="mahasiswa-{{ $m->id }}"
-                    class="{{ session('highlight_id') == $m->id ? 'highlight-row' : '' }}"
-                >
-                  <td>{{ $m->nama ?? '-' }}</td>
-                  <td>{{ $m->program_studi ?? '-' }}</td>
-                  <td class="td-center">{{ $m->nim ?? '-' }}</td>
-                  <td class="td-center">{{ $m->kelas ?? '-' }}</td>
-                  <td class="td-center">{{ $m->angkatan ?? '-' }}</td>
-                  <td>{{ $m->email ?? '-' }}</td>
-
-                  <td class="td-center">
-                    <a href="{{ route('admin.mahasiswa.edit', $m->id) }}" class="btn btn-soft">Edit</a>
-
-                    <form action="{{ route('admin.mahasiswa.destroy', $m->id) }}"
-                          method="POST"
-                          style="display:inline-block;"
-                          onsubmit="return confirm('Yakin mau menghapus mahasiswa ini?\n\n{{ $m->nama }} ({{ $m->nim }})');">
-                      @csrf
-                      @method('DELETE')
-                      <button class="btn btn-danger" type="submit">Hapus</button>
-                    </form>
-                  </td>
-                </tr>
-              @empty
-                <tr>
-                  <td colspan="7" class="td-center" style="color:var(--muted); padding:16px;">
-                    Data mahasiswa belum ada.
-                  </td>
-                </tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
-
-      </div>
-
+  <div class="bulk-bar">
+    <div id="selectInfoMahasiswa" class="select-mode-info" style="display:none;">
+      Pilih beberapa mahasiswa yang ingin dihapus
     </div>
+
+    <div id="selectedCountMahasiswa" class="selected-count">
+      Belum ada mahasiswa dipilih
+    </div>
+
+    <button type="button" id="btnModePilihMahasiswa" class="btn btn-soft" onclick="aktifkanModePilihMahasiswa()">
+      ✅ Pilih Beberapa Mahasiswa
+    </button>
+
+    <button type="button" id="btnPilihSemuaMahasiswa" class="btn btn-warning" onclick="togglePilihSemuaMahasiswa()" style="display:none;">
+      Pilih Semua
+    </button>
+
+    <button type="button" id="btnHapusTerpilihMahasiswa" class="btn btn-danger" onclick="hapusMahasiswaTerpilih()" style="display:none;">
+      Hapus Terpilih
+    </button>
+
+    <button type="button" id="btnBatalPilihMahasiswa" class="btn btn-grey" onclick="batalModePilihMahasiswa()" style="display:none;">
+      Batal
+    </button>
   </div>
+
+  <div class="table-wrap">
+    <table class="minw">
+      <thead>
+        <tr>
+          <th id="kolomPilihHeader" style="width:45px; display:none;">Pilih</th>
+          <th style="width:200px;">Nama Mahasiswa</th>
+          <th style="width:150px;">Program Studi</th>
+          <th style="width:100px;">NIM</th>
+          <th style="width:80px;">Kelas</th>
+          <th style="width:100px;">Angkatan</th>
+          <th style="width:180px;">Email</th>
+          <th style="width:210px;">Aksi</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @forelse($mahasiswas as $m)
+          <tr id="mahasiswa-{{ $m->id }}" class="{{ session('highlight_id') == $m->id ? 'highlight-row' : '' }}">
+            <td class="td-center kolom-pilih" style="display:none;">
+              <input
+                type="checkbox"
+                class="mahasiswa-check"
+                value="{{ $m->id }}"
+                onclick="updateSelectedCountMahasiswa()"
+              >
+            </td>
+
+            <td>{{ $m->nama ?? '-' }}</td>
+            <td>{{ $m->program_studi ?? '-' }}</td>
+            <td class="td-center">{{ $m->nim ?? '-' }}</td>
+            <td class="td-center">{{ $m->kelas ?? '-' }}</td>
+            <td class="td-center">{{ $m->angkatan ?? '-' }}</td>
+            <td>{{ $m->email ?? '-' }}</td>
+
+            <td class="td-center">
+              <div class="aksi-wrap">
+                <a href="{{ route('admin.mahasiswa.edit', $m->id) }}" class="btn btn-soft">Edit</a>
+
+                <form action="{{ route('admin.mahasiswa.destroy', $m->id) }}"
+                      method="POST"
+                      onsubmit="return confirm('Yakin mau menghapus mahasiswa ini?\n\n{{ $m->nama }} ({{ $m->nim }})');">
+                  @csrf
+                  @method('DELETE')
+                  <button class="btn btn-danger" type="submit">Hapus</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        @empty
+          <tr>
+            <td colspan="8" class="td-center" style="color:var(--muted); padding:16px;">
+              Data mahasiswa belum ada.
+            </td>
+          </tr>
+        @endforelse
+      </tbody>
+    </table>
+  </div>
+</div>
 
   <script>
 function togglePassword() {
@@ -814,6 +901,117 @@ window.addEventListener('load', function () {
 });
 
 @endif
+
+let modePilihMahasiswaAktif = false;
+let semuaMahasiswaDipilih = false;
+
+function aktifkanModePilihMahasiswa() {
+    modePilihMahasiswaAktif = true;
+    document.body.classList.add('mode-pilih-mahasiswa');
+
+    document.querySelectorAll('.kolom-pilih').forEach(td => {
+        td.style.display = 'table-cell';
+    });
+
+    document.getElementById('kolomPilihHeader').style.display = 'table-cell';
+    document.getElementById('selectInfoMahasiswa').style.display = 'inline';
+    document.getElementById('selectedCountMahasiswa').style.display = 'inline-block';
+    document.getElementById('btnPilihSemuaMahasiswa').style.display = 'inline-block';
+    document.getElementById('btnHapusTerpilihMahasiswa').style.display = 'inline-block';
+    document.getElementById('btnBatalPilihMahasiswa').style.display = 'inline-block';
+    document.getElementById('btnModePilihMahasiswa').style.display = 'none';
+
+    updateSelectedCountMahasiswa();
+}
+
+function batalModePilihMahasiswa() {
+    modePilihMahasiswaAktif = false;
+    semuaMahasiswaDipilih = false;
+
+    document.body.classList.remove('mode-pilih-mahasiswa');
+
+    document.querySelectorAll('.kolom-pilih').forEach(td => {
+        td.style.display = 'none';
+    });
+
+    document.getElementById('kolomPilihHeader').style.display = 'none';
+
+    document.querySelectorAll('.mahasiswa-check').forEach(cb => {
+        cb.checked = false;
+    });
+
+    document.getElementById('selectInfoMahasiswa').style.display = 'none';
+    document.getElementById('selectedCountMahasiswa').style.display = 'none';
+    document.getElementById('btnPilihSemuaMahasiswa').style.display = 'none';
+    document.getElementById('btnHapusTerpilihMahasiswa').style.display = 'none';
+    document.getElementById('btnBatalPilihMahasiswa').style.display = 'none';
+    document.getElementById('btnModePilihMahasiswa').style.display = 'inline-block';
+    document.getElementById('btnPilihSemuaMahasiswa').innerText = 'Pilih Semua';
+}
+
+function togglePilihSemuaMahasiswa() {
+    const checks = document.querySelectorAll('.mahasiswa-check');
+
+    semuaMahasiswaDipilih = !semuaMahasiswaDipilih;
+
+    checks.forEach(cb => {
+        cb.checked = semuaMahasiswaDipilih;
+    });
+
+    document.getElementById('btnPilihSemuaMahasiswa').innerText =
+        semuaMahasiswaDipilih ? 'Batalkan Semua' : 'Pilih Semua';
+
+    updateSelectedCountMahasiswa();
+}
+
+function updateSelectedCountMahasiswa() {
+    const total = document.querySelectorAll('.mahasiswa-check:checked').length;
+    const counter = document.getElementById('selectedCountMahasiswa');
+
+    if (total === 0) {
+        counter.innerHTML = '⚠️ Belum ada mahasiswa dipilih';
+    } else {
+        counter.innerHTML = '✅ ' + total + ' mahasiswa dipilih untuk dihapus';
+    }
+}
+
+function hapusMahasiswaTerpilih() {
+    const ids = Array.from(document.querySelectorAll('.mahasiswa-check:checked'))
+        .map(cb => cb.value);
+
+    if (ids.length === 0) {
+        alert('Pilih dulu mahasiswa yang ingin dihapus.');
+        return;
+    }
+
+    if (!confirm(`Yakin ingin menghapus ${ids.length} mahasiswa terpilih?`)) {
+        return;
+    }
+
+    fetch(`{{ route('admin.mahasiswa.bulkDelete') }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            ids: ids
+        })
+    })
+    .then(async res => {
+        const data = await res.json();
+
+        if (!res.ok || data.success === false) {
+            alert(data.message || 'Gagal menghapus mahasiswa');
+            return;
+        }
+
+        location.reload();
+    })
+    .catch(err => {
+        alert('Error: ' + err.message);
+    });
+}
 </script>
 </body>
 </html>

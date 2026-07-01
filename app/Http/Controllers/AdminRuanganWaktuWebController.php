@@ -134,6 +134,21 @@ class AdminRuanganWaktuWebController extends Controller
         return redirect()->route('admin.ruangan_waktu.index')->with('ok', 'Ruangan berhasil dihapus.');
     }
 
+    public function bulkDeleteRuangan(Request $request)
+{
+    $request->validate([
+        'ids' => ['required', 'array'],
+        'ids.*' => ['integer', 'exists:ruangans,id'],
+    ]);
+
+    Ruangan::whereIn('id', $request->ids)->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => count($request->ids) . ' ruangan berhasil dihapus',
+    ]);
+}
+
     // =========================
     // WAKTU
     // =========================
@@ -279,6 +294,21 @@ class AdminRuanganWaktuWebController extends Controller
         $waktu->delete();
         return redirect()->route('admin.ruangan_waktu.index')->with('ok', 'Waktu berhasil dihapus.');
     }
+
+    public function bulkDeleteWaktu(Request $request)
+{
+    $request->validate([
+        'ids' => ['required', 'array'],
+        'ids.*' => ['integer', 'exists:waktus,id'],
+    ]);
+
+    Waktu::whereIn('id', $request->ids)->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => count($request->ids) . ' waktu berhasil dihapus',
+    ]);
+}
 
    public function importRuangan(Request $request)
     {

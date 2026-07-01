@@ -71,11 +71,11 @@ class AdminDosenWebController extends Controller
         'kode_dosen' => 'required',
         'program_studi' => 'required',
         'email' => 'required|email',
-        'password' => 'required|min:6',
-    ], [
+        'password' => $this->passwordRules(true),
+    ], array_merge([
         'nidn.required' => 'NIDN wajib diisi',
         'nidn.digits' => 'NIDN harus tepat 10 angka',
-    ]);
+    ], $this->passwordMessages()));
 
     $errors = [];
 
@@ -195,12 +195,11 @@ return back()
         'program_studi' => ['nullable','string','max:255'],
         'nidn'          => ['required','digits:10'],
         'email'         => ['nullable','email','max:255'],
-        'password'      => ['nullable','string','min:6'],
-    ], [
-
+        'password'      => $this->passwordRules(false),
+    ], array_merge([
         'nidn.required' => 'NIDN wajib diisi',
         'nidn.digits' => 'NIDN harus tepat 10 angka',
-    ]);
+    ], $this->passwordMessages()));
 
         $errors = [];
 
@@ -348,4 +347,27 @@ return back()
             $lastDosen?->id
         );
     }
+
+    private function passwordRules(bool $required = true): array
+{
+    return [
+        $required ? 'required' : 'nullable',
+        'string',
+        'min:8',
+        'regex:/[A-Z]/',
+        'regex:/[a-z]/',
+        'regex:/[0-9]/',
+        'regex:/[@$!%*#?&_]/',
+    ];
+}
+
+private function passwordMessages(): array
+{
+    return [
+        'password.required' => 'Password wajib diisi.',
+        'password.min' => 'Password minimal 8 karakter.',
+        'password.regex' => 'Password harus memiliki huruf besar, huruf kecil, angka, dan simbol seperti @, #, _, atau !.',
+    ];
+}
+
 }

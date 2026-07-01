@@ -377,16 +377,16 @@ body.mode-pilih-dosen .dosen-check{
   border:2px solid #fff;
 }
 
-.aksi-cell{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:8px;
-    flex-wrap:nowrap;
+.aksi-wrap{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  flex-wrap:nowrap;
 }
 
-.aksi-cell form{
-    margin:0;
+.aksi-wrap form{
+  margin:0;
 }
 
   </style>
@@ -789,8 +789,8 @@ body.mode-pilih-dosen .dosen-check{
                     style="width:45px;display:none;">
                     Pilih
                 </th>
-                <th style="width:90px;">Kode</th>
-                <th>Nama Dosen</th>
+                <th style="width:70px;">Kode</th>
+                <th style="width:200px;">Nama Dosen</th>
                 <th style="width:180px;">Program Studi</th>
                 <th style="width:140px;">NIDN</th>
                 <th style="width:220px;">Email</th>
@@ -823,18 +823,19 @@ body.mode-pilih-dosen .dosen-check{
                   <td class="td-center">{{ $d->nidn ?? '-' }}</td>
                   <td>{{ $d->email ?? '-' }}</td>
 
-                  <td class="td-center aksi-cell">
+                  <td class="td-center">
+                  <div class="aksi-wrap">
                     <a href="{{ route('admin.dosen.edit', $d->id) }}" class="btn btn-soft">Edit</a>
 
                     <form action="{{ route('admin.dosen.destroy', $d->id) }}"
                           method="POST"
-                          style="display:inline-block;"
                           onsubmit="return confirm('Yakin mau menghapus dosen ini?\n\n{{ $d->nama }} ({{ $d->kode_dosen }})');">
                       @csrf
                       @method('DELETE')
                       <button class="btn btn-danger" type="submit">Hapus</button>
                     </form>
-                  </td>
+                  </div>
+                </td>
                 </tr>
               @empty
                 <tr>
@@ -923,7 +924,7 @@ let semuaDosenDipilih = false;
 
 function aktifkanModePilihDosen() {
     modePilihDosenAktif = true;
-    document.body.classList.add('mode-pilih');
+    document.body.classList.add('mode-pilih-dosen');
 
     document.querySelectorAll('.kolom-pilih').forEach(td=>td.style.display='table-cell');
     document.getElementById('kolomPilihHeader').style.display='table-cell';
@@ -994,6 +995,9 @@ function hapusDosenTerpilih() {
         return;
     }
 
+    document.getElementById('btnHapusTerpilihDosen').innerText = 'Menghapus...';
+    document.getElementById('btnHapusTerpilihDosen').disabled = true;
+
     fetch(`{{ route('admin.dosen.bulkDelete') }}`, {
         method: 'POST',
         headers: {
@@ -1024,7 +1028,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const msg = localStorage.getItem('success_dosen');
 
     if (msg) {
-        alert(msg);
+        const box = document.createElement('div');
+
+        box.className = 'success';
+        box.innerText = msg;
+
+        const card = document.querySelector('.card');
+        const title = document.querySelector('.page-title');
+
+        card.insertBefore(box, title.nextSibling);
+
         localStorage.removeItem('success_dosen');
     }
 });

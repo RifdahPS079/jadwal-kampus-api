@@ -78,6 +78,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/mahasiswa/{mahasiswa}/edit', [AdminMahasiswaWebController::class, 'edit'])->name('mahasiswa.edit');
         Route::put('/mahasiswa/{mahasiswa}', [AdminMahasiswaWebController::class, 'update'])->name('mahasiswa.update');
         Route::delete('/mahasiswa/{mahasiswa}', [AdminMahasiswaWebController::class, 'destroy'])->name('mahasiswa.destroy'); 
+        Route::post('/mahasiswa/bulk-delete', [AdminMahasiswaWebController::class, 'bulkDelete'] )->name('mahasiswa.bulkDelete');
 
         
          /*
@@ -91,7 +92,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/matakuliah/{mataKuliah}/edit', [AdminMataKuliahWebController::class, 'edit'])->name('matakuliah.edit');
         Route::put('/matakuliah/{mataKuliah}', [AdminMataKuliahWebController::class, 'update'])->name('matakuliah.update');
         Route::delete('/matakuliah/{mataKuliah}', [AdminMataKuliahWebController::class, 'destroy'])->name('matakuliah.destroy');
-
+        Route::post('/matakuliah/bulk-delete', [AdminMataKuliahWebController::class, 'bulkDelete'])->name('matakuliah.bulkDelete');
 
         /*
         |--------------------------------------------------------------------------
@@ -106,6 +107,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/ruangan-waktu/ruangan/{ruangan}', [AdminRuanganWaktuWebController::class, 'updateRuangan'])->name('ruangan.update');
         Route::delete('/ruangan-waktu/ruangan/{ruangan}', [AdminRuanganWaktuWebController::class, 'destroyRuangan'])->name('ruangan.destroy');
         Route::post('/ruangan-waktu/ruangan/import', [AdminRuanganWaktuWebController::class, 'importRuangan'])->name('ruangan.import');
+        Route::post('/ruangan-waktu/ruangan/bulk-delete', [AdminRuanganWaktuWebController::class, 'bulkDeleteRuangan'])->name('ruangan.bulkDelete');
 
         // WAKTU
         Route::post('/ruangan-waktu/waktu', [AdminRuanganWaktuWebController::class, 'storeWaktu'])->name('waktu.store');
@@ -113,6 +115,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/ruangan-waktu/waktu/{waktu}', [AdminRuanganWaktuWebController::class, 'updateWaktu'])->name('waktu.update');
         Route::delete('/ruangan-waktu/waktu/{waktu}', [AdminRuanganWaktuWebController::class, 'destroyWaktu'])->name('waktu.destroy');
         Route::post('/ruangan-waktu/waktu/import', [AdminRuanganWaktuWebController::class, 'importWaktu'])->name('waktu.import');
+        Route::post('/ruangan-waktu/waktu/bulk-delete', [AdminRuanganWaktuWebController::class, 'bulkDeleteWaktu'])->name('waktu.bulkDelete');
     });
 
     Route::get('/', function () {

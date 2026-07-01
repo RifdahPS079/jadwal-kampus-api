@@ -285,6 +285,65 @@
   box-shadow:0 4px 10px rgba(0,0,0,.12);
 }
 
+.bulk-bar{
+  margin:14px 0;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.select-mode-info{
+  font-size:13px;
+  color:#777;
+  font-weight:600;
+}
+
+.selected-count{
+  display:none;
+  padding:6px 10px;
+  border-radius:8px;
+  background:#fff4e6;
+  color:#b45309;
+  font-size:13px;
+  font-weight:700;
+}
+
+.matakuliah-check{
+  display:none;
+  width:18px;
+  height:18px;
+  cursor:pointer;
+}
+
+body.mode-pilih-matakuliah .matakuliah-check{
+  display:inline-block;
+}
+
+.btn-warning{
+  background:#fff4e6;
+  color:#b45309;
+  border:1px solid #f0b36a;
+}
+
+.btn-grey{
+  background:#eee;
+  color:#555;
+}
+
+.aksi-wrap{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  flex-wrap:nowrap;
+}
+
+.aksi-wrap form{
+  margin:0;
+}
+
 .notif-count{
   position:absolute;
   top:-6px;
@@ -628,93 +687,125 @@
       </div>
 
       {{-- DAFTAR --}}
-      <div class="panel" style="margin-top:14px;">
-        <h4>Daftar Mata Kuliah</h4>
+<div class="panel" style="margin-top:14px;">
+  <h4>Daftar Mata Kuliah</h4>
 
-        <div class="table-wrap">
-          <table class="minw">
-            <thead>
-              <tr>
-                <th style="width:120px;">Kode</th>
-                <th>Nama Mata Kuliah</th>
-                <th style="width:180px;">Program Studi</th>
-                <th style="width:90px;">SKS</th>
-                <th style="width:90px;">Semester</th>
-                <th style="width:260px;">Dosen Pengampu ({{ $tahunAjaran ?? '-' }})</th>
-                <th style="width:200px;">Aksi</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              @forelse($mataKuliahs as $mk)
-                @php
-                 $pengampu = $mk->pengampus
-                  ->where('semester', $semester)
-                  ->where('tahun_ajaran', $tahunAjaran)
-                  ->first();
-                @endphp
-
-                  <tr
-                      id="matakuliah-{{ $mk->id }}"
-                      class="{{ in_array($mk->id, session('highlight_ids', [])) ? 'highlight-row' : '' }}"
-                  >
-                  <td class="td-center">{{ $mk->kode_mk ?? '-' }}</td>
-                  <td>{{ $mk->nama_mk ?? '-' }}</td>
-                  <td class="td-center">{{ $mk->program_studi ?? '-' }}</td>
-                  <td class="td-center">{{ $mk->sks ?? '-' }}</td>
-                  <td class="td-center">{{ $mk->semester ?? '-' }}</td>
-
-                  <td>
-                    @if($pengampu && $pengampu->dosen)
-                    <b>{{ $pengampu->dosen->nama }}</b><br>
-                    <span style="color:var(--muted); font-size:12px;">
-                      {{ $pengampu->dosen->kode_dosen }}
-                    </span>
-
-                    @if($pengampu->dosen2)
-                      <br><br>
-                      <b>{{ $pengampu->dosen2->nama }}</b><br>
-                      <span style="color:var(--muted); font-size:12px;">
-                        {{ $pengampu->dosen2->kode_dosen }}
-                      </span>
-                    @endif
-                  @else
-                    <span style="color:var(--muted);">Belum di-set</span>
-                  @endif
-                  </td>
-
-                  <td class="td-center">
-                    <a class="btn btn-soft"
-                       href="{{ route('admin.matakuliah.edit', ['mataKuliah' => $mk->id]) }}?semester={{ $semester ?? 1 }}&tahun_ajaran={{ $tahunAjaran ?? '' }}">
-                      Edit
-                    </a>
-
-                    <form method="POST"
-                          action="{{ route('admin.matakuliah.destroy', ['mataKuliah' => $mk->id]) }}"
-                          style="display:inline-block;"
-                          onsubmit="return confirm('Yakin mau hapus mata kuliah ini?\n\n{{ $mk->nama_mk }} ({{ $mk->kode_mk }})');">
-                      @csrf
-                      @method('DELETE')
-                      <button class="btn btn-danger" type="submit">Hapus</button>
-                    </form>
-                  </td>
-                </tr>
-              @empty
-                <tr>
-                  <td colspan="7" class="td-center" style="color:var(--muted); padding:16px;">
-                    Data mata kuliah belum ada.
-                  </td>
-                </tr>
-              @endforelse
-            </tbody>
-
-          </table>
-        </div>
-
-      </div>
-
+  <div class="bulk-bar">
+    <div id="selectInfoMatakuliah" class="select-mode-info" style="display:none;">
+      Pilih beberapa mata kuliah yang ingin dihapus
     </div>
+
+    <div id="selectedCountMatakuliah" class="selected-count">
+      Belum ada mata kuliah dipilih
+    </div>
+
+    <button type="button" id="btnModePilihMatakuliah" class="btn btn-soft" onclick="aktifkanModePilihMatakuliah()">
+      ✅ Pilih Beberapa Mata Kuliah
+    </button>
+
+    <button type="button" id="btnPilihSemuaMatakuliah" class="btn btn-warning" onclick="togglePilihSemuaMatakuliah()" style="display:none;">
+      Pilih Semua
+    </button>
+
+    <button type="button" id="btnHapusTerpilihMatakuliah" class="btn btn-danger" onclick="hapusMatakuliahTerpilih()" style="display:none;">
+      Hapus Terpilih
+    </button>
+
+    <button type="button" id="btnBatalPilihMatakuliah" class="btn btn-grey" onclick="batalModePilihMatakuliah()" style="display:none;">
+      Batal
+    </button>
   </div>
+
+  <div class="table-wrap">
+    <table class="minw">
+      <thead>
+        <tr>
+          <th id="kolomPilihHeader" style="width:45px; display:none;">Pilih</th>
+          <th style="width:120px;">Kode</th>
+          <th>Nama Mata Kuliah</th>
+          <th style="width:180px;">Program Studi</th>
+          <th style="width:90px;">SKS</th>
+          <th style="width:90px;">Semester</th>
+          <th style="width:260px;">Dosen Pengampu ({{ $tahunAjaran ?? '-' }})</th>
+          <th style="width:230px;">Aksi</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @forelse($mataKuliahs as $mk)
+          @php
+            $pengampu = $mk->pengampus
+              ->where('semester', $semester)
+              ->where('tahun_ajaran', $tahunAjaran)
+              ->first();
+          @endphp
+
+          <tr
+            id="matakuliah-{{ $mk->id }}"
+            class="{{ in_array($mk->id, session('highlight_ids', [])) ? 'highlight-row' : '' }}"
+          >
+            <td class="td-center kolom-pilih" style="display:none;">
+              <input
+                type="checkbox"
+                class="matakuliah-check"
+                value="{{ $mk->id }}"
+                onclick="updateSelectedCountMatakuliah()"
+              >
+            </td>
+
+            <td class="td-center">{{ $mk->kode_mk ?? '-' }}</td>
+            <td>{{ $mk->nama_mk ?? '-' }}</td>
+            <td class="td-center">{{ $mk->program_studi ?? '-' }}</td>
+            <td class="td-center">{{ $mk->sks ?? '-' }}</td>
+            <td class="td-center">{{ $mk->semester ?? '-' }}</td>
+
+            <td>
+              @if($pengampu && $pengampu->dosen)
+                <b>{{ $pengampu->dosen->nama }}</b><br>
+                <span style="color:var(--muted); font-size:12px;">
+                  {{ $pengampu->dosen->kode_dosen }}
+                </span>
+
+                @if($pengampu->dosen2)
+                  <br><br>
+                  <b>{{ $pengampu->dosen2->nama }}</b><br>
+                  <span style="color:var(--muted); font-size:12px;">
+                    {{ $pengampu->dosen2->kode_dosen }}
+                  </span>
+                @endif
+              @else
+                <span style="color:var(--muted);">Belum di-set</span>
+              @endif
+            </td>
+
+            <td class="td-center">
+              <div class="aksi-wrap">
+                <a class="btn btn-soft"
+                   href="{{ route('admin.matakuliah.edit', ['mataKuliah' => $mk->id]) }}?semester={{ $semester ?? 1 }}&tahun_ajaran={{ $tahunAjaran ?? '' }}">
+                  Edit
+                </a>
+
+                <form method="POST"
+                      action="{{ route('admin.matakuliah.destroy', ['mataKuliah' => $mk->id]) }}"
+                      onsubmit="return confirm('Yakin mau hapus mata kuliah ini?\n\n{{ $mk->nama_mk }} ({{ $mk->kode_mk }})');">
+                  @csrf
+                  @method('DELETE')
+                  <button class="btn btn-danger" type="submit">Hapus</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        @empty
+          <tr>
+            <td colspan="8" class="td-center" style="color:var(--muted); padding:16px;">
+              Data mata kuliah belum ada.
+            </td>
+          </tr>
+        @endforelse
+      </tbody>
+    </table>
+  </div>
+</div>
 
   <script>
 
@@ -746,6 +837,117 @@ window.addEventListener('load', function () {
 });
 
 @endif
+
+let modePilihMatakuliahAktif = false;
+let semuaMatakuliahDipilih = false;
+
+function aktifkanModePilihMatakuliah() {
+    modePilihMatakuliahAktif = true;
+    document.body.classList.add('mode-pilih-matakuliah');
+
+    document.querySelectorAll('.kolom-pilih').forEach(td => {
+        td.style.display = 'table-cell';
+    });
+
+    document.getElementById('kolomPilihHeader').style.display = 'table-cell';
+    document.getElementById('selectInfoMatakuliah').style.display = 'inline';
+    document.getElementById('selectedCountMatakuliah').style.display = 'inline-block';
+    document.getElementById('btnPilihSemuaMatakuliah').style.display = 'inline-block';
+    document.getElementById('btnHapusTerpilihMatakuliah').style.display = 'inline-block';
+    document.getElementById('btnBatalPilihMatakuliah').style.display = 'inline-block';
+    document.getElementById('btnModePilihMatakuliah').style.display = 'none';
+
+    updateSelectedCountMatakuliah();
+}
+
+function batalModePilihMatakuliah() {
+    modePilihMatakuliahAktif = false;
+    semuaMatakuliahDipilih = false;
+
+    document.body.classList.remove('mode-pilih-matakuliah');
+
+    document.querySelectorAll('.kolom-pilih').forEach(td => {
+        td.style.display = 'none';
+    });
+
+    document.getElementById('kolomPilihHeader').style.display = 'none';
+
+    document.querySelectorAll('.matakuliah-check').forEach(cb => {
+        cb.checked = false;
+    });
+
+    document.getElementById('selectInfoMatakuliah').style.display = 'none';
+    document.getElementById('selectedCountMatakuliah').style.display = 'none';
+    document.getElementById('btnPilihSemuaMatakuliah').style.display = 'none';
+    document.getElementById('btnHapusTerpilihMatakuliah').style.display = 'none';
+    document.getElementById('btnBatalPilihMatakuliah').style.display = 'none';
+    document.getElementById('btnModePilihMatakuliah').style.display = 'inline-block';
+    document.getElementById('btnPilihSemuaMatakuliah').innerText = 'Pilih Semua';
+}
+
+function togglePilihSemuaMatakuliah() {
+    const checks = document.querySelectorAll('.matakuliah-check');
+
+    semuaMatakuliahDipilih = !semuaMatakuliahDipilih;
+
+    checks.forEach(cb => {
+        cb.checked = semuaMatakuliahDipilih;
+    });
+
+    document.getElementById('btnPilihSemuaMatakuliah').innerText =
+        semuaMatakuliahDipilih ? 'Batalkan Semua' : 'Pilih Semua';
+
+    updateSelectedCountMatakuliah();
+}
+
+function updateSelectedCountMatakuliah() {
+    const total = document.querySelectorAll('.matakuliah-check:checked').length;
+    const counter = document.getElementById('selectedCountMatakuliah');
+
+    if (total === 0) {
+        counter.innerHTML = '⚠️ Belum ada mata kuliah dipilih';
+    } else {
+        counter.innerHTML = '✅ ' + total + ' mata kuliah dipilih untuk dihapus';
+    }
+}
+
+function hapusMatakuliahTerpilih() {
+    const ids = Array.from(document.querySelectorAll('.matakuliah-check:checked'))
+        .map(cb => cb.value);
+
+    if (ids.length === 0) {
+        alert('Pilih dulu mata kuliah yang ingin dihapus.');
+        return;
+    }
+
+    if (!confirm(`Yakin ingin menghapus ${ids.length} mata kuliah terpilih?`)) {
+        return;
+    }
+
+    fetch(`{{ route('admin.matakuliah.bulkDelete') }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            ids: ids
+        })
+    })
+    .then(async res => {
+        const data = await res.json();
+
+        if (!res.ok || data.success === false) {
+            alert(data.message || 'Gagal menghapus mata kuliah');
+            return;
+        }
+
+        location.reload();
+    })
+    .catch(err => {
+        alert('Error: ' + err.message);
+    });
+}
 
 </script>
 </body>

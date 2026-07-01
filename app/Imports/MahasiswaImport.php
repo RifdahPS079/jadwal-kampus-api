@@ -9,6 +9,17 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 class MahasiswaImport implements ToModel, WithHeadingRow
 {
+    public static $errors = [];
+
+    private function passwordValid(string $password): bool
+    {
+        return strlen($password) >= 8
+            && preg_match('/[A-Z]/', $password)
+            && preg_match('/[a-z]/', $password)
+            && preg_match('/[0-9]/', $password)
+            && preg_match('/[@$!%*#?&_]/', $password);
+    }
+
     public function model(array $row)
     {
         $nim = trim((string)($row['nim'] ?? ''));
@@ -16,9 +27,18 @@ class MahasiswaImport implements ToModel, WithHeadingRow
 
         $email = trim((string)($row['email'] ?? ''));
 
-        // password wajib ada saat import
-        $plainPass = (string)($row['password'] ?? '');
-        if (trim($plainPass) === '') $plainPass = '1234'; // fallback (boleh kamu hapus)
+        $plainPass = trim((string)($row['password'] ?? ''));
+
+        if ($plainPass === '') {
+            self::$errors[] = 'Password mahasiswa dengan NIM '.$nim.' kosong.';
+            return null;
+        }
+
+        if (!$this->passwordValid($plainPass)) {
+            self::$errors[] =
+                'Password mahasiswa dengan NIM '.$nim.' tidak valid. Password minimal 8 karakter, wajib huruf besar, huruf kecil, angka, dan simbol.';
+            return null;
+        }
 
         Mahasiswa::updateOrCreate(
             ['nim' => $nim],

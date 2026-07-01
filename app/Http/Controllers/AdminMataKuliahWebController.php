@@ -76,7 +76,8 @@ class AdminMataKuliahWebController extends Controller
             'semester',
             'qDosen',
             'qProdi',
-            'prodis' // ✅ WAJIB ADA
+            'prodis',
+            'jumlahPermohonanMenunggu'
         ));
     }
 
@@ -259,6 +260,23 @@ class AdminMataKuliahWebController extends Controller
 
         return redirect()->route('admin.matakuliah.index')->with('ok', 'Mata kuliah berhasil dihapus.');
     }
+
+    public function bulkDelete(Request $request)
+{
+    $request->validate([
+        'ids' => ['required', 'array'],
+        'ids.*' => ['integer', 'exists:mata_kuliahs,id'],
+    ]);
+
+    PengampuMataKuliah::whereIn('mata_kuliah_id', $request->ids)->delete();
+
+    MataKuliah::whereIn('id', $request->ids)->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => count($request->ids) . ' data mata kuliah berhasil dihapus',
+    ]);
+}
 
     public function import(Request $request)
     {

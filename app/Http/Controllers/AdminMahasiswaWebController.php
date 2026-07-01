@@ -63,8 +63,8 @@ class AdminMahasiswaWebController extends Controller
             'kelas'         => ['nullable','string','max:50'],
             'angkatan'      => ['nullable','string','max:10'],
             'email'         => ['required','email','max:255'],
-            'password'      => ['required','string','min:4','max:100'],
-        ]);
+            'password'      => $this->passwordRules(true),
+        ], $this->passwordMessages());
 
         $errors = [];
 
@@ -130,15 +130,11 @@ class AdminMahasiswaWebController extends Controller
             'kelas'         => ['nullable','string','max:50'],
             'angkatan'      => ['nullable','string','max:10'],
             'email'         => ['required','email','max:255'],
-            'password'      => ['nullable','string','min:4','max:100'],
-
-        ], [
-
+            'password'      => $this->passwordRules(false),
+        ], array_merge([
             'nim.required' => 'NIM wajib diisi',
-
             'nim.digits' => 'NIM harus tepat 9 angka',
-
-        ]);
+        ], $this->passwordMessages()));
         $errors = [];
 
         // =========================
@@ -212,6 +208,21 @@ class AdminMahasiswaWebController extends Controller
         return redirect()->route('admin.mahasiswa.index')->with('ok', 'Data mahasiswa berhasil dihapus.');
     }
 
+public function bulkDelete(Request $request)
+{
+    $request->validate([
+        'ids' => ['required', 'array'],
+        'ids.*' => ['integer', 'exists:mahasiswas,id'],
+    ]);
+
+    Mahasiswa::whereIn('id', $request->ids)->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => count($request->ids) . ' data mahasiswa berhasil dihapus',
+    ]);
+}
+
     public function import(Request $request)
     {
         $request->validate([
@@ -224,7 +235,14 @@ class AdminMahasiswaWebController extends Controller
             'angkatan' => ['nullable','string','max:10'],
         ]);
 
+        MahasiswaImport::$errors = [];
         Excel::import(new MahasiswaImport, $request->file('file'));
+
+        if (count(MahasiswaImport::$errors) > 0) {
+            return back()
+                ->with('error', MahasiswaImport::$errors)
+                ->with('ok', 'Import selesai. Sebagian data gagal ditambahkan.');
+        }
         $lastMahasiswa = \App\Models\Mahasiswa::latest()->first();
         return redirect()->route('admin.mahasiswa.index', [
             'q' => $request->input('q', ''),
@@ -239,4 +257,27 @@ class AdminMahasiswaWebController extends Controller
             $lastMahasiswa?->id
         );
     }
+
+    private function passwordRules(bool $required = true): array
+{
+    return [
+        $required ? 'required' : 'nullable',
+        'string',
+        'min:8',
+        'regex:/[A-Z]/',
+        'regex:/[a-z]/',
+        'regex:/[0-9]/',
+        'regex:/[@$!%*#?&_]/',
+    ];
+}
+
+private function passwordMessages(): array
+{
+    return [
+        'password.required' => 'Password wajib diisi.',
+        'password.min' => 'Password minimal 8 karakter.',
+        'password.regex' => 'Password harus memiliki huruf besar, huruf kecil, angka, dan simbol seperti @, #, _, atau !.',
+    ];
+}
+
 }

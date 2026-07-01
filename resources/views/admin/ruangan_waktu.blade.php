@@ -273,6 +273,70 @@ select:focus{
   box-shadow:0 4px 10px rgba(0,0,0,.12);
 }
 
+.bulk-bar{
+  margin:14px 0;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.select-mode-info{
+  font-size:13px;
+  color:#777;
+  font-weight:600;
+}
+
+.selected-count{
+  display:none;
+  padding:6px 10px;
+  border-radius:8px;
+  background:#fff4e6;
+  color:#b45309;
+  font-size:13px;
+  font-weight:700;
+}
+
+.ruangan-check,
+.waktu-check{
+  display:none;
+  width:18px;
+  height:18px;
+  cursor:pointer;
+}
+
+body.mode-pilih-ruangan .ruangan-check{
+  display:inline-block;
+}
+
+body.mode-pilih-waktu .waktu-check{
+  display:inline-block;
+}
+
+.btn-warning{
+  background:#fff4e6;
+  color:#b45309;
+  border:1px solid #f0b36a;
+}
+
+.btn-grey{
+  background:#eee;
+  color:#555;
+}
+
+.aksi-wrap{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  flex-wrap:nowrap;
+}
+
+.aksi-wrap form{
+  margin:0;
+}
+
 .notif-count{
   position:absolute;
   top:-6px;
@@ -511,131 +575,209 @@ select:focus{
 
     </div>
       {{-- DAFTAR RUANGAN --}}
-      <div class="panel" style="margin-top:14px;">
-        <h4>Daftar Ruangan</h4>
+<div class="panel" style="margin-top:14px;">
+  <h4>Daftar Ruangan</h4>
 
-        <div class="table-wrap">
-          <table class="minw">
-            <thead>
-              <tr>
-                <th style="width:160px;">Kode Ruangan</th>
-                <th>Nama Ruangan</th>
-                <th style="width:220px;">Gedung</th>
-                <th style="width:170px;">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              @forelse($ruangans as $r)
-               <tr
-                  id="ruangan-{{ $r->id }}"
-                  class="
-                      {{
-                          (
-                              session('highlight_ruangan_id') == $r->id
-                              ||
-                              in_array($r->id, session('highlight_ruangan_ids', []))
-                          )
-                          ? 'highlight-row'
-                          : ''
-                      }}
-                  "
-              >
-                  <td class="td-center">{{ $r->kode_ruangan ?? '-' }}</td>
-                  <td>{{ $r->nama_ruangan ?? '-' }}</td>
-                  <td>{{ $r->gedung ?? '-' }}</td>
-                  <td class="td-center">
-                    <a class="btn btn-soft" href="{{ route('admin.ruangan.edit', $r->id) }}">Edit</a>
-                    <form method="POST" action="{{ route('admin.ruangan.destroy', $r->id) }}"
-                          style="display:inline-block;"
-                          onsubmit="return confirm('Yakin mau hapus ruangan ini?\n\n{{ $r->kode_ruangan }}');">
-                      @csrf
-                      @method('DELETE')
-                      <button class="btn btn-danger" type="submit">Hapus</button>
-                    </form>
-                  </td>
-                </tr>
-              @empty
-                <tr>
-                  <td colspan="4" class="td-center" style="color:var(--muted); padding:16px;">
-                    Data ruangan belum ada.
-                  </td>
-                </tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {{-- DAFTAR WAKTU --}}
-      <div class="panel" style="margin-top:14px;">
-        <h4>Daftar Waktu</h4>
-
-        <div class="table-wrap">
-          <table class="minw">
-            <thead>
-              <tr>
-                <th style="width:90px;">Jam Mulai</th>
-                <th style="width:90px;">Jam Selesai</th>
-                <th style="width:100px;">Hari</th>
-                <th style="width:120px;">Tanggal</th>
-                <th style="width:100px;">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-            @forelse($waktus as $w)
-              <tr
-                id="waktu-{{ $w->id }}"
-                class="
-                    {{
-                        (
-                            session('highlight_waktu_id') == $w->id
-                            ||
-                            in_array($w->id, session('highlight_waktu_ids', []))
-                        )
-                        ? 'highlight-row'
-                        : ''
-                    }}
-                "
-            >
-                 <td class="td-center">
-                      {{ $w->jam_mulai ? \Carbon\Carbon::parse($w->jam_mulai)->format('H:i') : '-' }}
-                    </td>
-                    <td class="td-center">
-                      {{ $w->jam_selesai ? \Carbon\Carbon::parse($w->jam_selesai)->format('H:i') : '-' }}
-                    </td>
-                    <td class="td-center">{{ $w->hari ?? '-' }}</td>
-                    <td class="td-center">
-                      {{ $w->tanggal_otomatis ?? '-' }}
-                    </td>
-
-                <td class="td-center">
-                  <a class="btn btn-soft" href="{{ route('admin.waktu.edit', $w->id) }}">Edit</a>
-
-                  <form method="POST"
-                        action="{{ route('admin.waktu.destroy', $w->id) }}"
-                        style="display:inline-block"
-                        onsubmit="return confirm('Yakin hapus waktu ini?');">
-                    @csrf
-                    @method('DELETE')
-                    <button class="btn btn-danger" type="submit">Hapus</button>
-                  </form>
-                </td>
-              </tr>
-            @empty
-              <tr>
-                <td colspan="5" class="td-center" style="color:var(--muted); padding:16px;">
-                  Data waktu belum ada.
-                </td>
-              </tr>
-            @endforelse
-          </tbody>
-
-          </table>
-        </div>
-      </div>
+  <div class="bulk-bar">
+    <div id="selectInfoRuangan" class="select-mode-info" style="display:none;">
+      Pilih beberapa ruangan yang ingin dihapus
     </div>
+
+    <div id="selectedCountRuangan" class="selected-count">
+      Belum ada ruangan dipilih
+    </div>
+
+    <button type="button" id="btnModePilihRuangan" class="btn btn-soft" onclick="aktifkanModePilihRuangan()">
+      ✅ Pilih Beberapa Ruangan
+    </button>
+
+    <button type="button" id="btnPilihSemuaRuangan" class="btn btn-warning" onclick="togglePilihSemuaRuangan()" style="display:none;">
+      Pilih Semua
+    </button>
+
+    <button type="button" id="btnHapusTerpilihRuangan" class="btn btn-danger" onclick="hapusRuanganTerpilih()" style="display:none;">
+      Hapus Terpilih
+    </button>
+
+    <button type="button" id="btnBatalPilihRuangan" class="btn btn-grey" onclick="batalModePilihRuangan()" style="display:none;">
+      Batal
+    </button>
   </div>
 
+  <div class="table-wrap">
+    <table class="minw">
+      <thead>
+        <tr>
+          <th id="kolomPilihHeaderRuangan" style="width:45px; display:none;">Pilih</th>
+          <th style="width:160px;">Kode Ruangan</th>
+          <th>Nama Ruangan</th>
+          <th style="width:220px;">Gedung</th>
+          <th style="width:230px;">Aksi</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @forelse($ruangans as $r)
+          <tr
+            id="ruangan-{{ $r->id }}"
+            class="{{
+              (
+                session('highlight_ruangan_id') == $r->id
+                ||
+                in_array($r->id, session('highlight_ruangan_ids', []))
+              )
+              ? 'highlight-row'
+              : ''
+            }}"
+          >
+            <td class="td-center kolom-pilih-ruangan" style="display:none;">
+              <input
+                type="checkbox"
+                class="ruangan-check"
+                value="{{ $r->id }}"
+                onclick="updateSelectedCountRuangan()"
+              >
+            </td>
+
+            <td class="td-center">{{ $r->kode_ruangan ?? '-' }}</td>
+            <td>{{ $r->nama_ruangan ?? '-' }}</td>
+            <td>{{ $r->gedung ?? '-' }}</td>
+
+            <td class="td-center">
+              <div class="aksi-wrap">
+                <a class="btn btn-soft" href="{{ route('admin.ruangan.edit', $r->id) }}">
+                  Edit
+                </a>
+
+                <form method="POST"
+                      action="{{ route('admin.ruangan.destroy', $r->id) }}"
+                      onsubmit="return confirm('Yakin mau hapus ruangan ini?\n\n{{ $r->kode_ruangan }}');">
+                  @csrf
+                  @method('DELETE')
+                  <button class="btn btn-danger" type="submit">Hapus</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        @empty
+          <tr>
+            <td colspan="5" class="td-center" style="color:var(--muted); padding:16px;">
+              Data ruangan belum ada.
+            </td>
+          </tr>
+        @endforelse
+      </tbody>
+    </table>
+  </div>
+</div>
+
+      {{-- DAFTAR WAKTU --}}
+<div class="panel" style="margin-top:14px;">
+  <h4>Daftar Waktu</h4>
+
+  <div class="bulk-bar">
+    <div id="selectInfoWaktu" class="select-mode-info" style="display:none;">
+      Pilih beberapa waktu yang ingin dihapus
+    </div>
+
+    <div id="selectedCountWaktu" class="selected-count">
+      Belum ada waktu dipilih
+    </div>
+
+    <button type="button" id="btnModePilihWaktu" class="btn btn-soft" onclick="aktifkanModePilihWaktu()">
+      ✅ Pilih Beberapa Waktu
+    </button>
+
+    <button type="button" id="btnPilihSemuaWaktu" class="btn btn-warning" onclick="togglePilihSemuaWaktu()" style="display:none;">
+      Pilih Semua
+    </button>
+
+    <button type="button" id="btnHapusTerpilihWaktu" class="btn btn-danger" onclick="hapusWaktuTerpilih()" style="display:none;">
+      Hapus Terpilih
+    </button>
+
+    <button type="button" id="btnBatalPilihWaktu" class="btn btn-grey" onclick="batalModePilihWaktu()" style="display:none;">
+      Batal
+    </button>
+  </div>
+
+  <div class="table-wrap">
+    <table class="minw">
+      <thead>
+        <tr>
+          <th id="kolomPilihHeaderWaktu" style="width:45px; display:none;">Pilih</th>
+          <th style="width:90px;">Jam Mulai</th>
+          <th style="width:90px;">Jam Selesai</th>
+          <th style="width:100px;">Hari</th>
+          <th style="width:120px;">Tanggal</th>
+          <th style="width:180px;">Aksi</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @forelse($waktus as $w)
+          <tr
+            id="waktu-{{ $w->id }}"
+            class="{{
+              (
+                session('highlight_waktu_id') == $w->id
+                ||
+                in_array($w->id, session('highlight_waktu_ids', []))
+              )
+              ? 'highlight-row'
+              : ''
+            }}"
+          >
+            <td class="td-center kolom-pilih-waktu" style="display:none;">
+              <input
+                type="checkbox"
+                class="waktu-check"
+                value="{{ $w->id }}"
+                onclick="updateSelectedCountWaktu()"
+              >
+            </td>
+
+            <td class="td-center">
+              {{ $w->jam_mulai ? \Carbon\Carbon::parse($w->jam_mulai)->format('H:i') : '-' }}
+            </td>
+
+            <td class="td-center">
+              {{ $w->jam_selesai ? \Carbon\Carbon::parse($w->jam_selesai)->format('H:i') : '-' }}
+            </td>
+
+            <td class="td-center">{{ $w->hari ?? '-' }}</td>
+
+            <td class="td-center">
+              {{ $w->tanggal_otomatis ?? '-' }}
+            </td>
+
+            <td class="td-center">
+              <div class="aksi-wrap">
+                <a class="btn btn-soft" href="{{ route('admin.waktu.edit', $w->id) }}">
+                  Edit
+                </a>
+
+                <form method="POST"
+                      action="{{ route('admin.waktu.destroy', $w->id) }}"
+                      onsubmit="return confirm('Yakin hapus waktu ini?');">
+                  @csrf
+                  @method('DELETE')
+                  <button class="btn btn-danger" type="submit">Hapus</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        @empty
+          <tr>
+            <td colspan="6" class="td-center" style="color:var(--muted); padding:16px;">
+              Data waktu belum ada.
+            </td>
+          </tr>
+        @endforelse
+      </tbody>
+    </table>
+  </div>
+</div>
   <script>
 
 window.addEventListener('load', function () {
@@ -737,6 +879,222 @@ window.addEventListener('load', function () {
     @endif
 
 });
+
+let semuaRuanganDipilih = false;
+
+function aktifkanModePilihRuangan() {
+    document.body.classList.add('mode-pilih-ruangan');
+
+    document.querySelectorAll('.kolom-pilih-ruangan').forEach(td => {
+        td.style.display = 'table-cell';
+    });
+
+    document.getElementById('kolomPilihHeaderRuangan').style.display = 'table-cell';
+    document.getElementById('selectInfoRuangan').style.display = 'inline';
+    document.getElementById('selectedCountRuangan').style.display = 'inline-block';
+    document.getElementById('btnPilihSemuaRuangan').style.display = 'inline-block';
+    document.getElementById('btnHapusTerpilihRuangan').style.display = 'inline-block';
+    document.getElementById('btnBatalPilihRuangan').style.display = 'inline-block';
+    document.getElementById('btnModePilihRuangan').style.display = 'none';
+
+    updateSelectedCountRuangan();
+}
+
+function batalModePilihRuangan() {
+    semuaRuanganDipilih = false;
+
+    document.body.classList.remove('mode-pilih-ruangan');
+
+    document.querySelectorAll('.kolom-pilih-ruangan').forEach(td => {
+        td.style.display = 'none';
+    });
+
+    document.getElementById('kolomPilihHeaderRuangan').style.display = 'none';
+
+    document.querySelectorAll('.ruangan-check').forEach(cb => {
+        cb.checked = false;
+    });
+
+    document.getElementById('selectInfoRuangan').style.display = 'none';
+    document.getElementById('selectedCountRuangan').style.display = 'none';
+    document.getElementById('btnPilihSemuaRuangan').style.display = 'none';
+    document.getElementById('btnHapusTerpilihRuangan').style.display = 'none';
+    document.getElementById('btnBatalPilihRuangan').style.display = 'none';
+    document.getElementById('btnModePilihRuangan').style.display = 'inline-block';
+    document.getElementById('btnPilihSemuaRuangan').innerText = 'Pilih Semua';
+}
+
+function togglePilihSemuaRuangan() {
+    const checks = document.querySelectorAll('.ruangan-check');
+
+    semuaRuanganDipilih = !semuaRuanganDipilih;
+
+    checks.forEach(cb => {
+        cb.checked = semuaRuanganDipilih;
+    });
+
+    document.getElementById('btnPilihSemuaRuangan').innerText =
+        semuaRuanganDipilih ? 'Batalkan Semua' : 'Pilih Semua';
+
+    updateSelectedCountRuangan();
+}
+
+function updateSelectedCountRuangan() {
+    const total = document.querySelectorAll('.ruangan-check:checked').length;
+    const counter = document.getElementById('selectedCountRuangan');
+
+    if (total === 0) {
+        counter.innerHTML = '⚠️ Belum ada ruangan dipilih';
+    } else {
+        counter.innerHTML = '✅ ' + total + ' ruangan dipilih untuk dihapus';
+    }
+}
+
+function hapusRuanganTerpilih() {
+    const ids = Array.from(document.querySelectorAll('.ruangan-check:checked'))
+        .map(cb => cb.value);
+
+    if (ids.length === 0) {
+        alert('Pilih dulu ruangan yang ingin dihapus.');
+        return;
+    }
+
+    if (!confirm(`Yakin ingin menghapus ${ids.length} ruangan terpilih?`)) {
+        return;
+    }
+
+    fetch(`{{ route('admin.ruangan.bulkDelete') }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            ids: ids
+        })
+    })
+    .then(async res => {
+        const data = await res.json();
+
+        if (!res.ok || data.success === false) {
+            alert(data.message || 'Gagal menghapus ruangan');
+            return;
+        }
+
+        location.reload();
+    })
+    .catch(err => {
+        alert('Error: ' + err.message);
+    });
+}
+
+let semuaWaktuDipilih = false;
+
+function aktifkanModePilihWaktu() {
+    document.body.classList.add('mode-pilih-waktu');
+
+    document.querySelectorAll('.kolom-pilih-waktu').forEach(td => {
+        td.style.display = 'table-cell';
+    });
+
+    document.getElementById('kolomPilihHeaderWaktu').style.display = 'table-cell';
+    document.getElementById('selectInfoWaktu').style.display = 'inline';
+    document.getElementById('selectedCountWaktu').style.display = 'inline-block';
+    document.getElementById('btnPilihSemuaWaktu').style.display = 'inline-block';
+    document.getElementById('btnHapusTerpilihWaktu').style.display = 'inline-block';
+    document.getElementById('btnBatalPilihWaktu').style.display = 'inline-block';
+    document.getElementById('btnModePilihWaktu').style.display = 'none';
+
+    updateSelectedCountWaktu();
+}
+
+function batalModePilihWaktu() {
+    semuaWaktuDipilih = false;
+
+    document.body.classList.remove('mode-pilih-waktu');
+
+    document.querySelectorAll('.kolom-pilih-waktu').forEach(td => {
+        td.style.display = 'none';
+    });
+
+    document.getElementById('kolomPilihHeaderWaktu').style.display = 'none';
+
+    document.querySelectorAll('.waktu-check').forEach(cb => {
+        cb.checked = false;
+    });
+
+    document.getElementById('selectInfoWaktu').style.display = 'none';
+    document.getElementById('selectedCountWaktu').style.display = 'none';
+    document.getElementById('btnPilihSemuaWaktu').style.display = 'none';
+    document.getElementById('btnHapusTerpilihWaktu').style.display = 'none';
+    document.getElementById('btnBatalPilihWaktu').style.display = 'none';
+    document.getElementById('btnModePilihWaktu').style.display = 'inline-block';
+    document.getElementById('btnPilihSemuaWaktu').innerText = 'Pilih Semua';
+}
+
+function togglePilihSemuaWaktu() {
+    const checks = document.querySelectorAll('.waktu-check');
+
+    semuaWaktuDipilih = !semuaWaktuDipilih;
+
+    checks.forEach(cb => {
+        cb.checked = semuaWaktuDipilih;
+    });
+
+    document.getElementById('btnPilihSemuaWaktu').innerText =
+        semuaWaktuDipilih ? 'Batalkan Semua' : 'Pilih Semua';
+
+    updateSelectedCountWaktu();
+}
+
+function updateSelectedCountWaktu() {
+    const total = document.querySelectorAll('.waktu-check:checked').length;
+    const counter = document.getElementById('selectedCountWaktu');
+
+    if (total === 0) {
+        counter.innerHTML = '⚠️ Belum ada waktu dipilih';
+    } else {
+        counter.innerHTML = '✅ ' + total + ' waktu dipilih untuk dihapus';
+    }
+}
+
+function hapusWaktuTerpilih() {
+    const ids = Array.from(document.querySelectorAll('.waktu-check:checked'))
+        .map(cb => cb.value);
+
+    if (ids.length === 0) {
+        alert('Pilih dulu waktu yang ingin dihapus.');
+        return;
+    }
+
+    if (!confirm(`Yakin ingin menghapus ${ids.length} waktu terpilih?`)) {
+        return;
+    }
+
+    fetch(`{{ route('admin.waktu.bulkDelete') }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            ids: ids
+        })
+    })
+    .then(async res => {
+        const data = await res.json();
+
+        if (!res.ok || data.success === false) {
+            alert(data.message || 'Gagal menghapus waktu');
+            return;
+        }
+
+        location.reload();
+    })
+    .catch(err => {
+        alert('Error: ' + err.message);
+    });
+}
 
 </script>
 </body>

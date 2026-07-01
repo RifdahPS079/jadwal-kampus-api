@@ -12,6 +12,15 @@ class DosenImport implements ToModel, WithHeadingRow
     // 🔥 simpan daftar duplicate
     public static $duplicates = [];
 
+    private function passwordValid(string $password): bool
+    {
+        return strlen($password) >= 8
+            && preg_match('/[A-Z]/', $password)
+            && preg_match('/[a-z]/', $password)
+            && preg_match('/[0-9]/', $password)
+            && preg_match('/[@$!%*#?&_]/', $password);
+    }
+
     public function model(array $row)
     {
         // wajib: kode_dosen, nama, password
@@ -25,6 +34,13 @@ class DosenImport implements ToModel, WithHeadingRow
 
         // password kosong → skip
         if (trim($pass) === '') {
+            self::$duplicates[] = 'Password untuk dosen '.$nama.' kosong.';
+            return null;
+        }
+
+        if (!$this->passwordValid($pass)) {
+            self::$duplicates[] =
+                'Password dosen '.$nama.' tidak valid. Password minimal 8 karakter, wajib huruf besar, huruf kecil, angka, dan simbol.';
             return null;
         }
 
