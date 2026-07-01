@@ -338,10 +338,10 @@
 }
 
 .dosen-check{
-  display:none;
-  width:18px;
-  height:18px;
-  cursor:pointer;
+    display:none;
+    width:18px;
+    height:18px;
+    cursor:pointer;
 }
 
 body.mode-pilih-dosen .dosen-check{
@@ -375,6 +375,18 @@ body.mode-pilih-dosen .dosen-check{
   align-items:center;
   justify-content:center;
   border:2px solid #fff;
+}
+
+.aksi-cell{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+    flex-wrap:nowrap;
+}
+
+.aksi-cell form{
+    margin:0;
 }
 
   </style>
@@ -773,13 +785,16 @@ body.mode-pilih-dosen .dosen-check{
           <table class="minw">
             <thead>
               <tr>
-                <th style="width:45px;">Pilih</th>
+                <th id="kolomPilihHeader"
+                    style="width:45px;display:none;">
+                    Pilih
+                </th>
                 <th style="width:90px;">Kode</th>
                 <th>Nama Dosen</th>
                 <th style="width:180px;">Program Studi</th>
                 <th style="width:140px;">NIDN</th>
                 <th style="width:220px;">Email</th>
-                <th style="width:170px;">Aksi</th>
+                <th style="width:230px;">Aksi</th>
               </tr>
             </thead>
 
@@ -790,10 +805,13 @@ body.mode-pilih-dosen .dosen-check{
                   id="dosen-{{ $d->id }}"
                   class="{{ session('highlight_id') == $d->id ? 'highlight-row' : '' }}"
               >
-                  <td class="td-center">
-                    <input
-                      type="checkbox"
-                      class="dosen-check"
+                  <td
+                      class="td-center kolom-pilih"
+                      style="display:none;"
+                  >
+                      <input
+                          type="checkbox"
+                          class="dosen-check"
                       value="{{ $d->id }}"
                       onclick="updateSelectedCountDosen()"
                     >
@@ -805,7 +823,7 @@ body.mode-pilih-dosen .dosen-check{
                   <td class="td-center">{{ $d->nidn ?? '-' }}</td>
                   <td>{{ $d->email ?? '-' }}</td>
 
-                  <td class="td-center">
+                  <td class="td-center aksi-cell">
                     <a href="{{ route('admin.dosen.edit', $d->id) }}" class="btn btn-soft">Edit</a>
 
                     <form action="{{ route('admin.dosen.destroy', $d->id) }}"
@@ -905,8 +923,10 @@ let semuaDosenDipilih = false;
 
 function aktifkanModePilihDosen() {
     modePilihDosenAktif = true;
-    document.body.classList.add('mode-pilih-dosen');
+    document.body.classList.add('mode-pilih');
 
+    document.querySelectorAll('.kolom-pilih').forEach(td=>td.style.display='table-cell');
+    document.getElementById('kolomPilihHeader').style.display='table-cell';
     document.getElementById('selectInfoDosen').style.display = 'inline';
     document.getElementById('selectedCountDosen').style.display = 'inline-block';
     document.getElementById('btnPilihSemuaDosen').style.display = 'inline-block';
@@ -922,11 +942,9 @@ function batalModePilihDosen() {
     semuaDosenDipilih = false;
 
     document.body.classList.remove('mode-pilih-dosen');
-
-    document.querySelectorAll('.dosen-check').forEach(cb => {
-        cb.checked = false;
-    });
-
+    document.querySelectorAll('.kolom-pilih').forEach(td=>td.style.display='none');
+    document.getElementById('kolomPilihHeader').style.display='none';
+    document.querySelectorAll('.dosen-check').forEach(cb => {cb.checked = false; });
     document.getElementById('selectInfoDosen').style.display = 'none';
     document.getElementById('selectedCountDosen').style.display = 'none';
     document.getElementById('btnPilihSemuaDosen').style.display = 'none';
