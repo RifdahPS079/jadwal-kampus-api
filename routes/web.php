@@ -64,6 +64,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/dosen/{dosen}', [AdminDosenWebController::class, 'update'])->name('dosen.update');
         Route::delete('/dosen/{dosen}', [AdminDosenWebController::class, 'destroy'])->name('dosen.destroy');
         Route::post('/dosen/import', [AdminDosenWebController::class, 'import'])->name('dosen.import');
+        Route::post('/dosen/bulk-delete', [AdminDosenWebController::class, 'bulkDelete'])->name('dosen.bulkDelete');
 
          /*
         |--------------------------------------------------------------------------

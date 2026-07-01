@@ -312,6 +312,52 @@
   color:#e5861f;
   box-shadow:0 4px 10px rgba(0,0,0,.12);
 }
+.bulk-bar{
+  margin:14px 0;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.select-mode-info{
+  font-size:13px;
+  color:#777;
+  font-weight:600;
+}
+
+.selected-count{
+  display:none;
+  padding:6px 10px;
+  border-radius:8px;
+  background:#fff4e6;
+  color:#b45309;
+  font-size:13px;
+  font-weight:700;
+}
+
+.dosen-check{
+  display:none;
+  width:18px;
+  height:18px;
+  cursor:pointer;
+}
+
+body.mode-pilih-dosen .dosen-check{
+  display:inline-block;
+}
+
+.btn-warning{
+  background:#fff4e6;
+  color:#b45309;
+  border:1px solid #f0b36a;
+}
+
+.btn-grey{
+  background:#eee;
+  color:#555;
+}
 
 .notif-count{
   position:absolute;
@@ -693,15 +739,41 @@
         </div>
       </div>
 
-      {{-- DAFTAR DOSEN --}}
-      <div class="panel" style="margin-top:14px;">
-        <h4>Daftar Dosen</h4>
+     {{-- DAFTAR DOSEN --}}
+<div class="panel" style="margin-top:14px;">
+  <h4>Daftar Dosen</h4>
 
-        <div class="table-wrap">
+  <div class="bulk-bar">
+    <div id="selectInfoDosen" class="select-mode-info" style="display:none;">
+      Pilih beberapa dosen yang ingin dihapus
+    </div>
+
+    <div id="selectedCountDosen" class="selected-count">
+      Belum ada dosen dipilih
+    </div>
+
+    <button type="button" id="btnModePilihDosen" class="btn btn-soft" onclick="aktifkanModePilihDosen()">
+      ✅ Pilih Beberapa Dosen
+    </button>
+
+    <button type="button" id="btnPilihSemuaDosen" class="btn btn-warning" onclick="togglePilihSemuaDosen()" style="display:none;">
+      Pilih Semua
+    </button>
+
+    <button type="button" id="btnHapusTerpilihDosen" class="btn btn-danger" onclick="hapusDosenTerpilih()" style="display:none;">
+      Hapus Terpilih
+    </button>
+
+    <button type="button" id="btnBatalPilihDosen" class="btn btn-grey" onclick="batalModePilihDosen()" style="display:none;">
+      Batal
+    </button>
+  </div>
+
+  <div class="table-wrap">
           <table class="minw">
             <thead>
               <tr>
-            
+                <th style="width:45px;">Pilih</th>
                 <th style="width:90px;">Kode</th>
                 <th>Nama Dosen</th>
                 <th style="width:180px;">Program Studi</th>
@@ -718,6 +790,15 @@
                   id="dosen-{{ $d->id }}"
                   class="{{ session('highlight_id') == $d->id ? 'highlight-row' : '' }}"
               >
+                  <td class="td-center">
+                    <input
+                      type="checkbox"
+                      class="dosen-check"
+                      value="{{ $d->id }}"
+                      onclick="updateSelectedCountDosen()"
+                    >
+                  </td>
+
                   <td class="td-center">{{ $d->kode_dosen ?? '-' }}</td>
                   <td>{{ $d->nama ?? '-' }}</td>
                   <td>{{ $d->program_studi ?? '-' }}</td>
@@ -739,7 +820,7 @@
                 </tr>
               @empty
                 <tr>
-                  <td colspan="6" class="td-center" style="color:var(--muted); padding:16px;">
+                  <td colspan="7" class="td-center" style="color:var(--muted); padding:16px;">
                     Data dosen belum ada.
                   </td>
                 </tr>
@@ -817,6 +898,117 @@ prodiSelect.addEventListener('change', function () {
 
     });
 
+});
+
+let modePilihDosenAktif = false;
+let semuaDosenDipilih = false;
+
+function aktifkanModePilihDosen() {
+    modePilihDosenAktif = true;
+    document.body.classList.add('mode-pilih-dosen');
+
+    document.getElementById('selectInfoDosen').style.display = 'inline';
+    document.getElementById('selectedCountDosen').style.display = 'inline-block';
+    document.getElementById('btnPilihSemuaDosen').style.display = 'inline-block';
+    document.getElementById('btnHapusTerpilihDosen').style.display = 'inline-block';
+    document.getElementById('btnBatalPilihDosen').style.display = 'inline-block';
+    document.getElementById('btnModePilihDosen').style.display = 'none';
+
+    updateSelectedCountDosen();
+}
+
+function batalModePilihDosen() {
+    modePilihDosenAktif = false;
+    semuaDosenDipilih = false;
+
+    document.body.classList.remove('mode-pilih-dosen');
+
+    document.querySelectorAll('.dosen-check').forEach(cb => {
+        cb.checked = false;
+    });
+
+    document.getElementById('selectInfoDosen').style.display = 'none';
+    document.getElementById('selectedCountDosen').style.display = 'none';
+    document.getElementById('btnPilihSemuaDosen').style.display = 'none';
+    document.getElementById('btnHapusTerpilihDosen').style.display = 'none';
+    document.getElementById('btnBatalPilihDosen').style.display = 'none';
+    document.getElementById('btnModePilihDosen').style.display = 'inline-block';
+
+    document.getElementById('btnPilihSemuaDosen').innerText = 'Pilih Semua';
+}
+
+function togglePilihSemuaDosen() {
+    const checks = document.querySelectorAll('.dosen-check');
+
+    semuaDosenDipilih = !semuaDosenDipilih;
+
+    checks.forEach(cb => {
+        cb.checked = semuaDosenDipilih;
+    });
+
+    document.getElementById('btnPilihSemuaDosen').innerText =
+        semuaDosenDipilih ? 'Batalkan Semua' : 'Pilih Semua';
+
+    updateSelectedCountDosen();
+}
+
+function updateSelectedCountDosen() {
+    const total = document.querySelectorAll('.dosen-check:checked').length;
+    const counter = document.getElementById('selectedCountDosen');
+
+    if (total === 0) {
+        counter.innerHTML = '⚠️ Belum ada dosen dipilih';
+    } else {
+        counter.innerHTML = '✅ ' + total + ' dosen dipilih untuk dihapus';
+    }
+}
+
+function hapusDosenTerpilih() {
+    const ids = Array.from(document.querySelectorAll('.dosen-check:checked'))
+        .map(cb => cb.value);
+
+    if (ids.length === 0) {
+        alert('Pilih dulu dosen yang ingin dihapus.');
+        return;
+    }
+
+    if (!confirm(`Yakin ingin menghapus ${ids.length} dosen terpilih?`)) {
+        return;
+    }
+
+    fetch(`{{ route('admin.dosen.bulkDelete') }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            ids: ids
+        })
+    })
+    .then(async res => {
+        const data = await res.json();
+
+        if (!res.ok || data.success === false) {
+            alert(data.message || 'Gagal menghapus dosen');
+            return;
+        }
+
+        localStorage.setItem('success_dosen', data.message);
+        location.reload();
+    })
+    .catch(err => {
+        alert('Error: ' + err.message);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const msg = localStorage.getItem('success_dosen');
+
+    if (msg) {
+        alert(msg);
+        localStorage.removeItem('success_dosen');
+    }
 });
 </script>
 </body>

@@ -292,6 +292,21 @@ return back()
         return redirect()->route('admin.dosen.index')->with('ok', 'Data dosen berhasil dihapus.');
     }
 
+    public function bulkDelete(Request $request)
+{
+    $data = $request->validate([
+        'ids' => ['required', 'array'],
+        'ids.*' => ['exists:dosens,id'],
+    ]);
+
+    Dosen::whereIn('id', $data['ids'])->delete();
+
+    return response()->json([
+        'success' => true,
+        'message' => count($data['ids']) . ' data dosen berhasil dihapus',
+    ]);
+}
+
    public function import(Request $request)
     {
         $request->validate([
